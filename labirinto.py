@@ -1,15 +1,16 @@
 class No:
     #0 ->N, 1 -> L, S -> 2, O -> 3
     dicionario_direcoes = {"N":0, "L": 1, "S":2, "0":3}
-    lista_arestas = []
+    lista_arestas = [0,0,0,0]
     
     def __init__(self, posicao_linha,posicao_coluna,tipo):
         self.posicao_linha = posicao_linha
         self.posicao_coluna = posicao_coluna
         self.tipo = tipo
 
-    def adicionar_adjacencia(self,direcao,aresta,no):
-        no.lista_arestas[self.dicionario_direcoes[direcao]] = aresta
+    def adicionar_adjacencia(self,direcao,aresta):
+        if self.lista_aresta[self.dicionario_direcoes[direcao]] == 0:
+            self.lista_arestas[self.dicionario_direcoes[direcao]] = aresta
 
 class Aresta:
     def __init__(self,origem,destino,custo):
@@ -39,18 +40,33 @@ def validar_labirinto(caminho_do_labirinto):
 
 def gerar_labirinto(caminho_do_labirinto):
 
-
     lista_nos = []
     arquivo = open(caminho_do_labirinto,"r")
     for indice_linha,linha in enumerate(arquivo):
         for indice_caractere,caractere in enumerate(linha):
             if caractere !=  "#":
                 lista_nos.append(No(indice_linha,indice_caractere,caractere))
+    return Labirinto(0,0,lista_nos)
 
 #Terminar implementação.
 
-# def ligar_elementos_lista_nos(lista_nos):
-#     for no_1 in lista_nos:
-#         for no_2 in lista_nos
-#
-    
+def ligar_elementos_lista_nos(lista_nos):
+    for no_1 in lista_nos:
+        for no_2 in lista_nos:
+            if (no_1.posicao_linha+1 == no_2.posicaolinha):
+                no_1.adicionar_adjacencia("L",Aresta(no_1,no_2,0))
+                no_2.adicionar_adjacencia("O",Aresta(no_2,no_1,0))
+
+            if (no_1.posicao_linha-1 == no_2.posicao_linha- 1):
+                no_1.adicionar_adjacencia("O",Aresta(no_2,no_1,0))
+                no_2.adicionar_adjacencia("L",Aresta(no_2,no_1,0))
+
+            if (no_1.posicao_coluna +1 == no_2.posicao_coluna):
+                no_1.adicionar_adjacencia("N",Aresta(no_1,no_2,0))
+                no_2.adicionar_adjacencia("S",Aresta(no_2,no_1,0))
+            if (no_1.posicao_linha -1== no_2.posicao_linha- 1):
+                no_1.adicionar_adjacencia("S",Aresta(no_1,no_2,0))  
+                no_2.adicionar_adjacencia("N",Aresta(no_2,no_1,0))  
+
+
+
