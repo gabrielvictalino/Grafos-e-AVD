@@ -129,12 +129,3 @@ def bfs_grafo_estados(Labirinto):
                 #Ver como eu transformo no normal para no_estado.
                 lista_nos_estados.append(elemento_analisado.lista_arestas[i])
                 elemento_analisado.lista_arestas[i].estado_de_visualizacao = "Visitado"
-        
-        
-
-        
-
-    
-
-
-
