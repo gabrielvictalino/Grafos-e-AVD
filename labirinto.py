@@ -109,6 +109,8 @@ def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
             return lista_nos_estados[i]
 
 def bfs_grafo_estados(Labirinto):
+    chaves = []
+    camada = 0
     lista_nos_estados = []
     estado_inicial = 0
     estado_final = 0
@@ -121,17 +123,22 @@ def bfs_grafo_estados(Labirinto):
             estado_final = no
         elif no.tipo =="A" or no.tipo =="B" or no.tipo =="C" or no.tipo =="D":
             no.bloqueado = 1 
-        
-    lista_nos_estados.append(estado_inicial)
-    while lista_nos_estados[0] != estado_final:
-        lista_nos_estados[0].estado_de_visualizacao = "Encerrado"
-        elemento_analisado = lista_nos_estados.pop(0)
+
+        lista_nos_estados.append(no)
+    lista_estados_analisados = []    
+    lista_estados_analisados.append(estado_inicial)
+    while lista_estados_analisados[0] != estado_final:
+        lista_estados_analisados[0].estado_de_visualizacao = "Encerrado"
+        elemento_analisado = lista_estados_analisados.pop(0)
         for i in range(4):
             if elemento_analisado.lista_arestas[i] != 0:
                 novo_elemento = buscar_no_estado_a_partir_posicao(lista_nos_estados,elemento_analisado.lista_arestas[i].destino)
-                if novo_elemento.estado_visualizacao == "Não Visitado" and (novo_elemento.bloqueado == 0 or elemento_analisado.lista_arestas[i].tipo == elemento_analisado.lista_arestas[i].chaves.upper()):
+                if novo_elemento.no.tipo == "a" or novo_elemento.no.tipo == "b" or novo_elemento.no.tipo == "c" or novo_elemento.no.tipo == "d":
+                    chaves.append(novo_elemento.no.tipo)
+                    camada += 1
+                if novo_elemento.estado_de_visualizacao == "Não Visitado" and (novo_elemento.bloqueado == 0 or elemento_analisado.lista_arestas[i].tipo.lower() in chaves):
                 #chaves é uma lista. como eu consigo fazer uma comparação para porta?
-                    lista_nos_estados.append(novo_elemento)
-                    novo_elemento.estado = "Visitado"      
+                    lista_estados_analisados.append(novo_elemento)
+                    novo_elemento.estado_de_visualizacao = "Visitado"      
                 if novo_elemento.bloqueado == 1:
-                    break #fazer a lógica para o algoritmo não continuar quando bater em uma porta e não tiver chave.         
+                    continue #fazer a lógica para o algoritmo não continuar quando bater em uma porta e não tiver chave.         
