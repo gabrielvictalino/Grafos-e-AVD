@@ -25,13 +25,11 @@ class Aresta:
 
 
 class No_estados:
-    def __init__(self,posicao_linha,posicao_coluna,chaves,bonus,tipo,estado_de_visualizacao,lista_arestas):
-        self.posicao_linha = posicao_linha,
-        self.posicao_coluna = posicao_coluna
+    bloqueado = 0
+    def __init__(self,chaves,bonus,estado_de_visualizacao,no):
+        self.no = no
         self.chaves = chaves
         self.bonus = bonus
-        self.tipo = tipo
-        self.lista_arestas = lista_arestas
         self.estado_de_visualizacao = estado_de_visualizacao
         
     
@@ -79,7 +77,6 @@ def gerar_labirinto(caminho_do_labirinto):
     ligar_elementos_lista_nos(lista_nos)
     return Labirinto(estado_incial,estado_final,lista_nos)
 
-
 def ligar_elementos_lista_nos(lista_nos):
     for no_1 in lista_nos:
         custo_1 = DicionarioCustos[no_1.tipo]
@@ -87,7 +84,7 @@ def ligar_elementos_lista_nos(lista_nos):
             custo_2 = DicionarioCustos[no_2.tipo]
             #Implementar esteiras. 
             if (no_1.posicao_linha+1 == no_2.posicao_linha):
-
+                
                 no_1.adicionar_adjacencia("L",Aresta(no_1,no_2,custo_2))
                 no_2.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_1))
 
@@ -106,26 +103,35 @@ def ligar_elementos_lista_nos(lista_nos):
                 no_1.adicionar_adjacencia("S",Aresta(no_1,no_2,custo_2))  
                 no_2.adicionar_adjacencia("N",Aresta(no_2,no_1,custo_1))  
 
+def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
+    for i in lista_nos_estados:
+        if lista_nos_estados[i].no == no_posicao_alvo:
+            return lista_nos_estados[i]
+
 def bfs_grafo_estados(Labirinto):
     lista_nos_estados = []
     estado_inicial = 0
     estado_final = 0
     for i in Labirinto.lista_nos:
-        no = No_estados(i.posicao_linha,i.posicao_coluna,"-","-",i.tipo,"Não Visitado",i.lista_arestas)
-        if i.tipo == "S":
+        no = No_estados("-","-",i.tipo,"Não Visitado",i)
+        if no.tipo == "S":
             estado_inicial = no
             estado_inicial.estado_de_visualizacao = "Visitado"
-        elif i.tipo == "G":
+        elif no.tipo == "G":
             estado_final = no
-        elif i.tipo =="A" or i.tipo =="B" or i.tipo =="C" or i.tipo =="D":
-            #implementar logica de deixar como "parede"
-            break
+        elif no.tipo =="A" or no.tipo =="B" or no.tipo =="C" or no.tipo =="D":
+            no.bloqueado = 1 
+        
     lista_nos_estados.append(estado_inicial)
     while lista_nos_estados[0] != estado_final:
         lista_nos_estados[0].estado_de_visualizacao = "Encerrado"
         elemento_analisado = lista_nos_estados.pop(0)
         for i in range(4):
-            if elemento_analisado.lista_arestas[i] != 0 and elemento_analisado.lista_arestas[i].estado_visualizacao == "Não Visitado":
-                #Ver como eu transformo no normal para no_estado.
-                lista_nos_estados.append(elemento_analisado.lista_arestas[i])
-                elemento_analisado.lista_arestas[i].estado_de_visualizacao = "Visitado"
+            if elemento_analisado.lista_arestas[i] != 0:
+                novo_elemento = buscar_no_estado_a_partir_posicao(lista_nos_estados,elemento_analisado.lista_arestas[i].destino)
+                if novo_elemento.estado_visualizacao == "Não Visitado" and (novo_elemento.bloqueado == 0 or elemento_analisado.lista_arestas[i].tipo == elemento_analisado.lista_arestas[i].chaves.upper()):
+                #chaves é uma lista. como eu consigo fazer uma comparação para porta?
+                    lista_nos_estados.append(novo_elemento)
+                    novo_elemento.estado = "Visitado"      
+                if novo_elemento.bloqueado == 1:
+                    break #fazer a lógica para o algoritmo não continuar quando bater em uma porta e não tiver chave.         
