@@ -17,7 +17,13 @@ def dijkstra(lista_nos, origem):
         if u is None or menor_distancia == float('inf'):
             break
         visitados[u] = True
-
+        for aresta in u.lista_arestas:
+            if aresta!= 0:
+                v=aresta.destino
+                if distancias[v] > distancias[u] + aresta.custo:
+                    distancias[v] = distancias[u] + aresta.custo
+                    anteriores[v] = u
+    return distancias, anteriores
 
 def bellmon_ford(listas_nos,origem):
     anteriores={}
