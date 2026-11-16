@@ -26,17 +26,13 @@ class Aresta:
 
 class No_estados:
     bloqueado = 0
-    def __init__(self,chaves,bonus,estado_de_visualizacao,no):
-        self.no = no
+    def __init__(self,chaves,bonus,estado_de_visualizacao,no_pos):
+        self.no_pos = no_pos
         self.chaves = chaves
         self.bonus = bonus
         self.estado_de_visualizacao = estado_de_visualizacao
         
     
-    def __init__(self,origem,destino,custo):
-        self.origem = origem
-        self.destino = destino
-        self.custo = custo
 
 
 class Labirinto:
@@ -46,7 +42,7 @@ class Labirinto:
         self.lista_nos = lista_nos
 
 def validar_labirinto(caminho_do_labirinto):
-    caracteres_permitidos = set("#.S,~abcdABDCD><^v+*\\n")
+    caracteres_permitidos = set("#.S,~abcdABCD><^v+*\n")
     arquivo = open(caminho_do_labirinto, "r")
     string_total = set(arquivo.read())
     arquivo.close()
@@ -66,7 +62,7 @@ def gerar_labirinto(caminho_do_labirinto):
     arquivo = open(caminho_do_labirinto,"r")
     for indice_linha,linha in enumerate(arquivo):
         for indice_caractere,caractere in enumerate(linha):
-            if caractere !=  "#":
+            if caractere !=  "#" and caractere != "\n":
                 no = No(indice_linha,indice_caractere,caractere)
                 if caractere == "S":
                     estado_incial = no
@@ -105,8 +101,8 @@ def ligar_elementos_lista_nos(lista_nos):
 
 def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
     for i in lista_nos_estados:
-        if lista_nos_estados[i].no == no_posicao_alvo:
-            return lista_nos_estados[i]
+        if i == no_posicao_alvo:
+            return i
 
 def bfs_grafo_estados(Labirinto):
     chaves = []
@@ -115,25 +111,27 @@ def bfs_grafo_estados(Labirinto):
     estado_inicial = 0
     estado_final = 0
     for i in Labirinto.lista_nos:
-        no = No_estados("-","-",i.tipo,"Não Visitado",i)
-        if no.tipo == "S":
+        no = No_estados("-","-","Não Visitado",i)
+        if no.no_pos.tipo == "S":
             estado_inicial = no
             estado_inicial.estado_de_visualizacao = "Visitado"
-        elif no.tipo == "G":
+        elif no.no_pos.tipo == "G":
             estado_final = no
-        elif no.tipo =="A" or no.tipo =="B" or no.tipo =="C" or no.tipo =="D":
+        elif no.no_pos.tipo =="A" or no.no_pos.tipo =="B" or no.no_pos.tipo =="C" or no.no_pos.tipo =="D":
             no.bloqueado = 1 
 
         lista_nos_estados.append(no)
     lista_estados_analisados = []    
     lista_estados_analisados.append(estado_inicial)
-    while lista_estados_analisados[0] != estado_final:
+    while lista_estados_analisados  and lista_estados_analisados[0] != estado_final:
         lista_estados_analisados[0].estado_de_visualizacao = "Encerrado"
         elemento_analisado = lista_estados_analisados.pop(0)
         for i in range(4):
-            if elemento_analisado.lista_arestas[i] != 0:
-                novo_elemento = buscar_no_estado_a_partir_posicao(lista_nos_estados,elemento_analisado.lista_arestas[i].destino)
-                if novo_elemento.no.tipo == "a" or novo_elemento.no.tipo == "b" or novo_elemento.no.tipo == "c" or novo_elemento.no.tipo == "d":
+            if elemento_analisado.no_pos.lista_arestas[i] != 0:
+                novo_elemento = buscar_no_estado_a_partir_posicao(lista_nos_estados,elemento_analisado.no_pos.lista_arestas[i].destino)
+                if novo_elemento is None:
+                    continue
+                if novo_elemento.no_pos.tipo == "a" or novo_elemento.no_pos.tipo == "b" or novo_elemento.no_pos.tipo == "c" or novo_elemento.no_pos.tipo == "d":
                     chaves.append(novo_elemento.no.tipo)
                     camada += 1
                 if novo_elemento.estado_de_visualizacao == "Não Visitado" and (novo_elemento.bloqueado == 0 or elemento_analisado.lista_arestas[i].tipo.lower() in chaves):
