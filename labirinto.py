@@ -148,11 +148,11 @@ def bfs_grafo_estados(Labirinto):
         elif no.no_pos.tipo == "G":
             estado_final = no
         elif no.no_pos.tipo =="A" or no.no_pos.tipo =="B" or no.no_pos.tipo =="C" or no.no_pos.tipo =="D":
-            no.bloqueado = 1 
+            no.bloqueado = 1
 
         lista_nos_estados.append(no)
-    lista_estados_analisados = []    
-    lista_estados_analisados.append(estado_inicial)
+    anteriores = {estado_inicial: None}
+    lista_estados_analisados = [estado_inicial]
     while lista_estados_analisados  and lista_estados_analisados[0] != estado_final:
         lista_estados_analisados[0].estado_de_visualizacao = "Encerrado"
         elemento_analisado = lista_estados_analisados.pop(0)
@@ -166,7 +166,16 @@ def bfs_grafo_estados(Labirinto):
                     camada += 1
                 if novo_elemento.estado_de_visualizacao == "Não Visitado" and (novo_elemento.bloqueado == 0 or elemento_analisado.lista_arestas[i].tipo.lower() in chaves):
                 #chaves é uma lista. como eu consigo fazer uma comparação para porta?
+                    anteriores[novo_elemento] = elemento_analisado
                     lista_estados_analisados.append(novo_elemento)
                     novo_elemento.estado_de_visualizacao = "Visitado"      
                 if novo_elemento.bloqueado == 1:
                     continue #fazer a lógica para o algoritmo não continuar quando bater em uma porta e não tiver chave.         
+    caminho = []
+    atual = estado_final
+    while atual is not None:
+        caminho.append(atual.no_pos)  # ou atual, dependendo do que interpretar_resultado espera
+        atual = anteriores.get(atual)
+
+    caminho.reverse()
+    return caminho
