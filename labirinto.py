@@ -42,17 +42,47 @@ class Labirinto:
         self.lista_nos = lista_nos
 
 def validar_labirinto(caminho_do_labirinto):
-    caracteres_permitidos = set("#.S,~abcdABCD><^v+*\n")
-    arquivo = open(caminho_do_labirinto, "r")
-    string_total = set(arquivo.read())
-    arquivo.close()
-    existe_diferenca = string_total-caracteres_permitidos
-    if(existe_diferenca):
+    caracteres_permitidos = set("#.S,G~abcdABCD><^v+*\n")
+
+    with open(caminho_do_labirinto, "r") as arquivo:
+        texto = arquivo.read()
+
+    string_total = set(texto)
+
+    existe_diferenca = string_total - caracteres_permitidos
+
+    numeroS = texto.count("S")
+    numeroG = texto.count("G")
+
+    lista_quantidade_linhas = []
+
+    for indice, linha in enumerate(texto.splitlines()):
+        lista_quantidade_linhas.append(len(linha))
+
+    resultado_tamanho_igual = (
+        len(lista_quantidade_linhas) > 0 and
+        all(elemento == lista_quantidade_linhas[0]
+            for elemento in lista_quantidade_linhas)
+    )
+
+    if not resultado_tamanho_igual:
+        print("Número de linhas e colunas diferentes")
+
+    if numeroS != 1 or numeroG != 1:
+        print("Número de entradas ou saídas inválidos")
+
+    if existe_diferenca:
         print("Não validado, possui caracteres inválidos")
         return False
-    else:
-        print("Validado")
-        return True
+
+    if not resultado_tamanho_igual:
+        return False
+
+    if numeroS != 1 or numeroG != 1:
+        return False
+
+    print("Validado")
+    return True 
 
 def gerar_labirinto(caminho_do_labirinto):
     estado_incial = 0
