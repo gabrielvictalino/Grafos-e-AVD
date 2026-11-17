@@ -5,6 +5,7 @@ def dijkstra(lista_nos, origem):
     for no in lista_nos:
         distancias[no] = float('inf')
         visitados[no] = False
+        
         anteriores[no] = None
     distancias[origem] = 0
     while True:
@@ -32,10 +33,18 @@ def bellmon_ford(listas_nos,origem):
     for no in listas_nos:
         distancias[no]= float('inf')
         anteriores[no]= None
+        for i in no.lista_arestas:
+            if i != 0:
+                arestas.append(i)
     distancias[origem]= 0
     
     for i in range (len(listas_nos)-1):
-        for org,dest, peso in arestas:
+        for aresta in arestas:
+            
+            org = aresta.origem
+            dest = aresta.destino
+            peso = aresta.custo
+            
             if distancias[org]!= float('inf'):
                 if distancias[org] + peso< distancias[dest]:
                     distancias[dest]=distancias[org] + peso
