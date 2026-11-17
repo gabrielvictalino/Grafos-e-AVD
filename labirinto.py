@@ -121,13 +121,13 @@ def ligar_elementos_lista_nos(lista_nos):
 
             if (no_1.posicao_coluna +1 == no_2.posicao_coluna):
 
-                no_1.adicionar_adjacencia("N",Aresta(no_1,no_2,custo_2))
-                no_2.adicionar_adjacencia("S",Aresta(no_2,no_1,custo_1))
+                no_1.adicionar_adjacencia("S",Aresta(no_1,no_2,custo_2))
+                no_2.adicionar_adjacencia("N",Aresta(no_2,no_1,custo_1))
 
             if (no_1.posicao_linha -1== no_2.posicao_linha):
 
-                no_1.adicionar_adjacencia("S",Aresta(no_1,no_2,custo_2))  
-                no_2.adicionar_adjacencia("N",Aresta(no_2,no_1,custo_1))  
+                no_1.adicionar_adjacencia("N",Aresta(no_1,no_2,custo_2))  
+                no_2.adicionar_adjacencia("S",Aresta(no_2,no_1,custo_1))  
 
 def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
     for i in lista_nos_estados:
