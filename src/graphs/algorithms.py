@@ -9,7 +9,7 @@ def dijkstra(lista_nos, origem):
     distancias[origem] = 0
     while True:
         u= None
-        menor=float('inf')
+        menor_distancia=float('inf')
         for no in lista_nos:
             if not visitados[no] and distancias[no] < menor_distancia:
                 menor_distancia = distancias[no]
