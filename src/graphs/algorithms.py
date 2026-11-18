@@ -26,7 +26,7 @@ def dijkstra(lista_nos, origem):
                     anteriores[v] = u
     return distancias, anteriores
 
-def bellmon_ford(listas_nos,origem):
+def bellman_ford(listas_nos,origem):
     anteriores={}
     distancias={}
     arestas=[]
@@ -39,8 +39,8 @@ def bellmon_ford(listas_nos,origem):
     distancias[origem]= 0
     
     for i in range (len(listas_nos)-1):
+        mudou =False
         for aresta in arestas:
-            
             org = aresta.origem
             dest = aresta.destino
             peso = aresta.custo
@@ -49,4 +49,8 @@ def bellmon_ford(listas_nos,origem):
                 if distancias[org] + peso< distancias[dest]:
                     distancias[dest]=distancias[org] + peso
                     anteriores[dest]=org
-                return distancias, anteriores
+        mudou= True
+        if not mudou:
+            break
+
+        return distancias, anteriores

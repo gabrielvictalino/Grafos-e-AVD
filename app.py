@@ -2,7 +2,7 @@
 
 Rodar na raiz do repositório:
     pip install -r requirements.txt
-    streamlit run app_labirinto.py
+    streamlit run app.py
 
 Este arquivo NÃO implementa busca nem regra do labirinto. Ele só:
   1. lista os mapas .txt da pasta mapas/;
