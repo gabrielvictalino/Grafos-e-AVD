@@ -1,0 +1,37 @@
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs e editores
+.vscode/
+.idea/
+*.code-workspace
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários e logs
+*.log
+*.tmp
+*.bak
+
+# Variáveis de ambiente
+.env
+.env.*
+
+# Dependências, builds e caches
+node_modules/
+dist/
+build/
+.cache/
