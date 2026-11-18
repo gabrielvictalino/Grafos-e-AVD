@@ -47,7 +47,7 @@ def importar_projeto():
     """Importa os módulos do repositório e devolve (labirinto, algorithms, erros)."""
     erros, lab_mod, alg_mod = [], None, None
     try:
-        import labirinto as lab_mod
+        import graphs.labirinto as lab_mod
     except Exception:
         erros.append("Falha ao importar labirinto.py:\n" + traceback.format_exc())
     try:
