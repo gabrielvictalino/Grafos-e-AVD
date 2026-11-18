@@ -1,3 +1,5 @@
+from graphs.labirinto import buscar_no_estado_a_partir_posicao
+
 def dijkstra(lista_nos, origem):
     anteriores={} # Para escrever o caminho no final
     distancias= {} #guarda o menor custo
@@ -145,3 +147,140 @@ def dfs(lista_nos, origem, detalhado=False):
         }
 
     return distancias, anteriores
+
+def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
+    
+    estado_inicial.estado_de_visualizacao = "Visitado"
+    
+    anteriores = {estado_inicial: None}
+    lista_estados_analisados = [estado_inicial]
+
+    while lista_estados_analisados:
+
+        elemento_analisado = lista_estados_analisados.pop(0)
+
+        # Verifica se chegou ao destino
+        if elemento_analisado == estado_final:
+            break
+
+        elemento_analisado.estado_de_visualizacao = "Encerrado"
+
+        for i in range(4):
+
+            aresta = elemento_analisado.no_pos.lista_arestas[i]
+
+            if aresta == 0:
+                continue
+
+            novo_elemento = buscar_no_estado_a_partir_posicao(
+                lista_nos_estados,
+                aresta.destino
+            )
+
+            if novo_elemento is None:
+                continue
+            if novo_elemento.estado_de_visualizacao != "Não Visitado":
+                continue
+            anteriores[novo_elemento] = elemento_analisado
+
+            lista_estados_analisados.append(novo_elemento)
+
+            novo_elemento.estado_de_visualizacao = "Visitado"
+            anteriores[novo_elemento] = elemento_analisado
+
+            lista_estados_analisados.append(novo_elemento)
+
+            novo_elemento.estado_de_visualizacao = "Visitado"
+        
+        caminho = []
+        
+        if estado_final not in anteriores:
+            return None
+    
+        atual = estado_final
+    
+        while atual is not None:
+            caminho.append(atual.no_pos)
+            atual = anteriores.get(atual)
+    
+        caminho.reverse()
+    
+        return caminho
+
+
+    
+    
+
+def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
+
+    camadas = 0
+    chaves = set()
+
+    estado_inicial.estado_de_visualizacao = "Visitado"
+
+    anteriores = {estado_inicial: None}
+    lista_estados_analisados = [estado_inicial]
+
+    while lista_estados_analisados:
+
+        elemento_analisado = lista_estados_analisados.pop(0)
+
+        # Verifica se chegou ao destino
+        if elemento_analisado == estado_final:
+            break
+
+        elemento_analisado.estado_de_visualizacao = "Encerrado"
+
+        for i in range(4):
+
+            aresta = elemento_analisado.no_pos.lista_arestas[i]
+
+            if aresta == 0:
+                continue
+
+            novo_elemento = buscar_no_estado_a_partir_posicao(
+                lista_nos_estados,
+                aresta.destino
+            )
+
+            if novo_elemento is None:
+                continue
+
+            # Verifica se encontrou uma chave
+            if novo_elemento.no_pos.tipo in ("a", "b", "c", "d"):
+                camada += 1
+                chaves.add(novo_elemento.no_pos.tipo)
+
+            # Verifica se o nó já foi visitado
+            if novo_elemento.estado_de_visualizacao != "Não Visitado":
+                continue
+
+            # Verifica se o nó está bloqueado
+            if novo_elemento.bloqueado == 1:
+
+                tipo_porta = aresta.tipo.lower()
+
+                if tipo_porta not in chaves:
+                    continue
+
+            anteriores[novo_elemento] = elemento_analisado
+
+            lista_estados_analisados.append(novo_elemento)
+
+            novo_elemento.estado_de_visualizacao = "Visitado"
+
+    # Reconstrução do caminho
+    caminho = []
+
+    if estado_final not in anteriores:
+        return None
+
+    atual = estado_final
+
+    while atual is not None:
+        caminho.append(atual.no_pos)
+        atual = anteriores.get(atual)
+
+    caminho.reverse()
+
+    return caminho
