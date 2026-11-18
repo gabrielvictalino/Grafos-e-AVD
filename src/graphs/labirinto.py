@@ -51,8 +51,7 @@ class Metricas:
         self.densidade = 0
         self.ordem = 0
         self.tamanho = 0
-        self.grau_entrada = 0
-        self.grau_saida = 0
+    
     
     def setOrdem(self,ordem):
         self.ordem = ordem
