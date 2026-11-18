@@ -10,6 +10,8 @@ class No:
         self.posicao_coluna = posicao_coluna
         self.tipo = tipo
         self.lista_arestas = [0,0,0,0]
+        self.grau_entrada = 0
+        self.grau_saida = 0
 
     def adicionar_adjacencia(self,direcao,aresta):
         if self.lista_arestas[self.dicionario_direcoes[direcao]] == 0:
@@ -36,10 +38,12 @@ class No_estados:
 
 
 class Labirinto:
-    def __init__(self,estado_incial, estado_final,lista_nos):
+    def __init__(self,estado_incial, estado_final,lista_nos,metricas):
         self.estado_incial = estado_incial
         self.estado_final = estado_final
         self.lista_nos = lista_nos
+        self.metricas = metricas
+        
 
 class Metricas:
     
@@ -49,6 +53,19 @@ class Metricas:
         self.tamanho = 0
         self.grau_entrada = 0
         self.grau_saida = 0
+    
+    def setOrdem(self,ordem):
+        self.ordem = ordem
+    def setTamanho(self,tamanho):
+        self.tamanho = tamanho
+    def definirDensidade(self,ordem,tamanho):
+        if ordem>2:
+            self.densidade = tamanho/ordem*(ordem-1)
+        else:
+            self.densidade = 0
+        
+    
+    
 
 def validar_labirinto(caminho_do_labirinto):
     caracteres_permitidos = set("#.S,G~abcdABCD><^v+*\n")
@@ -96,12 +113,13 @@ def validar_labirinto(caminho_do_labirinto):
 def gerar_labirinto(caminho_do_labirinto):
     estado_incial = 0
     estado_final = 0
-
+    ordem = 0
     lista_nos = []
     arquivo = open(caminho_do_labirinto,"r")
     for indice_linha,linha in enumerate(arquivo):
         for indice_caractere,caractere in enumerate(linha):
             if caractere !=  "#" and caractere != "\n":
+                ordem += 1
                 no = No(indice_linha,indice_caractere,caractere)
                 if caractere == "S":
                     estado_incial = no
@@ -109,40 +127,64 @@ def gerar_labirinto(caminho_do_labirinto):
                     estado_final = no
                 lista_nos.append(no)
     arquivo.close()
-    ligar_elementos_lista_nos(lista_nos)
-    return Labirinto(estado_incial,estado_final,lista_nos)
+    metricas = Metricas()
+    metricas.setOrdem(ordem)
+    tamanho = ligar_elementos_lista_nos(lista_nos)
+    metricas.setTamanho(tamanho)
+    return Labirinto(estado_incial,estado_final,lista_nos,metricas)
 
 def ligar_elementos_lista_nos(lista_nos):
+    num_arestas = 0
     for no_1 in lista_nos:
         custo_1 = DicionarioCustos[no_1.tipo]
         for no_2 in lista_nos:
             custo_2 = DicionarioCustos[no_2.tipo]
-            #Implementar esteiras. 
             if (no_1.posicao_linha+1 == no_2.posicao_linha):
                 
                 if no_1.tipo != "<" and no_1.tipo != "v" and no_1.tipo != "^":
                     no_1.adicionar_adjacencia("L",Aresta(no_1,no_2,custo_2))
+                    no_1.grau_saida += 1
+                    no_2.grau_entrada += 1
                 if no_2.tipo != ">" and no_2.tipo != "v" and no_2.tipo != "^":    
                     no_2.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_1))
+                    no_2.grau_saida += 1
+                    no_1.grau_entrada += 1
+                num_arestas += 1
 
             if (no_1.posicao_linha-1 == no_2.posicao_linha):
                 if no_1.tipo != ">" and no_1.tipo != "v" and no_1.tipo != "^":
                     no_1.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_2))
+                    no_1.grau_saida += 1
+                    no_2.grau_entrada += 1
                 if no_2.tipo != "<" and no_2.tipo != "v" and no_2.tipo != "^":
                     no_2.adicionar_adjacencia("L",Aresta(no_2,no_1,custo_1))
+                    no_2.grau_saida += 1
+                    no_1.grau_entrada += 1
+                num_arestas += 1
 
             if (no_1.posicao_coluna +1 == no_2.posicao_coluna):
                 if no_1.tipo != ">" and no_1.tipo != "^" and no_1.tipo != "<":
                     no_1.adicionar_adjacencia("S",Aresta(no_1,no_2,custo_2))
+                    no_1.grau_saida += 1
+                    no_2.grau_entrada += 1
                 if no_2.tipo != ">" and no_2.tipo != "v" and no_2.tipo != "<":
                     no_2.adicionar_adjacencia("N",Aresta(no_2,no_1,custo_1))
+                    no_2.grau_saida += 1
+                    no_1.grau_entrada += 1
+                num_arestas += 1
 
             if (no_1.posicao_linha -1== no_2.posicao_linha):
                 if no_1.tipo != ">" and no_1.tipo != "v" and no_1.tipo != "<":
                     no_1.adicionar_adjacencia("N",Aresta(no_1,no_2,custo_2))  
+                    no_1.grau_saida += 1
+                    no_2.grau_entrada += 1
                 
                 if no_2.tipo != ">" and no_2.tipo != "^" and no_2.tipo != "<":
                     no_2.adicionar_adjacencia("S",Aresta(no_2,no_1,custo_1))  
+                    no_2.grau_saida += 1
+                    no_1.grau_entrada += 1
+                num_arestas += 1
+    return num_arestas
 
 def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
     for i in lista_nos_estados:
