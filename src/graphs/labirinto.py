@@ -8,6 +8,7 @@ class No:
     def __init__(self, posicao_linha,posicao_coluna,tipo):
         self.posicao_linha = posicao_linha
         self.posicao_coluna = posicao_coluna
+        self.lista_estados_gerados = []
         self.tipo = tipo
         self.lista_arestas = [0,0,0,0]
         self.grau_entrada = 0
@@ -110,7 +111,7 @@ def validar_labirinto(caminho_do_labirinto):
     return True 
 
 def gerar_labirinto(caminho_do_labirinto):
-    estado_incial = 0
+    estado_inicial = 0
     estado_final = 0
     ordem = 0
     lista_nos = []
@@ -121,7 +122,7 @@ def gerar_labirinto(caminho_do_labirinto):
                 ordem += 1
                 no = No(indice_linha,indice_caractere,caractere)
                 if caractere == "S":
-                    estado_incial = no
+                    estado_inicial = no
                 elif caractere == "G":
                     estado_final = no
                 lista_nos.append(no)
@@ -130,7 +131,7 @@ def gerar_labirinto(caminho_do_labirinto):
     metricas.setOrdem(ordem)
     tamanho = ligar_elementos_lista_nos(lista_nos)
     metricas.setTamanho(tamanho)
-    return Labirinto(estado_incial,estado_final,lista_nos,metricas)
+    return Labirinto(estado_inicial,estado_final,lista_nos,metricas)
 
 def ligar_elementos_lista_nos(lista_nos):
     num_arestas = 0
@@ -138,51 +139,32 @@ def ligar_elementos_lista_nos(lista_nos):
         custo_1 = DicionarioCustos[no_1.tipo]
         for no_2 in lista_nos:
             custo_2 = DicionarioCustos[no_2.tipo]
-            if (no_1.posicao_linha+1 == no_2.posicao_linha):
+            if (no_1.posicao_linha == no_2.posicao_linha and no_1.posicao_coluna + 1 == no_2.posicao_coluna):
                 
                 if no_1.tipo != "<" and no_1.tipo != "v" and no_1.tipo != "^":
                     no_1.adicionar_adjacencia("L",Aresta(no_1,no_2,custo_2))
+                    num_arestas += 1
                     no_1.grau_saida += 1
                     no_2.grau_entrada += 1
                 if no_2.tipo != ">" and no_2.tipo != "v" and no_2.tipo != "^":    
                     no_2.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_1))
+                    num_arestas += 1
                     no_2.grau_saida += 1
                     no_1.grau_entrada += 1
-                num_arestas += 1
 
-            if (no_1.posicao_linha-1 == no_2.posicao_linha):
-                if no_1.tipo != ">" and no_1.tipo != "v" and no_1.tipo != "^":
-                    no_1.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_2))
-                    no_1.grau_saida += 1
-                    no_2.grau_entrada += 1
-                if no_2.tipo != "<" and no_2.tipo != "v" and no_2.tipo != "^":
-                    no_2.adicionar_adjacencia("L",Aresta(no_2,no_1,custo_1))
-                    no_2.grau_saida += 1
-                    no_1.grau_entrada += 1
-                num_arestas += 1
-
-            if (no_1.posicao_coluna +1 == no_2.posicao_coluna):
+            
+            if (no_1.posicao_coluna == no_2.posicao_coluna and no_1.posicao_linha +1 == no_2.posicao_linha):
                 if no_1.tipo != ">" and no_1.tipo != "^" and no_1.tipo != "<":
                     no_1.adicionar_adjacencia("S",Aresta(no_1,no_2,custo_2))
+                    num_arestas += 1
                     no_1.grau_saida += 1
                     no_2.grau_entrada += 1
                 if no_2.tipo != ">" and no_2.tipo != "v" and no_2.tipo != "<":
                     no_2.adicionar_adjacencia("N",Aresta(no_2,no_1,custo_1))
+                    num_arestas += 1
                     no_2.grau_saida += 1
                     no_1.grau_entrada += 1
-                num_arestas += 1
 
-            if (no_1.posicao_linha -1== no_2.posicao_linha):
-                if no_1.tipo != ">" and no_1.tipo != "v" and no_1.tipo != "<":
-                    no_1.adicionar_adjacencia("N",Aresta(no_1,no_2,custo_2))  
-                    no_1.grau_saida += 1
-                    no_2.grau_entrada += 1
-                
-                if no_2.tipo != ">" and no_2.tipo != "^" and no_2.tipo != "<":
-                    no_2.adicionar_adjacencia("S",Aresta(no_2,no_1,custo_1))  
-                    no_2.grau_saida += 1
-                    no_1.grau_entrada += 1
-                num_arestas += 1
     return num_arestas
 
 def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):

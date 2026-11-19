@@ -247,22 +247,15 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
                 continue
 
             # Verifica se encontrou uma chave
-            if novo_elemento.no_pos.tipo in ("a", "b", "c", "d"):
-                camada += 1
-                chaves.add(novo_elemento.no_pos.tipo)
-
+            camadas = verificar_chaves(novo_elemento,chaves,camadas)
             # Verifica se o nó já foi visitado
             if novo_elemento.estado_de_visualizacao != "Não Visitado":
                 continue
 
             # Verifica se o nó está bloqueado
-            if novo_elemento.bloqueado == 1:
-
-                tipo_porta = aresta.tipo.lower()
-
-                if tipo_porta not in chaves:
-                    continue
-
+            #verificar_bloqueio(novo_elemento,aresta,chaves)
+            
+            
             anteriores[novo_elemento] = elemento_analisado
 
             lista_estados_analisados.append(novo_elemento)
@@ -284,3 +277,19 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
     caminho.reverse()
 
     return caminho
+
+def verificar_chaves(novo_elemento,chaves,camada):
+    if novo_elemento.no_pos.tipo in ("a", "b", "c", "d"):
+        camada += 1
+        novo_elemento.chaves = novo_elemento.chaves + novo_elemento.no_pos.tipo
+        novo_elemento.lista_estados_gerados.append(novo_elemento)
+        chaves.add(novo_elemento.no_pos.tipo)
+    return camada
+
+def verificar_bloqueio(novo_elemento,aresta,chaves):
+    if novo_elemento.bloqueado == 1:
+        tipo_porta = aresta.tipo.lower()
+
+        if tipo_porta not in chaves:
+            return true
+        
