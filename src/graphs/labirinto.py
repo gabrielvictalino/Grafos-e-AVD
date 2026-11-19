@@ -65,8 +65,14 @@ class Metricas:
             self.densidade = 0
         
     
-    
 
+class Camada:
+    def __init__(self, chaves=""):
+        self.chaves = chaves
+        self.lista_nos_estados = []
+        self.metricas = Metricas()
+        
+#Ver se as paredes são # ou não
 def validar_labirinto(caminho_do_labirinto):
     caracteres_permitidos = set("#.S,G~abcdABCD><^v+*\n")
 
