@@ -1,4 +1,8 @@
 from graphs.labirinto import buscar_no_estado_a_partir_posicao
+from graphs.labirinto import Camada
+from graphs.labirinto import No_estados
+
+from collections import deque
 
 def dijkstra(lista_nos, origem):
     anteriores={} # Para escrever o caminho no final
@@ -207,15 +211,14 @@ def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
     
         return caminho
 
-
-    
-    
-
 def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
-    camadas = 0
-    chaves = set()
+    num_camadas = 0
+    camadas = [Camada()]
 
+    camadas[0].lista_nos_estados = lista_nos_estados
+
+    estado_inicial.chaves = ""
     estado_inicial.estado_de_visualizacao = "Visitado"
 
     anteriores = {estado_inicial: None}
@@ -225,8 +228,13 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
         elemento_analisado = lista_estados_analisados.pop(0)
 
+        camadas = verificar_chaves(
+            elemento_analisado, camadas
+        )
+
         # Verifica se chegou ao destino
-        if elemento_analisado == estado_final:
+        if elemento_analisado.no_pos.tipo == "G":
+            estado_final = elemento_analisado
             break
 
         elemento_analisado.estado_de_visualizacao = "Encerrado"
@@ -246,16 +254,57 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
             if novo_elemento is None:
                 continue
 
-            # Verifica se encontrou uma chave
-            camadas = verificar_chaves(novo_elemento,chaves,camadas)
-            # Verifica se o nó já foi visitado
-            if novo_elemento.estado_de_visualizacao != "Não Visitado":
+            # Verifica se o nó está bloqueado
+            esta_bloqueado = verificar_bloqueio(
+                novo_elemento,
+                elemento_analisado.chaves
+            )
+
+            if esta_bloqueado:
                 continue
 
-            # Verifica se o nó está bloqueado
-            #verificar_bloqueio(novo_elemento,aresta,chaves)
-            
-            
+            # Propaga as chaves em toda movimentação
+            novas_chaves = elemento_analisado.chaves
+
+            # Verifica a combinação posição + chaves
+            estado_existente = False
+
+            for camada in camadas:
+                for estado in camada.lista_nos_estados:
+                    if (estado.no_pos == novo_elemento.no_pos
+                            and estado.chaves == novas_chaves):
+                        estado_existente = True
+                        break
+
+
+            if estado_existente:
+                continue
+            else:
+                # Cria um novo estado para a mesma posição
+                novo_elemento = No_estados(
+                    "-", "-",
+                    novo_elemento.no_pos.tipo,
+                    "Não Visitado",
+                    novo_elemento.no_pos
+                )
+
+                novo_elemento.chaves = novas_chaves
+
+                # Adiciona o estado à camada correspondente
+                camada_encontrada = None
+
+                for camada in camadas:
+                    if camada.chaves == novas_chaves:
+                        camada_encontrada = camada
+                        break
+
+                if camada_encontrada is None:
+                    camada_encontrada = Camada()
+                    camada_encontrada.chaves = novas_chaves
+                    camadas.append(camada_encontrada)
+
+                camada_encontrada.lista_nos_estados.append(novo_elemento)
+
             anteriores[novo_elemento] = elemento_analisado
 
             lista_estados_analisados.append(novo_elemento)
@@ -278,18 +327,44 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
     return caminho
 
-def verificar_chaves(novo_elemento,chaves,camada):
-    if novo_elemento.no_pos.tipo in ("a", "b", "c", "d"):
-        camada += 1
-        novo_elemento.chaves = novo_elemento.chaves + novo_elemento.no_pos.tipo
-        novo_elemento.lista_estados_gerados.append(novo_elemento)
-        chaves.add(novo_elemento.no_pos.tipo)
-    return camada
 
-def verificar_bloqueio(novo_elemento,aresta,chaves):
+def verificar_chaves(elemento_analisado, camadas):
+
+    if elemento_analisado.no_pos.tipo in ("a", "b", "c", "d"):
+
+        chave = elemento_analisado.no_pos.tipo
+
+        # Evita adquirir a mesma chave novamente
+        if chave not in elemento_analisado.chaves:
+
+            elemento_analisado.chaves = "".join(
+                sorted(elemento_analisado.chaves + chave)
+            )
+
+            # Verifica se já existe uma camada com essas chaves
+            for camada in camadas:
+                if camada.chaves == elemento_analisado.chaves:
+                    return camadas
+
+            # Cria uma nova camada
+            nova_camada = Camada()
+            nova_camada.chaves = elemento_analisado.chaves
+            camadas.append(nova_camada)
+
+            return camadas
+
+    return camadas
+
+
+def verificar_bloqueio(novo_elemento, chaves):
+
     if novo_elemento.bloqueado == 1:
-        tipo_porta = aresta.tipo.lower()
+
+        tipo_porta = novo_elemento.no_pos.tipo.lower()
 
         if tipo_porta not in chaves:
-            return true
-        
+            return True
+
+    return False        
+# #precisa no BFS?
+# def verificar_bonus()
