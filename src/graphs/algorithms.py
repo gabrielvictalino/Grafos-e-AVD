@@ -34,41 +34,121 @@ def dijkstra(lista_nos, origem):
     return distancias, anteriores
 
 
+
 def dijkstra_estados(lista_nos_estados, origem, final):
-    anteriores={} # Para escrever o caminho no final
-    distancias= {} #guarda o menor custo
-    visitados={} #fechados
+
+    anteriores = {}
+    distancias = {}
+    visitados = {}
+
     camadas = [Camada()]
-    camadas[0].lista_nos_estados = lista_nos_estados
-    
-    for no in lista_nos_estados:
-        distancias[no] = float('inf')
-        visitados[no] = False
-        anteriores[no] = None
-        
+    camadas[0].chaves = ""
+
+    origem.chaves = ""
+    origem.estado_de_visualizacao = "Visitado"
+
+    lista_estados_gerados = [origem]
+
+    # Identifica os estados por posição e chaves.
+    estados = {
+        (origem.no_pos, origem.chaves): origem
+    }
+
+    anteriores[origem] = None
     distancias[origem] = 0
+    visitados[origem] = False
+
+    estado_final = None
+
     while True:
-        u= None
-        menor_distancia=float('inf')
-        for no in lista_nos_estados:
-            if not visitados[no] and distancias[no] < menor_distancia and not verificar_bloqueio(no,no.chaves):
+
+        u = None
+        menor_distancia = float('inf')
+
+        # Seleciona o estado de menor custo.
+        for no in lista_estados_gerados:
+
+            if not visitados[no] and distancias[no] < menor_distancia:
                 menor_distancia = distancias[no]
                 u = no
-        if u is None or menor_distancia == float('inf'):
-            break
-            
-        visitados[u] = True
-        camadas = verificar_chaves(u, camadas)
-        chaves = u.chaves
-        adicionar_estado_a_camada(camadas,u,chaves)
 
-        for aresta in u.lista_arestas:
-            if aresta!= 0:
-                v=aresta.destino
-                if distancias[v] > distancias[u] + aresta.custo:
-                    distancias[v] = distancias[u] + aresta.custo
+        if u is None:
+            break
+
+        # Finaliza o estado atual.
+        visitados[u] = True
+        u.estado_de_visualizacao = "Encerrado"
+
+        # Adiciona à camada correspondente.
+        adicionar_estado_a_camada(camadas, u)
+
+        # Verifica se chegou ao destino.
+        if u.no_pos.tipo == "G":
+            estado_final = u
+            break
+
+        # Analisa as arestas.
+        for aresta in u.no_pos.lista_arestas:
+
+            if aresta == 0:
+                continue
+
+            v = buscar_no_estado_a_partir_posicao(
+                lista_nos_estados,
+                aresta.destino
+            )
+
+            if v is None:
+                continue
+
+            # Verifica se pode atravessar a porta.
+            if verificar_bloqueio(v, u.chaves):
+                continue
+
+            # Cria um estado independente do objeto original.
+            v = No_estados(
+                "-", "-",
+                v.no_pos.tipo,
+                "Não Visitado",
+                v.no_pos
+            )
+
+            # Herda as chaves do estado atual.
+            v.chaves = u.chaves
+
+            # Verifica se o destino contém uma nova chave.
+            camadas, v = verificar_chaves(v, camadas)
+
+            # Identifica o estado resultante.
+            identificador = (v.no_pos, v.chaves)
+
+            # Reutiliza um estado que já existe.
+            if identificador in estados:
+                v = estados[identificador]
+
+            else:
+                estados[identificador] = v
+                lista_estados_gerados.append(v)
+
+                distancias[v] = float('inf')
+                anteriores[v] = None
+                visitados[v] = False
+
+            # Relaxamento da aresta.
+            if not visitados[v]:
+
+                nova_distancia = distancias[u] + aresta.custo
+
+                if nova_distancia < distancias[v]:
+
+                    distancias[v] = nova_distancia
                     anteriores[v] = u
-    return distancias, anteriores
+
+                    v.estado_de_visualizacao = "Visitado"
+
+    return distancias, anteriores, camadas
+
+
 
 def bellman_ford(listas_nos,origem):
     anteriores={}
@@ -262,7 +342,7 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
         elemento_analisado = lista_estados_analisados.pop(0)
 
-        camadas = verificar_chaves(
+        camadas,elemento_analisado = verificar_chaves(
             elemento_analisado, camadas
         )
         elemento_analisado = adicionar_estado_a_camada(camadas,elemento_analisado)
@@ -330,7 +410,7 @@ def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
     caminho.reverse()
 
-    return caminho
+    return caminho, camadas
 
 
 def verificar_chaves(elemento_analisado, camadas):
@@ -341,24 +421,31 @@ def verificar_chaves(elemento_analisado, camadas):
 
         # Evita adquirir a mesma chave novamente
         if chave not in elemento_analisado.chaves:
+            novo_estado = No_estados(
+                "-", "-",
+                elemento_analisado.no_pos.tipo,
+                "Não Visitado",
+                elemento_analisado.no_pos
+            )
+            novo_estado.chaves = elemento_analisado.chaves
 
-            elemento_analisado.chaves = "".join(
+            novo_estado.chaves = "".join(
                 sorted(elemento_analisado.chaves + chave)
             )
 
             # Verifica se já existe uma camada com essas chaves
             for camada in camadas:
-                if camada.chaves == elemento_analisado.chaves:
-                    return camadas
+                if camada.chaves == novo_estado.chaves:
+                    return camadas, novo_estado
 
             # Cria uma nova camada
             nova_camada = Camada()
-            nova_camada.chaves = elemento_analisado.chaves
+            nova_camada.chaves = novo_estado.chaves
             camadas.append(nova_camada)
 
-            return camadas
+            return camadas,novo_estado
 
-    return camadas
+    return camadas,elemento_analisado
 
 
 def verificar_bloqueio(novo_elemento, chaves):
@@ -406,3 +493,4 @@ def adicionar_estado_a_camada(camadas,elemento_analisado):
 
             camada_encontrada.lista_nos_estados.append(elemento_analisado)
             return elemento_analisado
+        
