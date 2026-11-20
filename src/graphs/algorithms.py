@@ -173,11 +173,102 @@ def bellman_ford(listas_nos,origem):
                 if distancias[org] + peso< distancias[dest]:
                     distancias[dest]=distancias[org] + peso
                     anteriores[dest]=org
-        mudou= True
+                    mudou= True
         if not mudou:
             break
 
-        return distancias, anteriores
+    return distancias, anteriores
+
+
+def bellman_ford_estados(lista_nos_estados, origem):
+
+    camadas = [Camada()]
+    camadas[0].chaves = ""
+
+    origem.chaves = ""
+
+    estados = {
+        (origem.no_pos, origem.chaves): origem
+    }
+
+    lista_estados_gerados = [origem]
+
+    anteriores = {origem: None}
+    distancias = {origem: 0}
+    # Número de passagens sem assumir que os estados
+    # já foram todos gerados.
+    while True:
+
+        mudou = False
+        criou_estado = False
+
+        # Cópia dos estados existentes nesta passagem.
+        for org in lista_estados_gerados[:]:
+
+            if distancias[org] == float('inf'):
+                continue
+
+            for aresta in org.no_pos.lista_arestas:
+
+                if aresta == 0:
+                    continue
+
+                dest_original = buscar_no_estado_a_partir_posicao(
+                    lista_nos_estados,
+                    aresta.destino
+                )
+
+                if dest_original is None:
+                    continue
+
+                # Verifica o bloqueio da porta.
+                if verificar_bloqueio(dest_original, org.chaves):
+                    continue
+
+                # Cria um estado de destino independente.
+                dest = No_estados(
+                    org.chaves,
+                    "-",
+                    dest_original.no_pos.tipo,
+                    "Não Visitado",
+                    dest_original.no_pos
+                )
+
+                # Adquire a chave existente no destino.
+                camadas, dest = verificar_chaves(dest, camadas)
+
+                identificador = (dest.no_pos, dest.chaves)
+
+                # Reutiliza ou registra o estado.
+                if identificador in estados:
+                    dest = estados[identificador]
+
+                else:
+                    estados[identificador] = dest
+                    lista_estados_gerados.append(dest)
+
+                    distancias[dest] = float('inf')
+                    anteriores[dest] = None
+
+                    criou_estado = True
+
+                # Relaxamento.
+                peso = aresta.custo
+
+                if distancias[org] + peso < distancias[dest]:
+
+                    distancias[dest] = distancias[org] + peso
+                    anteriores[dest] = org
+
+                    mudou = True
+
+        # Termina quando nenhum estado foi criado
+        # e nenhuma distância foi melhorada.
+        if not mudou and not criou_estado:
+            break
+
+    return distancias, anteriores
+
 
 def dfs(lista_nos, origem, detalhado=False):
     anteriores = {} # pra escrever o caminho no final
