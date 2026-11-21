@@ -79,6 +79,24 @@ class Labirinto:
         self.maior_grau_entrada = max(graus_entrada.values(), default = 0)
         self.maior_grau_saida = max(graus_saida.values(), default = 0)
     
+    def calcular_heatmap(self):
+
+        numero_linhas = max(no.posicao_linha for no in self.lista_nos) + 1
+        numero_colunas = max(no.posicao_coluna for no in self.lista_nos) + 1
+
+        heatmap = [
+            [None for _ in range(numero_colunas)]
+            for _ in range(numero_linhas)
+        ]
+
+        for no in self.lista_nos:
+            linha = no.posicao_linha
+            coluna = no.posicao_coluna
+
+            heatmap[linha][coluna] = len(no.lista_estados_gerados)
+
+        return heatmap
+            
         
 
 class Metricas:

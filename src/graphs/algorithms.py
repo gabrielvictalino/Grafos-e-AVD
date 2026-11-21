@@ -456,7 +456,8 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
 
         # Registra o estado na camada
         adicionar_estado_a_camada(camadas, elemento_analisado)
-
+        if elemento_analisado not in elemento_analisado.no_pos.lista_estados_gerados:
+            elemento_analisado.no_pos.lista_estados_gerados.append(elemento_analisado)
         elemento_analisado.estado_de_visualizacao = "Encerrado"
 
         # Estados G possuem uma transição até ALVO
@@ -701,8 +702,7 @@ def verificar_bloqueio(novo_elemento, chaves):
             return True
 
     return False        
-# #precisa no BFS?
-# def verificar_bonus()
+
 def adicionar_estado_a_camada(camadas,elemento_analisado):
 
         estado_existente = False
