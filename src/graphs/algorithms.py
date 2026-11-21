@@ -2,6 +2,9 @@ from graphs.labirinto import buscar_no_estado_a_partir_posicao
 from graphs.labirinto import Camada
 from graphs.labirinto import No_estados
 from graphs.labirinto import dicionario_direcoes
+import matplotlib.pyplot as plt
+import os
+
 import csv
 import os
 
@@ -550,6 +553,36 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
 
     return arestas_geradas, camadas
 
+def bfs_estados_armadilha(arestas_geradas,camadas):
+    estados_gerados = {
+        estado
+        for camada in camadas
+        for estado in camada.lista_nos_estados
+    }
+    grafo_transposto = {}
+    for origem,destino,movimento,casa,peso in arestas_geradas:
+        if destino not in grafo_transposto:
+            grafo_transposto[destino] = []
+        grafo_transposto[destino].append(origem)
+    fila = ["ALVO"]
+    nos_alcansaveis = {"ALVO"}
+    while fila:
+        no = fila.pop(0)
+        vizinhos_no = grafo_transposto.get(no, [])
+        for i in vizinhos_no:
+            if i not in nos_alcansaveis:
+                fila.append(i)
+                nos_alcansaveis.add(i)
+    estados_armadilha = estados_gerados - nos_alcansaveis
+        
+        
+        
+        
+    
+        
+            
+    
+
     
 # def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
@@ -793,3 +826,47 @@ def exportar_arestas(lista_arestas, nome_mapa):
             ])
 
     return caminho_arquivo
+
+
+
+
+def exportar_heatmap(heatmap, nome_mapa):
+
+    os.makedirs("out/parte1", exist_ok=True)
+
+    # Converte None (paredes) para NaN
+    matriz = [
+        [float("nan") if valor is None else valor for valor in linha]
+        for linha in heatmap
+    ]
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    imagem = ax.imshow(
+        matriz,
+        cmap="hot",
+        interpolation="nearest",
+        vmin=0
+    )
+
+    ax.set_title("Heatmap de estados por posição")
+    ax.set_xlabel("Coluna")
+    ax.set_ylabel("Linha")
+
+    fig.colorbar(
+        imagem,
+        ax=ax,
+        label="Quantidade de estados"
+    )
+
+    caminho = f"out/parte1/heatmap_{nome_mapa}.png"
+
+    fig.savefig(
+        caminho,
+        dpi=300,
+        bbox_inches="tight"
+    )
+
+    plt.close(fig)
+
+    return caminho
