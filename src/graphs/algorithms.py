@@ -1,6 +1,9 @@
 from graphs.labirinto import buscar_no_estado_a_partir_posicao
 from graphs.labirinto import Camada
 from graphs.labirinto import No_estados
+from graphs.labirinto import dicionario_direcoes
+import csv
+import os
 
 
 def dijkstra(lista_nos, origem):
@@ -419,6 +422,115 @@ def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
     
         return caminho
 
+
+def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final):
+
+    arestas_geradas = []
+
+    camadas = [Camada()]
+    camadas[0].chaves = ""
+
+    estado_inicial.chaves = ""
+    estado_inicial.estado_de_visualizacao = "Visitado"
+
+    lista_estados_analisados = [estado_inicial]
+
+    # Identifica os estados por posição e chaves
+    estados = {
+        (estado_inicial.no_pos, estado_inicial.chaves): estado_inicial
+    }
+
+    while lista_estados_analisados:
+
+        elemento_analisado = lista_estados_analisados.pop(0)
+
+        # Registra o estado na camada
+        adicionar_estado_a_camada(camadas, elemento_analisado)
+
+        elemento_analisado.estado_de_visualizacao = "Encerrado"
+
+        # Estados G possuem uma transição até ALVO
+        if elemento_analisado.no_pos.tipo == "G":
+
+            arestas_geradas.append((
+                elemento_analisado,
+                "ALVO",
+                "-",
+                "-",
+                0
+            ))
+
+            # Considerando G como terminal
+            continue
+
+        for i in range(4):
+
+            aresta = elemento_analisado.no_pos.lista_arestas[i]
+
+            if aresta == 0:
+                continue
+
+            novo_elemento = buscar_no_estado_a_partir_posicao(
+                lista_nos_estados,
+                aresta.destino
+            )
+
+            if novo_elemento is None:
+                continue
+
+            # Verifica se o movimento é permitido
+            esta_bloqueado = verificar_bloqueio(
+                novo_elemento,
+                elemento_analisado.chaves
+            )
+
+            if esta_bloqueado:
+                continue
+
+            casa_destino = novo_elemento.no_pos.tipo
+
+            # Cria um estado independente
+            novo_elemento = No_estados(
+                elemento_analisado.chaves,
+                "-",
+                novo_elemento.no_pos.tipo,
+                "Não Visitado",
+                novo_elemento.no_pos
+            )
+
+            # Atualiza as chaves ao entrar no destino
+            camadas, novo_elemento = verificar_chaves(
+                novo_elemento, camadas
+            )
+
+            identificador = (
+                novo_elemento.no_pos,
+                novo_elemento.chaves
+            )
+
+            # Verifica se o estado já foi gerado
+            if identificador in estados:
+                novo_elemento = estados[identificador]
+
+            else:
+                estados[identificador] = novo_elemento
+
+                lista_estados_analisados.append(novo_elemento)
+
+                novo_elemento.estado_de_visualizacao = "Visitado"
+
+            # Registra a transição válida
+            arestas_geradas.append((
+                elemento_analisado,
+                novo_elemento,
+                dicionario_direcoes[i],
+                casa_destino,
+                aresta.custo
+            ))
+
+    return arestas_geradas, camadas
+
+    
 def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
     camadas = [Camada()]
@@ -584,4 +696,62 @@ def adicionar_estado_a_camada(camadas,elemento_analisado):
 
             camada_encontrada.lista_nos_estados.append(elemento_analisado)
             return elemento_analisado
-        
+
+def formatar_estado(estado):
+
+    linha = estado.no_pos.posicao_linha
+    coluna = estado.no_pos.posicao_coluna
+
+    chaves = estado.chaves if estado.chaves else "-"
+
+    bonus = getattr(estado, "bonus_consumidos", set())
+
+    bonus_formatado = "{" + ",".join(
+        sorted(bonus)
+    ) + "}"
+
+    return f"({linha},{coluna})|{chaves}|{bonus_formatado}"
+
+
+
+
+def exportar_arestas(lista_arestas, nome_mapa):
+
+    diretorio = "out/parte1"
+
+    os.makedirs(diretorio, exist_ok=True)
+
+    caminho_arquivo = os.path.join(
+        diretorio,
+        f"arestas_{nome_mapa}.csv"
+    )
+
+    with open(
+        caminho_arquivo,
+        "w",
+        newline="",
+        encoding="utf-8"
+    ) as arquivo:
+
+        escritor = csv.writer(arquivo)
+
+        escritor.writerow([
+            "origem",
+            "destino",
+            "movimento",
+            "casa_destino",
+            "peso"
+        ])
+
+        for origem, destino, movimento, peso in lista_arestas:
+
+            escritor.writerow([
+                formatar_estado(origem),
+                formatar_estado(destino),
+                movimento,
+                destino.no_pos.tipo,
+                peso
+            ])
+
+    return caminho_arquivo
+

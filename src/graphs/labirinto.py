@@ -34,6 +34,8 @@ class No_estados:
         self.chaves = chaves
         self.bonus = bonus
         self.estado_de_visualizacao = estado_de_visualizacao
+    def gerar_rotulo(self):
+        return "("+self.no_pos.posicao_linha+","+self.no_pos.posicao_coluna+") | "+self.chaves+ "| "+self.bonus
         
     
 
@@ -44,6 +46,7 @@ class Labirinto:
         self.estado_final = estado_final
         self.lista_nos = lista_nos
         self.metricas = metricas
+    
         
 
 class Metricas:
@@ -52,6 +55,8 @@ class Metricas:
         self.densidade = 0
         self.ordem = 0
         self.tamanho = 0
+        self.num_estados = 0
+        self.teto_teorico = 0
     
     
     def setOrdem(self,ordem):
@@ -60,9 +65,16 @@ class Metricas:
         self.tamanho = tamanho
     def definirDensidade(self,ordem,tamanho):
         if ordem>2:
-            self.densidade = tamanho/ordem*(ordem-1)
+            self.densidade = tamanho/(ordem*(ordem-1))
         else:
             self.densidade = 0
+    def definir_teto(self,num_chaves,num_bonus):
+        self.teto_teorico = 2*self.ordem*num_chaves*num_bonus
+    def definir_num_estados(self,camadas):
+        contador_estados = 0
+        for camada in camadas:
+            contador_estados += len(camada)
+        self.num_estados = contador_estados                
         
     
 
@@ -121,10 +133,16 @@ def gerar_labirinto(caminho_do_labirinto):
     estado_final = 0
     ordem = 0
     lista_nos = []
+    num_chaves = 0
+    num_bonus = 0
     arquivo = open(caminho_do_labirinto,"r")
     for indice_linha,linha in enumerate(arquivo):
         for indice_caractere,caractere in enumerate(linha):
             if caractere !=  "#" and caractere != "\n":
+                if caractere in ["a","b","c","d"]:
+                    num_chaves += 1
+                if caractere == "+":
+                    num_bonus += 1
                 ordem += 1
                 no = No(indice_linha,indice_caractere,caractere)
                 if caractere == "S":
@@ -137,6 +155,8 @@ def gerar_labirinto(caminho_do_labirinto):
     metricas.setOrdem(ordem)
     tamanho = ligar_elementos_lista_nos(lista_nos)
     metricas.setTamanho(tamanho)
+    metricas.definir_teto(num_chaves,num_bonus)
+    
     return Labirinto(estado_inicial,estado_final,lista_nos,metricas)
 
 def ligar_elementos_lista_nos(lista_nos):
