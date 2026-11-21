@@ -176,7 +176,7 @@ def ligar_elementos_lista_nos(lista_nos):
                     num_arestas += 1
                     no_1.grau_saida += 1
                     no_2.grau_entrada += 1
-                if no_2.tipo != ">" and no_2.tipo != "v" and no_2.tipo != "^":    
+                if no_2.tipo != ">" and no_2.tip_elemento.chaveso != "v" and no_2.tipo != "^":    
                     no_2.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_1))
                     num_arestas += 1
                     no_2.grau_saida += 1
@@ -202,7 +202,6 @@ def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
         if i == no_posicao_alvo:
             return i
         
-
 def gerar_grafo_estados(labirinto):
     lista_nos_estados = []
 

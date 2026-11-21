@@ -38,118 +38,118 @@ def dijkstra(lista_nos, origem):
 
 
 
-def dijkstra_estados(lista_nos_estados, origem, final):
+# def dijkstra_estados(lista_nos_estados, origem, final):
 
-    anteriores = {}
-    distancias = {}
-    visitados = {}
+#     anteriores = {}
+#     distancias = {}
+#     visitados = {}
 
-    camadas = [Camada()]
-    camadas[0].chaves = ""
+#     camadas = [Camada()]
+#     camadas[0].chaves = ""
 
-    origem.chaves = ""
-    origem.estado_de_visualizacao = "Visitado"
+#     origem.chaves = ""
+#     origem.estado_de_visualizacao = "Visitado"
 
-    lista_estados_gerados = [origem]
+#     lista_estados_gerados = [origem]
 
-    # Identifica os estados por posição e chaves.
-    estados = {
-        (origem.no_pos, origem.chaves): origem
-    }
+#     # Identifica os estados por posição e chaves.
+#     estados = {
+#         (origem.no_pos, origem.chaves): origem
+#     }
 
-    anteriores[origem] = None
-    distancias[origem] = 0
-    visitados[origem] = False
+#     anteriores[origem] = None
+#     distancias[origem] = 0
+#     visitados[origem] = False
 
-    estado_final = None
+#     estado_final = None
 
-    while True:
+#     while True:
 
-        u = None
-        menor_distancia = float('inf')
+#         u = None
+#         menor_distancia = float('inf')
 
-        # Seleciona o estado de menor custo.
-        for no in lista_estados_gerados:
+#         # Seleciona o estado de menor custo.
+#         for no in lista_estados_gerados:
 
-            if not visitados[no] and distancias[no] < menor_distancia:
-                menor_distancia = distancias[no]
-                u = no
+#             if not visitados[no] and distancias[no] < menor_distancia:
+#                 menor_distancia = distancias[no]
+#                 u = no
 
-        if u is None:
-            break
+#         if u is None:
+#             break
 
-        # Finaliza o estado atual.
-        visitados[u] = True
-        u.estado_de_visualizacao = "Encerrado"
+#         # Finaliza o estado atual.
+#         visitados[u] = True
+#         u.estado_de_visualizacao = "Encerrado"
 
-        # Adiciona à camada correspondente.
-        adicionar_estado_a_camada(camadas, u)
+#         # Adiciona à camada correspondente.
+#         adicionar_estado_a_camada(camadas, u)
 
-        # Verifica se chegou ao destino.
-        if u.no_pos.tipo == "G":
-            estado_final = u
-            break
+#         # Verifica se chegou ao destino.
+#         if u.no_pos.tipo == "G":
+#             estado_final = u
+#             break
 
-        # Analisa as arestas.
-        for aresta in u.no_pos.lista_arestas:
+#         # Analisa as arestas.
+#         for aresta in u.no_pos.lista_arestas:
 
-            if aresta == 0:
-                continue
+#             if aresta == 0:
+#                 continue
 
-            v = buscar_no_estado_a_partir_posicao(
-                lista_nos_estados,
-                aresta.destino
-            )
+#             v = buscar_no_estado_a_partir_posicao(
+#                 lista_nos_estados,
+#                 aresta.destino
+#             )
 
-            if v is None:
-                continue
+#             if v is None:
+#                 continue
 
-            # Verifica se pode atravessar a porta.
-            if verificar_bloqueio(v, u.chaves):
-                continue
+#             # Verifica se pode atravessar a porta.
+#             if verificar_bloqueio(v, u.chaves):
+#                 continue
 
-            # Cria um estado independente do objeto original.
-            v = No_estados(
-                "-", "-",
-                v.no_pos.tipo,
-                "Não Visitado",
-                v.no_pos
-            )
+#             # Cria um estado independente do objeto original.
+#             v = No_estados(
+#                 "-", "-",
+#                 v.no_pos.tipo,
+#                 "Não Visitado",
+#                 v.no_pos
+#             )
 
-            # Herda as chaves do estado atual.
-            v.chaves = u.chaves
+#             # Herda as chaves do estado atual.
+#             v.chaves = u.chaves
 
-            # Verifica se o destino contém uma nova chave.
-            camadas, v = verificar_chaves(v, camadas)
+#             # Verifica se o destino contém uma nova chave.
+#             camadas, v = verificar_chaves(v, camadas)
 
-            # Identifica o estado resultante.
-            identificador = (v.no_pos, v.chaves)
+#             # Identifica o estado resultante.
+#             identificador = (v.no_pos, v.chaves)
 
-            # Reutiliza um estado que já existe.
-            if identificador in estados:
-                v = estados[identificador]
+#             # Reutiliza um estado que já existe.
+#             if identificador in estados:
+#                 v = estados[identificador]
 
-            else:
-                estados[identificador] = v
-                lista_estados_gerados.append(v)
+#             else:
+#                 estados[identificador] = v
+#                 lista_estados_gerados.append(v)
 
-                distancias[v] = float('inf')
-                anteriores[v] = None
-                visitados[v] = False
+#                 distancias[v] = float('inf')
+#                 anteriores[v] = None
+#                 visitados[v] = False
 
-            # Relaxamento da aresta.
-            if not visitados[v]:
+#             # Relaxamento da aresta.
+#             if not visitados[v]:
 
-                nova_distancia = distancias[u] + aresta.custo
+#                 nova_distancia = distancias[u] + aresta.custo
 
-                if nova_distancia < distancias[v]:
+#                 if nova_distancia < distancias[v]:
 
-                    distancias[v] = nova_distancia
-                    anteriores[v] = u
+#                     distancias[v] = nova_distancia
+#                     anteriores[v] = u
 
-                    v.estado_de_visualizacao = "Visitado"
+#                     v.estado_de_visualizacao = "Visitado"
 
-    return distancias, anteriores, camadas
+#     return distancias, anteriores, camadas
 
 
 
@@ -183,94 +183,94 @@ def bellman_ford(listas_nos,origem):
     return distancias, anteriores
 
 
-def bellman_ford_estados(lista_nos_estados, origem):
+# def bellman_ford_estados(lista_nos_estados, origem):
 
-    camadas = [Camada()]
-    camadas[0].chaves = ""
+#     camadas = [Camada()]
+#     camadas[0].chaves = ""
 
-    origem.chaves = ""
+#     origem.chaves = ""
 
-    estados = {
-        (origem.no_pos, origem.chaves): origem
-    }
+#     estados = {
+#         (origem.no_pos, origem.chaves): origem
+#     }
 
-    lista_estados_gerados = [origem]
+#     lista_estados_gerados = [origem]
 
-    anteriores = {origem: None}
-    distancias = {origem: 0}
-    # Número de passagens sem assumir que os estados
-    # já foram todos gerados.
-    while True:
+#     anteriores = {origem: None}
+#     distancias = {origem: 0}
+#     # Número de passagens sem assumir que os estados
+#     # já foram todos gerados.
+#     while True:
 
-        mudou = False
-        criou_estado = False
+#         mudou = False
+#         criou_estado = False
 
-        # Cópia dos estados existentes nesta passagem.
-        for org in lista_estados_gerados[:]:
+#         # Cópia dos estados existentes nesta passagem.
+#         for org in lista_estados_gerados[:]:
 
-            if distancias[org] == float('inf'):
-                continue
+#             if distancias[org] == float('inf'):
+#                 continue
 
-            for aresta in org.no_pos.lista_arestas:
+#             for aresta in org.no_pos.lista_arestas:
 
-                if aresta == 0:
-                    continue
+#                 if aresta == 0:
+#                     continue
 
-                dest_original = buscar_no_estado_a_partir_posicao(
-                    lista_nos_estados,
-                    aresta.destino
-                )
+#                 dest_original = buscar_no_estado_a_partir_posicao(
+#                     lista_nos_estados,
+#                     aresta.destino
+#                 )
 
-                if dest_original is None:
-                    continue
+#                 if dest_original is None:
+#                     continue
 
-                # Verifica o bloqueio da porta.
-                if verificar_bloqueio(dest_original, org.chaves):
-                    continue
+#                 # Verifica o bloqueio da porta.
+#                 if verificar_bloqueio(dest_original, org.chaves):
+#                     continue
 
-                # Cria um estado de destino independente.
-                dest = No_estados(
-                    org.chaves,
-                    "-",
-                    dest_original.no_pos.tipo,
-                    "Não Visitado",
-                    dest_original.no_pos
-                )
+#                 # Cria um estado de destino independente.
+#                 dest = No_estados(
+#                     org.chaves,
+#                     "-",
+#                     dest_original.no_pos.tipo,
+#                     "Não Visitado",
+#                     dest_original.no_pos
+#                 )
 
-                # Adquire a chave existente no destino.
-                camadas, dest = verificar_chaves(dest, camadas)
+#                 # Adquire a chave existente no destino.
+#                 camadas, dest = verificar_chaves(dest, camadas)
 
-                identificador = (dest.no_pos, dest.chaves)
+#                 identificador = (dest.no_pos, dest.chaves)
 
-                # Reutiliza ou registra o estado.
-                if identificador in estados:
-                    dest = estados[identificador]
+#                 # Reutiliza ou registra o estado.
+#                 if identificador in estados:
+#                     dest = estados[identificador]
 
-                else:
-                    estados[identificador] = dest
-                    lista_estados_gerados.append(dest)
+#                 else:
+#                     estados[identificador] = dest
+#                     lista_estados_gerados.append(dest)
 
-                    distancias[dest] = float('inf')
-                    anteriores[dest] = None
+#                     distancias[dest] = float('inf')
+#                     anteriores[dest] = None
 
-                    criou_estado = True
+#                     criou_estado = True
 
-                # Relaxamento.
-                peso = aresta.custo
+#                 # Relaxamento.
+#                 peso = aresta.custo
 
-                if distancias[org] + peso < distancias[dest]:
+#                 if distancias[org] + peso < distancias[dest]:
 
-                    distancias[dest] = distancias[org] + peso
-                    anteriores[dest] = org
+#                     distancias[dest] = distancias[org] + peso
+#                     anteriores[dest] = org
 
-                    mudou = True
+#                     mudou = True
 
-        # Termina quando nenhum estado foi criado
-        # e nenhuma distância foi melhorada.
-        if not mudou and not criou_estado:
-            break
+#         # Termina quando nenhum estado foi criado
+#         # e nenhuma distância foi melhorada.
+#         if not mudou and not criou_estado:
+#             break
 
-    return distancias, anteriores
+#     return distancias, anteriores
 
 
 def dfs(lista_nos, origem, detalhado=False):
@@ -437,7 +437,7 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
 
     # Identifica os estados por posição e chaves
     estados = {
-        (estado_inicial.no_pos, estado_inicial.chaves): estado_inicial
+        (estado_inicial.no_pos, estado_inicial.chaves, estado_inicial.bonus): estado_inicial
     }
 
     while lista_estados_analisados:
@@ -502,10 +502,12 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
             camadas, novo_elemento = verificar_chaves(
                 novo_elemento, camadas
             )
-
+            
+            # chamar verificar bonus.
             identificador = (
                 novo_elemento.no_pos,
-                novo_elemento.chaves
+                novo_elemento.chaves,
+                novo_elemento.bonus
             )
 
             # Verifica se o estado já foi gerado
@@ -531,89 +533,89 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
     return arestas_geradas, camadas
 
     
-def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
+# def bfs_grafo_estados(lista_nos_estados, estado_inicial, estado_final):
 
-    camadas = [Camada()]
-    camadas[0].chaves = ""
-    estado_inicial.chaves = ""
-    estado_inicial.estado_de_visualizacao = "Visitado"
+#     camadas = [Camada()]
+#     camadas[0].chaves = ""
+#     estado_inicial.chaves = ""
+#     estado_inicial.estado_de_visualizacao = "Visitado"
 
-    anteriores = {estado_inicial: None}
-    lista_estados_analisados = [estado_inicial]
+#     anteriores = {estado_inicial: None}
+#     lista_estados_analisados = [estado_inicial]
 
-    while lista_estados_analisados:
+#     while lista_estados_analisados:
 
-        elemento_analisado = lista_estados_analisados.pop(0)
+#         elemento_analisado = lista_estados_analisados.pop(0)
 
-        camadas,elemento_analisado = verificar_chaves(
-            elemento_analisado, camadas
-        )
-        elemento_analisado = adicionar_estado_a_camada(camadas,elemento_analisado)
-        if elemento_analisado is None:
-            continue
-        # Verifica se chegou ao destino
-        if elemento_analisado.no_pos.tipo == "G":
-            estado_final = elemento_analisado
-            break
+#         camadas,elemento_analisado = verificar_chaves(
+#             elemento_analisado, camadas
+#         )
+#         elemento_analisado = adicionar_estado_a_camada(camadas,elemento_analisado)
+#         if elemento_analisado is None:
+#             continue
+#         # Verifica se chegou ao destino
+#         if elemento_analisado.no_pos.tipo == "G":
+#             estado_final = elemento_analisado
+#             break
 
-        elemento_analisado.estado_de_visualizacao = "Encerrado"
+#         elemento_analisado.estado_de_visualizacao = "Encerrado"
 
-        for i in range(4):
+#         for i in range(4):
 
-            aresta = elemento_analisado.no_pos.lista_arestas[i]
+#             aresta = elemento_analisado.no_pos.lista_arestas[i]
 
-            if aresta == 0:
-                continue
+#             if aresta == 0:
+#                 continue
 
-            novo_elemento = buscar_no_estado_a_partir_posicao(
-                lista_nos_estados,
-                aresta.destino
-            )
+#             novo_elemento = buscar_no_estado_a_partir_posicao(
+#                 lista_nos_estados,
+#                 aresta.destino
+#             )
 
-            if novo_elemento is None:
-                continue
+#             if novo_elemento is None:
+#                 continue
 
-            # Verifica se o nó está bloqueado
-            esta_bloqueado = verificar_bloqueio(
-                novo_elemento,
-                elemento_analisado.chaves
-            )
+#             # Verifica se o nó está bloqueado
+#             esta_bloqueado = verificar_bloqueio(
+#                 novo_elemento,
+#                 elemento_analisado.chaves
+#             )
 
-            if esta_bloqueado:
-                continue
+#             if esta_bloqueado:
+#                 continue
 
-            # Propaga as chaves em toda movimentação
-            novas_chaves = elemento_analisado.chaves
-            novo_elemento = No_estados(
-                "-", "-",
-                novo_elemento.no_pos.tipo,
-                "Não Visitado",
-                novo_elemento.no_pos
-            )
-            #evita que o elemento "novo_elemento", que é compartulhado com a lista de estados, seja também alterado de forma global.
-            novo_elemento.chaves = novas_chaves
+#             # Propaga as chaves em toda movimentação
+#             novas_chaves = elemento_analisado.chaves
+#             novo_elemento = No_estados(
+#                 "-", "-",
+#                 novo_elemento.no_pos.tipo,
+#                 "Não Visitado",
+#                 novo_elemento.no_pos
+#             )
+#             #evita que o elemento "novo_elemento", que é compartulhado com a lista de estados, seja também alterado de forma global.
+#             novo_elemento.chaves = novas_chaves
 
-            anteriores[novo_elemento] = elemento_analisado
+#             anteriores[novo_elemento] = elemento_analisado
 
-            lista_estados_analisados.append(novo_elemento)
+#             lista_estados_analisados.append(novo_elemento)
 
-            novo_elemento.estado_de_visualizacao = "Visitado"
+#             novo_elemento.estado_de_visualizacao = "Visitado"
 
-    # Reconstrução do caminho
-    caminho = []
+#     # Reconstrução do caminho
+#     caminho = []
 
-    if estado_final not in anteriores:
-        return None
+#     if estado_final not in anteriores:
+#         return None
 
-    atual = estado_final
+#     atual = estado_final
 
-    while atual is not None:
-        caminho.append(atual.no_pos)
-        atual = anteriores.get(atual)
+#     while atual is not None:
+#         caminho.append(atual.no_pos)
+#         atual = anteriores.get(atual)
 
-    caminho.reverse()
+#     caminho.reverse()
 
-    return caminho, camadas
+#     return caminho, camadas
 
 
 def verificar_chaves(elemento_analisado, camadas):
@@ -669,7 +671,7 @@ def adicionar_estado_a_camada(camadas,elemento_analisado):
         for camada in camadas:
             for estado in camada.lista_nos_estados:
                 if (estado.no_pos == elemento_analisado.no_pos
-                        and estado.chaves == elemento_analisado.chaves):
+                        and estado.chaves == elemento_analisado.chaves and estado.bonus == elemento_analisado.bonus):
                     estado_existente = True
                     break
             if estado_existente == True:
@@ -677,7 +679,6 @@ def adicionar_estado_a_camada(camadas,elemento_analisado):
 
         if estado_existente:
             return None
-        
         else:
 
 
