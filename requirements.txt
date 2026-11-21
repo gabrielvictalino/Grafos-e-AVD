@@ -7,3 +7,4 @@ scipy
 kagglehub
 networkx
 pyvis
+pytest
