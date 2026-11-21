@@ -425,6 +425,16 @@ def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
 
 def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final):
 
+    estado_inicial.bonus = frozenset()
+
+    # Cada nó "+" (ordenado por linha, coluna) recebe um id: 0, 1, 2, ...
+    posicoes_bonus = sorted({
+        (no.no_pos.posicao_linha, no.no_pos.posicao_coluna)
+        for no in lista_nos_estados
+        if no.no_pos.tipo == "+"
+    })
+    mapa_bonus = {pos: indice for indice, pos in enumerate(posicoes_bonus)}
+
     arestas_geradas = []
 
     camadas = [Camada()]
@@ -489,7 +499,7 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
 
             casa_destino = novo_elemento.no_pos.tipo
 
-            # Cria um estado independente
+            # Cria um estado independente, herdando chaves e bônus
             novo_elemento = No_estados(
                 elemento_analisado.chaves,
                 "-",
@@ -497,13 +507,20 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
                 "Não Visitado",
                 novo_elemento.no_pos
             )
+            novo_elemento.bonus = elemento_analisado.bonus
 
             # Atualiza as chaves ao entrar no destino
             camadas, novo_elemento = verificar_chaves(
                 novo_elemento, camadas
             )
-            
-            # chamar verificar bonus.
+
+            # Consome o bônus (se houver) e define o custo da transição
+            novo_elemento, custo_transicao = verificar_bonus(
+                novo_elemento,
+                aresta.custo,
+                mapa_bonus
+            )
+
             identificador = (
                 novo_elemento.no_pos,
                 novo_elemento.chaves,
@@ -527,7 +544,7 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
                 novo_elemento,
                 dicionario_direcoes[i],
                 casa_destino,
-                aresta.custo
+                custo_transicao
             ))
 
     return arestas_geradas, camadas
@@ -633,7 +650,7 @@ def verificar_chaves(elemento_analisado, camadas):
                 elemento_analisado.no_pos
             )
             novo_estado.chaves = elemento_analisado.chaves
-
+            novo_estado.bonus = elemento_analisado.bonus
             novo_estado.chaves = "".join(
                 sorted(elemento_analisado.chaves + chave)
             )
@@ -652,6 +669,27 @@ def verificar_chaves(elemento_analisado, camadas):
 
     return camadas,elemento_analisado
 
+def verificar_bonus(elemento_analisado, custo_padrao, mapa_bonus):
+
+    if elemento_analisado.no_pos.tipo == "+":
+        pos = (
+            elemento_analisado.no_pos.posicao_linha,
+            elemento_analisado.no_pos.posicao_coluna,
+        )
+        id_b = mapa_bonus[pos]
+
+        if id_b not in elemento_analisado.bonus:
+            # 1a vez: consome o bonus e aplica custo -4
+            # (união imutável: cria um novo frozenset, sem alterar o anterior)
+            elemento_analisado.bonus = elemento_analisado.bonus | frozenset({id_b})
+            return elemento_analisado, -4
+
+        else:
+            # já consumido: comporta-se como chão (custo 1)
+            return elemento_analisado, 1
+
+    # Qualquer outra casa mantém bônus e custo padrão
+    return elemento_analisado, custo_padrao
 
 def verificar_bloqueio(novo_elemento, chaves):
 
@@ -705,10 +743,10 @@ def formatar_estado(estado):
 
     chaves = estado.chaves if estado.chaves else "-"
 
-    bonus = getattr(estado, "bonus_consumidos", set())
+    bonus = getattr(estado, "bonus", frozenset())
 
     bonus_formatado = "{" + ",".join(
-        sorted(bonus)
+        str(b) for b in sorted(bonus)
     ) + "}"
 
     return f"({linha},{coluna})|{chaves}|{bonus_formatado}"
@@ -755,4 +793,3 @@ def exportar_arestas(lista_arestas, nome_mapa):
             ])
 
     return caminho_arquivo
-
