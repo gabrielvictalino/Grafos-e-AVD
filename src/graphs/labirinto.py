@@ -41,11 +41,13 @@ class No_estados:
 
 
 class Labirinto:
-    def __init__(self,estado_incial, estado_final,lista_nos,metricas):
+    def __init__(self,estado_incial, estado_final,lista_nos,metricas,maior_grau_entrada,maior_grau_saida):
         self.estado_incial = estado_incial
         self.estado_final = estado_final
         self.lista_nos = lista_nos
         self.metricas = metricas
+        self.maior_grau_entrada = maior_grau_entrada
+        self,maior_grau_saida = maior_grau_saida
     
         
 
@@ -74,7 +76,9 @@ class Metricas:
         contador_estados = 0
         for camada in camadas:
             contador_estados += len(camada)
-        self.num_estados = contador_estados                
+        self.num_estados = contador_estados -1 #Estado alvo. 
+    
+                    
         
     
 
