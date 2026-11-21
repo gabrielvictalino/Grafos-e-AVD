@@ -41,13 +41,43 @@ class No_estados:
 
 
 class Labirinto:
-    def __init__(self,estado_incial, estado_final,lista_nos,metricas,maior_grau_entrada,maior_grau_saida):
+    def __init__(self,estado_incial, estado_final,lista_nos,metricas):
         self.estado_incial = estado_incial
         self.estado_final = estado_final
         self.lista_nos = lista_nos
         self.metricas = metricas
-        self.maior_grau_entrada = maior_grau_entrada
-        self,maior_grau_saida = maior_grau_saida
+        self.maior_grau_entrada = 0
+        self.maior_grau_saida = 0
+        self.dicionario_graus_entrada = {}
+        self.dicionario_graus_saida = {}
+        self.becos = {}
+    def calcular_graus_estado(self, arestas_geradas, camadas):
+
+        estados_gerados = {
+            estado
+            for camada in camadas
+            for estado in camada.lista_nos_estados
+        }
+
+        estados_gerados.add("ALVO")
+
+        graus_entrada = {estado: 0 for estado in estados_gerados}
+        graus_saida = {estado: 0 for estado in estados_gerados}
+
+        for origem, destino, movimento, casa, peso in arestas_geradas:
+            graus_saida[origem] += 1
+            graus_entrada[destino] += 1
+        self.dicionario_graus_entrada = graus_entrada
+        self.dicionario_graus_saida = graus_saida
+        
+        becos = {
+            chave: valor
+            for chave, valor in graus_saida.items()
+            if valor == 0 and chave != "ALVO"
+        }
+        self.becos = becos 
+        self.maior_grau_entrada = max(graus_entrada.values(), default = 0)
+        self.maior_grau_saida = max(graus_saida.values(), default = 0)
     
         
 
@@ -65,9 +95,9 @@ class Metricas:
         self.ordem = ordem
     def setTamanho(self,tamanho):
         self.tamanho = tamanho
-    def definirDensidade(self,ordem,tamanho):
-        if ordem>2:
-            self.densidade = tamanho/(ordem*(ordem-1))
+    def definirDensidade(self):
+        if self.ordem>2:
+            self.densidade = self.tamanho/(self.ordem*(self.ordem-1))
         else:
             self.densidade = 0
     def definir_teto(self,num_chaves,num_bonus):
@@ -87,6 +117,31 @@ class Camada:
         self.chaves = chaves
         self.lista_nos_estados = []
         self.metricas = Metricas()
+        self.arestas_transicao = []
+
+    def calcular_metricas_camada(self, arestas_geradas):
+        ordem = len(self.lista_nos_estados)
+        self.metricas.setOrdem(ordem)
+
+        estados_camada = set(self.lista_nos_estados)
+
+        tamanho = 0
+        self.arestas_transicao = []
+
+        for origem, destino, movimento, casa, peso in arestas_geradas:
+
+            if origem in estados_camada and destino not in estados_camada:
+                self.arestas_transicao.append(
+                    Aresta(origem, destino, peso)
+                )
+
+            if origem in estados_camada and destino in estados_camada:
+                tamanho += 1
+
+        self.metricas.setTamanho(tamanho)
+        self.metricas.definirDensidade(self)        
+        
+        
         
 #Ver se as paredes são # ou não
 def validar_labirinto(caminho_do_labirinto):
@@ -159,6 +214,7 @@ def gerar_labirinto(caminho_do_labirinto):
     metricas.setOrdem(ordem)
     tamanho = ligar_elementos_lista_nos(lista_nos)
     metricas.setTamanho(tamanho)
+    metricas.definirDensidade()
     metricas.definir_teto(num_chaves,num_bonus)
     
     return Labirinto(estado_inicial,estado_final,lista_nos,metricas)
