@@ -1,0 +1,29 @@
+{
+  "mapa": "m06",
+  "arquivo": "m06_fonte.txt",
+  "algoritmo": "BELLMAN_FORD",
+  "tem_ciclo_negativo": true,
+  "custo_ciclo": -1,
+  "tamanho_ciclo": 2,
+  "ciclo_estados": [
+    "(3,6)|-|{}",
+    "(3,5)|-|{}",
+    "(3,6)|-|{}"
+  ],
+  "transicoes": [
+    {
+      "origem": "(3,6)|-|{}",
+      "destino": "(3,5)|-|{}",
+      "movimento": "O",
+      "casa_destino": "*",
+      "peso": -2
+    },
+    {
+      "origem": "(3,5)|-|{}",
+      "destino": "(3,6)|-|{}",
+      "movimento": "L",
+      "casa_destino": ".",
+      "peso": 1
+    }
+  ]
+}

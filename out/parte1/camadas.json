@@ -1,0 +1,356 @@
+{
+  "m01": {
+    "arquivo": "m01_terreno.txt",
+    "camadas": {
+      "-": {
+        "ordem": 24,
+        "tamanho": 46,
+        "densidade": 0.08333333333333333
+      }
+    },
+    "total_arcos_entre_camadas": 0,
+    "casas_geradoras_entre_camadas": [],
+    "arcos_entre_camadas": []
+  },
+  "m02": {
+    "arquivo": "m02_uma_chave.txt",
+    "camadas": {
+      "-": {
+        "ordem": 16,
+        "tamanho": 30,
+        "densidade": 0.125
+      },
+      "a": {
+        "ordem": 23,
+        "tamanho": 43,
+        "densidade": 0.08498023715415019
+      }
+    },
+    "total_arcos_entre_camadas": 1,
+    "casas_geradoras_entre_camadas": [
+      {
+        "linha": 3,
+        "coluna": 11,
+        "simbolo": "a",
+        "quantidade_arcos": 1
+      }
+    ],
+    "arcos_entre_camadas": [
+      {
+        "origem": "(3,10)|-|{}",
+        "destino": "(3,11)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "L",
+        "casa_destino": "a",
+        "posicao_destino": [
+          3,
+          11
+        ],
+        "peso": 1
+      }
+    ]
+  },
+  "m03": {
+    "arquivo": "m03_tres_chaves.txt",
+    "camadas": {
+      "-": {
+        "ordem": 12,
+        "tamanho": 22,
+        "densidade": 0.16666666666666666
+      },
+      "a": {
+        "ordem": 53,
+        "tamanho": 114,
+        "densidade": 0.041364296081277216
+      },
+      "ab": {
+        "ordem": 72,
+        "tamanho": 160,
+        "densidade": 0.03129890453834116
+      },
+      "abc": {
+        "ordem": 76,
+        "tamanho": 167,
+        "densidade": 0.029298245614035087
+      }
+    },
+    "total_arcos_entre_camadas": 3,
+    "casas_geradoras_entre_camadas": [
+      {
+        "linha": 1,
+        "coluna": 12,
+        "simbolo": "b",
+        "quantidade_arcos": 1
+      },
+      {
+        "linha": 6,
+        "coluna": 6,
+        "simbolo": "c",
+        "quantidade_arcos": 1
+      },
+      {
+        "linha": 8,
+        "coluna": 1,
+        "simbolo": "a",
+        "quantidade_arcos": 1
+      }
+    ],
+    "arcos_entre_camadas": [
+      {
+        "origem": "(7,1)|-|{}",
+        "destino": "(8,1)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "S",
+        "casa_destino": "a",
+        "posicao_destino": [
+          8,
+          1
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(1,11)|a|{}",
+        "destino": "(1,12)|ab|{}",
+        "camada_origem": "a",
+        "camada_destino": "ab",
+        "movimento": "L",
+        "casa_destino": "b",
+        "posicao_destino": [
+          1,
+          12
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(6,5)|ab|{}",
+        "destino": "(6,6)|abc|{}",
+        "camada_origem": "ab",
+        "camada_destino": "abc",
+        "movimento": "L",
+        "casa_destino": "c",
+        "posicao_destino": [
+          6,
+          6
+        ],
+        "peso": 1
+      }
+    ]
+  },
+  "m04": {
+    "arquivo": "m04_esteiras.txt",
+    "camadas": {
+      "-": {
+        "ordem": 17,
+        "tamanho": 30,
+        "densidade": 0.11029411764705882
+      },
+      "a": {
+        "ordem": 20,
+        "tamanho": 35,
+        "densidade": 0.09210526315789473
+      }
+    },
+    "total_arcos_entre_camadas": 1,
+    "casas_geradoras_entre_camadas": [
+      {
+        "linha": 3,
+        "coluna": 11,
+        "simbolo": "a",
+        "quantidade_arcos": 1
+      }
+    ],
+    "arcos_entre_camadas": [
+      {
+        "origem": "(3,10)|-|{}",
+        "destino": "(3,11)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "L",
+        "casa_destino": "a",
+        "posicao_destino": [
+          3,
+          11
+        ],
+        "peso": 1
+      }
+    ]
+  },
+  "m05": {
+    "arquivo": "m05_bonus.txt",
+    "camadas": {
+      "-": {
+        "ordem": 215,
+        "tamanho": 438,
+        "densidade": 0.009519669637035428
+      }
+    },
+    "total_arcos_entre_camadas": 0,
+    "casas_geradoras_entre_camadas": [],
+    "arcos_entre_camadas": []
+  },
+  "m06": {
+    "arquivo": "m06_fonte.txt",
+    "camadas": {
+      "-": {
+        "ordem": 24,
+        "tamanho": 46,
+        "densidade": 0.08333333333333333
+      }
+    },
+    "total_arcos_entre_camadas": 0,
+    "casas_geradoras_entre_camadas": [],
+    "arcos_entre_camadas": []
+  },
+  "m07": {
+    "arquivo": "m07_impossivel.txt",
+    "camadas": {
+      "-": {
+        "ordem": 16,
+        "tamanho": 38,
+        "densidade": 0.15833333333333333
+      }
+    },
+    "total_arcos_entre_camadas": 0,
+    "casas_geradoras_entre_camadas": [],
+    "arcos_entre_camadas": []
+  },
+  "m08": {
+    "arquivo": "m08_grande.txt",
+    "camadas": {
+      "-": {
+        "ordem": 165,
+        "tamanho": 356,
+        "densidade": 0.013155949741315596
+      },
+      "a": {
+        "ordem": 314,
+        "tamanho": 670,
+        "densidade": 0.006817118088764983
+      },
+      "ab": {
+        "ordem": 442,
+        "tamanho": 940,
+        "densidade": 0.004822441797231713
+      },
+      "abc": {
+        "ordem": 829,
+        "tamanho": 1818,
+        "densidade": 0.0026485550951906435
+      },
+      "abcd": {
+        "ordem": 1169,
+        "tamanho": 2574,
+        "densidade": 0.001885172902726836
+      }
+    },
+    "total_arcos_entre_camadas": 6,
+    "casas_geradoras_entre_camadas": [
+      {
+        "linha": 3,
+        "coluna": 23,
+        "simbolo": "b",
+        "quantidade_arcos": 1
+      },
+      {
+        "linha": 3,
+        "coluna": 29,
+        "simbolo": "d",
+        "quantidade_arcos": 1
+      },
+      {
+        "linha": 5,
+        "coluna": 37,
+        "simbolo": "c",
+        "quantidade_arcos": 2
+      },
+      {
+        "linha": 27,
+        "coluna": 5,
+        "simbolo": "a",
+        "quantidade_arcos": 2
+      }
+    ],
+    "arcos_entre_camadas": [
+      {
+        "origem": "(27,4)|-|{}",
+        "destino": "(27,5)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "L",
+        "casa_destino": "a",
+        "posicao_destino": [
+          27,
+          5
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(28,5)|-|{}",
+        "destino": "(27,5)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "N",
+        "casa_destino": "a",
+        "posicao_destino": [
+          27,
+          5
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(2,23)|a|{}",
+        "destino": "(3,23)|ab|{}",
+        "camada_origem": "a",
+        "camada_destino": "ab",
+        "movimento": "S",
+        "casa_destino": "b",
+        "posicao_destino": [
+          3,
+          23
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(6,37)|ab|{}",
+        "destino": "(5,37)|abc|{}",
+        "camada_origem": "ab",
+        "camada_destino": "abc",
+        "movimento": "N",
+        "casa_destino": "c",
+        "posicao_destino": [
+          5,
+          37
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(4,37)|ab|{}",
+        "destino": "(5,37)|abc|{}",
+        "camada_origem": "ab",
+        "camada_destino": "abc",
+        "movimento": "S",
+        "casa_destino": "c",
+        "posicao_destino": [
+          5,
+          37
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(3,30)|abc|{}",
+        "destino": "(3,29)|abcd|{}",
+        "camada_origem": "abc",
+        "camada_destino": "abcd",
+        "movimento": "O",
+        "casa_destino": "d",
+        "posicao_destino": [
+          3,
+          29
+        ],
+        "peso": 1
+      }
+    ]
+  }
+}
