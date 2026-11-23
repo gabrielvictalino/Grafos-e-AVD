@@ -1,15 +1,21 @@
-from graphs.labirinto import buscar_no_estado_a_partir_posicao
-from graphs.labirinto import Camada
-from graphs.labirinto import No_estados
-from graphs.labirinto import dicionario_direcoes
+from src.graphs.labirinto import buscar_no_estado_a_partir_posicao
+from src.graphs.labirinto import Camada
+from src.graphs.labirinto import No_estados
 import matplotlib.pyplot as plt
 import os
 
 import csv
 import os
 
+dicionario_direcoes = {"N":0, "L": 1, "S":2, "O":3}
+dicionario_direcoes_ao_contrario = {0:"N", 1: "L", 2:"S", 3:"O"}
 
 def dijkstra(lista_nos, origem):
+    for no in lista_nos:
+        for i in no.lista_arestas:
+            if i <0 and i.custo:
+                return None,None,True
+                
     anteriores={} # Para escrever o caminho no final
     distancias= {} #guarda o menor custo
     visitados={} #fechados
@@ -37,7 +43,8 @@ def dijkstra(lista_nos, origem):
                 if distancias[v] > distancias[u] + aresta.custo:
                     distancias[v] = distancias[u] + aresta.custo
                     anteriores[v] = u
-    return distancias, anteriores
+    return distancias, anteriores,False
+
 
 
 
@@ -180,6 +187,7 @@ def bellman_ford(listas_nos,origem):
                     distancias[dest]=distancias[org] + peso
                     anteriores[dest]=org
                     mudou= True
+                
         if not mudou:
             break
 
@@ -407,23 +415,21 @@ def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
             anteriores[novo_elemento] = elemento_analisado
             novo_elemento.estado_de_visualizacao = "Visitado"
 
-            lista_estados_analisados.append(novo_elemento)
+        
+    caminho = []
+    
+    if estado_final not in anteriores:
+        return None
 
-        
-        caminho = []
-        
-        if estado_final not in anteriores:
-            return None
-    
-        atual = estado_final
-    
-        while atual is not None:
-            caminho.append(atual.no_pos)
-            atual = anteriores.get(atual)
-    
-        caminho.reverse()
-    
-        return caminho
+    atual = estado_final
+
+    while atual is not None:
+        caminho.append(atual.no_pos)
+        atual = anteriores.get(atual)
+
+    caminho.reverse()
+
+    return caminho
 
 
 def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final):
@@ -507,7 +513,6 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
             novo_elemento = No_estados(
                 elemento_analisado.chaves,
                 "-",
-                novo_elemento.no_pos.tipo,
                 "Não Visitado",
                 novo_elemento.no_pos
             )
@@ -546,7 +551,7 @@ def bfs_grafo_estados_exploracao(lista_nos_estados, estado_inicial, estado_final
             arestas_geradas.append((
                 elemento_analisado,
                 novo_elemento,
-                dicionario_direcoes[i],
+                dicionario_direcoes_ao_contrario[i],
                 casa_destino,
                 custo_transicao
             ))
@@ -574,6 +579,7 @@ def bfs_estados_armadilha(arestas_geradas,camadas):
                 fila.append(i)
                 nos_alcansaveis.add(i)
     estados_armadilha = estados_gerados - nos_alcansaveis
+    return estados_armadilha
         
         
         
@@ -679,7 +685,6 @@ def verificar_chaves(elemento_analisado, camadas):
         if chave not in elemento_analisado.chaves:
             novo_estado = No_estados(
                 "-", "-",
-                elemento_analisado.no_pos.tipo,
                 "Não Visitado",
                 elemento_analisado.no_pos
             )
@@ -870,3 +875,43 @@ def exportar_heatmap(heatmap, nome_mapa):
     plt.close(fig)
 
     return caminho
+
+
+
+
+from .labirinto import Aresta, No 
+
+
+def converter_grafo_estados(arestas_geradas, camadas, estado_inicial, estado_final):
+    """Retorna (lista_nos, inicio, alvo, nos_por_estado).
+    estado_inicial e estado_final são os No_estados de preparar_estados.
+    nos_por_estado associa cada estado original ao No correspondente e também
+    contém a entrada "ALVO". A saída física fornece a posição do alvo virtual,
+    inclusive quando a exploração não alcança nenhuma instância de G.
+    """
+    nos_por_estado = {}
+    for camada in camadas:
+        for estado in camada.lista_nos_estados:
+            casa = estado.no_pos
+            # O Dijkstra do projeto para no primeiro No de tipo G.
+            # Reservamos esse tipo para o ALVO comum a todas as saídas.
+            tipo = "." if casa.tipo == "G" else casa.tipo
+            nos_por_estado[estado] = No(casa.posicao_linha, casa.posicao_coluna, tipo)
+
+    saida = estado_final.no_pos
+    alvo = No(saida.posicao_linha, saida.posicao_coluna, "G")
+    nos_por_estado["ALVO"] = alvo
+
+    for origem, destino, movimento, _, peso in arestas_geradas:
+        no_origem = nos_por_estado[origem]
+        no_destino = nos_por_estado[destino]
+        # G tem um único arco virtual. Usamos o primeiro slot de adjacência.
+        direcao = "N" if destino == "ALVO" else movimento
+        no_origem.adicionar_adjacencia(direcao, Aresta(no_origem, no_destino, peso))
+        no_origem.grau_saida += 1
+        no_destino.grau_entrada += 1
+
+    lista_nos = list(nos_por_estado.values())
+    return lista_nos, nos_por_estado[estado_inicial], alvo, nos_por_estado
+
+

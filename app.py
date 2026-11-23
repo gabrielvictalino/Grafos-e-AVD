@@ -1,325 +1,622 @@
-"""Apresentação interativa do labirinto (Parte 1, item 9) — app Streamlit.
+"""Visualização dos algoritmos do projeto. Execute com streamlit run app.py."""
 
-Rodar na raiz do repositório:
-    pip install -r requirements.txt
-    streamlit run app.py
+from __future__ import annotations
 
-Este arquivo NÃO implementa busca nem regra do labirinto. Ele só:
-  1. lista os mapas .txt da pasta mapas/;
-  2. chama as funções do próprio projeto:
-       labirinto.validar_labirinto(caminho)
-       labirinto.gerar_labirinto(caminho)            -> Labirinto
-       labirinto.bfs_grafo_estados(Labirinto)
-       algorithms.dijkstra(lista_nos, origem)
-       algorithms.bellmon_ford(lista_nos, origem)
-       algorithms.dfs(...)                          (quando existir)
-  3. desenha e anima o resultado que essas funções devolverem.
-
-Formato de retorno que o app entende (qualquer um dos dois):
-  a) (distancias, anteriores)  -> dicionários indexados por nó/estado; o
-     caminho é lido seguindo `anteriores` a partir do estado final.
-  b) lista de nós/estados do caminho, de S até G.
-Cada nó/estado pode ser um `No` (posicao_linha, posicao_coluna, tipo) ou um
-`No_estados` (com .no, .chaves, .bonus). Se o estado tiver o atributo
-`armadilha` verdadeiro, a célula é realçada como estado-armadilha.
-"""
-import glob
-import inspect
-import os
-import sys
-import time
-import traceback
+from dataclasses import dataclass, field
+from html import escape
+from itertools import accumulate, pairwise
+from math import isfinite
+from pathlib import Path
+from time import monotonic, sleep
+from traceback import format_exc
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
-RAIZ = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, RAIZ)
-sys.path.insert(0, os.path.join(RAIZ, "src", "graphs"))
-PASTA_MAPAS = os.path.join(RAIZ, "mapas")
+if TYPE_CHECKING:
+    from src.graphs import labirinto
 
-CORES_CAMADA = ["#3b5bdb", "#e8590c", "#0c8599", "#9c36b5", "#2b8a3e",
-                "#c2255c", "#5c940d", "#1864ab", "#862e9c", "#d9480f"]
+
+RAIZ = Path(__file__).resolve().parent
+PASTA_MAPAS = RAIZ / "mapas"
+
+ALGORITMOS = ("BFS", "Dijkstra", "Bellman-Ford", "DFS")
+CLASSES_DFS = {
+    "arvore": ("Árvore", "#117a67"),
+    "retorno": ("Retorno", "#b43459"),
+    "avanco": ("Avanço", "#3458ad"),
+    "cruzamento": ("Cruzamento", "#985121"),
+}
 SETAS = {"^": "↑", ">": "→", "v": "↓", "<": "←"}
+SEGUIR_CAMADA = "Acompanhar o estado atual"
+TODAS_CAMADAS = "Todas as camadas"
 
-
-# ------------------------------------------------------------ ponte com o repo
-def importar_projeto():
-    """Importa os módulos do repositório e devolve (labirinto, algorithms, erros)."""
-    erros, lab_mod, alg_mod = [], None, None
-    try:
-        import graphs.labirinto as lab_mod
-    except Exception:
-        erros.append("Falha ao importar labirinto.py:\n" + traceback.format_exc())
-    try:
-        import algorithms as alg_mod
-    except Exception:
-        erros.append("Falha ao importar src/graphs/algorithms.py:\n" + traceback.format_exc())
-    return lab_mod, alg_mod, erros
-
-
-def algoritmos_disponiveis(lab_mod, alg_mod):
-    """Só oferece as funções que existem no projeto."""
-    algs = {}
-    if lab_mod and hasattr(lab_mod, "bfs_grafo_estados"):
-        algs["BFS (bfs_grafo_estados)"] = lambda L: lab_mod.bfs_grafo_estados(L)
-    if alg_mod:
-        for nome in ("bfs", "dfs", "dijkstra", "bellman_ford", "bellmon_ford"):
-            f = getattr(alg_mod, nome, None)
-            if f is None:
-                continue
-            n_params = len(inspect.signature(f).parameters)
-            if n_params == 1:
-                algs[nome] = (lambda f: lambda L: f(L))(f)
-            else:
-                algs[nome] = (lambda f: lambda L: f(L.lista_nos, L.estado_incial))(f)
-    return algs
-
-
-def posicao(x):
-    no = getattr(x, "no", x)
-    return no.posicao_linha, no.posicao_coluna
-
-
-def interpretar_resultado(resultado, L):
-    """Transforma o retorno do algoritmo em uma lista de quadros para animar.
-    Não calcula nada da busca: só lê o que o algoritmo devolveu."""
-    if resultado is None:
-        raise ValueError("O algoritmo não retornou nada (falta um `return`).")
-    distancias = None
-    if isinstance(resultado, tuple) and len(resultado) == 2 and all(isinstance(r, dict) for r in resultado):
-        distancias, anteriores = resultado
-        alvo = next((x for x in anteriores if posicao(x) == posicao(L.estado_final)
-                     and distancias.get(x, float("inf")) != float("inf")), None)
-        if alvo is None:
-            raise ValueError("O estado final (G) não aparece alcançado em `distancias`/`anteriores`.")
-        caminho, x, vistos = [], alvo, set()
-        while x is not None:
-            if id(x) in vistos:
-                raise ValueError("`anteriores` tem um ciclo; não dá para montar o caminho.")
-            vistos.add(id(x)); caminho.append(x); x = anteriores.get(x)
-        caminho.reverse()
-        if posicao(caminho[0]) != posicao(L.estado_incial):
-            raise ValueError("O caminho reconstruído por `anteriores` não começa em S.")
-    elif isinstance(resultado, (list, tuple)):
-        caminho = list(resultado)
-        if not caminho:
-            raise ValueError("O algoritmo retornou um caminho vazio.")
-    else:
-        raise ValueError(f"Formato de retorno não reconhecido: {type(resultado).__name__}.")
-
-    quadros = []
-    for i, x in enumerate(caminho):
-        quadros.append({
-            "pos": posicao(x),
-            "tipo": getattr(getattr(x, "no", x), "tipo", "?"),
-            "custo": distancias.get(x) if distancias else None,
-            "chaves": getattr(x, "chaves", None),
-            "bonus": getattr(x, "bonus", None),
-            "armadilha": bool(getattr(x, "armadilha", False)),
-        })
-    return quadros
-
-
-@st.cache_data(show_spinner=False)
-def ler_texto(caminho, _mtime):
-    with open(caminho, encoding="utf-8") as f:
-        return f.read()
-
-
-# ------------------------------------------------------------ desenho
 CSS = """
 <style>
-.lab{display:inline-grid;border-radius:6px;overflow:hidden;background:#2b2f36}
-.lab div{width:var(--cs);height:var(--cs);display:flex;align-items:center;justify-content:center;position:relative;
-  background:#fbfaf7;border:1px solid #ece8df;font:600 calc(var(--cs)*.38) system-ui,sans-serif;color:#555;box-sizing:border-box}
-.lab .w{background:#2b2f36;border-color:#2b2f36}
-.lab .sand{background:#ecd9a8}.lab .water{background:#a9cdea}
-.lab .st{background:#495057;color:#fff}.lab .go{background:#2b8a3e;color:#fff}
-.lab .key span{background:#ffd43b;color:#5c4400;border-radius:50%;width:62%;height:62%;display:flex;align-items:center;justify-content:center}
-.lab .door{background:#8a5a2b;color:#fff}
-.lab .conv{background:#eee9fb;color:#5f3dc4;font-size:calc(var(--cs)*.55)}
-.lab .bon span{background:#2b8a3e;color:#fff;border-radius:5px;padding:0 4px}
-.lab .ov{position:absolute;inset:0;pointer-events:none}
-.lab .trap{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2px #d6336c;
-  background:repeating-linear-gradient(45deg,rgba(214,51,108,.45) 0 3px,transparent 3px 8px)}
-.lab .ag{position:absolute;width:58%;height:58%;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);z-index:2}
-.ev{padding:9px 13px;border-radius:7px;border-left:4px solid #3b5bdb;background:#eef1fb;margin:4px 0 8px;color:#1f2328}
-.ev.bad{border-left-color:#d6336c;background:#fdeef3}.ev.ok{border-left-color:#2b8a3e;background:#ebf7ee}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.lab-painel {
+  overflow-x: auto; padding: 12px; background: #15232c;
+  border: 1px solid #2c424d; border-radius: 12px;
+}
+.lab-grade {
+  display: grid; grid-template-columns: repeat(var(--colunas), minmax(0, 1fr));
+  width: min(100%, var(--largura)); min-width: var(--minimo); gap: 1px;
+}
+.lab-celula {
+  aspect-ratio: 1; display: grid; place-items: center; position: relative;
+  background: #e9f1ef; color: #203741;
+  font: 750 var(--fonte) ui-monospace, monospace; border-radius: 2px;
+}
+.lab-celula.parede { background: #2e414b; }
+.lab-celula.partida { background: #334b77; color: #fff; }
+.lab-celula.saida { background: #196d57; color: #fff; }
+.lab-celula.areia { background: #eedbb0; }
+.lab-celula.agua { background: #a6ccdd; }
+.lab-celula.chave { background: #fbe193; color: #644818; }
+.lab-celula.porta { background: #90684b; color: #fff; }
+.lab-celula.esteira { background: #dfd8fa; color: #4f3b80; }
+.lab-celula.peso-negativo { background: #f0c7df; color: #652451; }
+.lab-celula.fora-da-camada { opacity: .37; }
+.lab-rastro, .lab-armadilha, .lab-arco, .lab-atual {
+  position: absolute; pointer-events: none; border-radius: inherit;
+}
+.lab-rastro { inset: 0; background: #148a80; opacity: .25; }
+.lab-armadilha {
+  inset: 0; box-shadow: inset 0 0 0 1px #a42141;
+  background: repeating-linear-gradient(135deg, #bf335d70 0 2px, transparent 2px 6px);
+}
+.lab-arco { inset: 1px; box-shadow: inset 0 0 0 2px var(--arco); }
+.lab-atual {
+  width: 52%; aspect-ratio: 1; border-radius: 50%; background: #113f49;
+  border: 2px solid #fff; box-sizing: border-box; box-shadow: 0 0 0 1px #113f49;
+}
+.lab-atual.encerrado { background: #2a9b64; }
 </style>
 """
 
+CASAS = {
+    "#": ("parede", ""),
+    ".": ("", ""),
+    "S": ("partida", "S"),
+    "G": ("saida", "G"),
+    ",": ("areia", ""),
+    "~": ("agua", ""),
+    "+": ("peso-negativo", "+"),
+    "*": ("peso-negativo", "*"),
+}
+CASAS.update({chave: ("chave", chave) for chave in "abcd"})
+CASAS.update({porta: ("porta", porta) for porta in "ABCD"})
+CASAS.update({casa: ("esteira", seta) for casa, seta in SETAS.items()})
 
-def chave_camada(chaves):
-    if chaves is None or chaves in ("-", ""):
-        return ""
-    return "".join(sorted(str(c) for c in chaves)) if not isinstance(chaves, str) else chaves
+
+@dataclass(frozen=True)
+class Vertice:
+    posicao: tuple[int, int]
+    casa: str
+    chaves: str | None = None
+    bonus: tuple[int, ...] | None = None
+    alvo: bool = False
+
+    @property
+    def bonus_exibido(self):
+        if self.bonus is None:
+            return "—"
+        return ", ".join(map(str, self.bonus)) or "Nenhum"
+
+    @property
+    def rotulo(self):
+        if self.alvo:
+            return "ALVO"
+        linha, coluna = self.posicao
+        posicao = f"({linha}, {coluna})"
+        if self.chaves is None:
+            return posicao
+        return f"{posicao} · chaves {self.chaves or '∅'} · bônus {self.bonus_exibido}"
 
 
-def desenhar(linhas, quadros, idx, cor, realcar_armadilha):
-    W = max(len(l) for l in linhas)
-    cs = max(8, min(44, 560 // max(W, 1)))
-    atual = quadros[idx]
-    rastro = {}
-    for q in quadros[: idx + 1]:
-        rastro[q["pos"]] = chave_camada(q["chaves"])
-    armadilhas = {q["pos"] for q in quadros[: idx + 1] if q["armadilha"]}
-    html = ['<div style="overflow-x:auto">', f'<div class="lab" style="--cs:{cs}px;grid-template-columns:repeat({W},{cs}px)">']
+@dataclass(frozen=True)
+class ArcoDFS:
+    origem: Vertice
+    destino: Vertice
+    movimento: str
+    classe: str
+
+
+@dataclass(frozen=True)
+class Quadro:
+    estado: Vertice
+    custo: int | float
+    arco: ArcoDFS | None = None
+
+
+@dataclass(frozen=True)
+class Diagnostico:
+    etapa: str
+    mensagem: str
+    traceback: str | None = None
+
+
+@dataclass
+class Resultado:
+    quadros: list[Quadro] = field(default_factory=list)
+    camadas: dict[str, list[Vertice]] = field(default_factory=dict)
+    armadilhas: set[Vertice] | None = None
+    erro_armadilhas: Diagnostico | None = None
+    erros: list[Diagnostico] = field(default_factory=list)
+    aviso: str | None = None
+    custo_minimo: bool = False
+    contagem_dfs: dict[str, int] = field(default_factory=dict)
+    tem_ciclo_dfs: bool | None = None
+    ciclo_negativo: bool = False
+
+
+@dataclass
+class Grafo:
+    lista_nos: list[labirinto.No]
+    vertices: dict[labirinto.No, Vertice]
+    inicio: labirinto.No
+    fim: labirinto.No
+    camadas: dict[str, list[Vertice]] = field(default_factory=dict)
+
+
+def posicao(no):
+    return no.posicao_linha, no.posicao_coluna
+
+
+def grafo_padrao(mapa):
+    vertices = {
+        no: Vertice(posicao(no), no.tipo, alvo=(no is mapa.estado_final))
+        for no in mapa.lista_nos
+    }
+    return Grafo(mapa.lista_nos, vertices, mapa.estado_incial, mapa.estado_final)
+
+
+def caminho_dos_anteriores(inicio, fim, distancias, anteriores):
+    """Lê a sequência já determinada pelo algoritmo."""
+    if not isfinite(distancias[fim]):
+        return []
+    caminho = [fim]
+    vistos = {fim}
+    while caminho[-1] is not inicio:
+        anterior = anteriores.get(caminho[-1])
+        if anterior in vistos:
+            raise ValueError("A cadeia de predecessores devolvida contém um ciclo.")
+        if anterior is None:
+            raise ValueError("A cadeia de predecessores devolvida termina antes de S.")
+        vistos.add(anterior)
+        caminho.append(anterior)
+    return caminho[::-1]
+
+
+def movimento_e_peso(origem, destino):
+    for movimento, indice in origem.dicionario_direcoes.items():
+        arco = origem.lista_arestas[indice]
+        if arco != 0 and arco.destino is destino:
+            return movimento, arco.custo
+    raise ValueError("O algoritmo devolveu uma transição ausente no grafo.")
+
+
+def quadros_do_caminho(caminho, grafo, distancias=None):
+    if distancias is None:
+        pesos = (movimento_e_peso(u, v)[1] for u, v in pairwise(caminho))
+        custos = accumulate(pesos, initial=0)
+    else:
+        custos = (distancias[no] for no in caminho)
+
+    quadros = []
+    for no, custo in zip(caminho, custos):
+        estado = grafo.vertices[no]
+        if no is grafo.fim and grafo.camadas and quadros:
+            # ALVO é virtual. A interface mantém o inventário do G de onde ele veio.
+            ultimo = quadros[-1].estado
+            estado = Vertice(estado.posicao, estado.casa, ultimo.chaves, ultimo.bonus, alvo=True)
+        quadros.append(Quadro(estado, custo))
+    return quadros
+
+
+def executar(algoritmo, grafo, resultado, labirinto, algorithms):
+    com_estados = bool(grafo.camadas)
+    nos = grafo.lista_nos
+
+    if algoritmo == "DFS":
+        dfs = algorithms.dfs(nos, grafo.inicio, detalhado=True)
+        distancias = dfs["distancias"]
+        resultado.quadros.append(Quadro(grafo.vertices[grafo.inicio], distancias[grafo.inicio]))
+        for u, v, classe in dfs["classificacao"]:
+            movimento, _ = movimento_e_peso(u, v)
+            if v is grafo.fim and com_estados:
+                movimento = "ALVO"
+            arco = ArcoDFS(grafo.vertices[u], grafo.vertices[v], movimento, classe)
+            atual = v if classe == "arvore" else u
+            estado = grafo.vertices[atual]
+            if atual is grafo.fim and com_estados:
+                estado = Vertice(estado.posicao, estado.casa, arco.origem.chaves, arco.origem.bonus, alvo=True)
+            resultado.quadros.append(Quadro(estado, distancias[atual], arco))
+        resultado.contagem_dfs = dfs["contagem"]
+        resultado.tem_ciclo_dfs = dfs["tem_ciclo"]
+        return
+
+    if algoritmo == "BFS":
+        # A BFS original recebe uma lista de invólucros de No, inclusive no grafo padrão.
+        modelos = {no: labirinto.No_estados("-", "-", "Não Visitado", no) for no in nos}
+        caminho = algorithms.bfs_grafo_nos(modelos.values(), modelos[grafo.inicio], modelos[grafo.fim])
+        resultado.quadros = quadros_do_caminho(caminho or [], grafo)
+        return
+
+    if algoritmo == "Dijkstra":
+        distancias, anteriores,tem_pesos_negativos = algorithms.dijkstra(nos, grafo.inicio)
+        if tem_pesos_negativos:
+            resultado.aviso = (
+                "O Dijkstra retornou um resultado para um grafo com pesos negativos."
+                "O custo devolvido pode divergir do mínimo."
+            )
+    elif algoritmo == "Bellman-Ford":
+        distancias, anteriores, *informacao_ciclo = algorithms.bellman_ford(nos, grafo.inicio)
+        if informacao_ciclo:
+            tem_ciclo, ciclo = informacao_ciclo
+            if tem_ciclo:
+                resultado.ciclo_negativo = True
+                if ciclo:
+                    sequencia = list(ciclo)
+                    if len(sequencia) == 1 or sequencia[-1] is not sequencia[0]:
+                        sequencia.append(sequencia[0])
+                    resultado.quadros = quadros_do_caminho(sequencia, grafo)
+                return
+        elif tem_pesos_negativos:
+            resultado.aviso = "A versão atual do Bellman-Ford ainda não informa ciclos negativos."
+    else:
+        raise ValueError(f"Algoritmo desconhecido: {algoritmo}")
+
+    caminho = caminho_dos_anteriores(grafo.inicio, grafo.fim, distancias, anteriores)
+    resultado.quadros = quadros_do_caminho(caminho, grafo, distancias)
+    resultado.custo_minimo = bool(caminho) and resultado.aviso is None
+
+
+def registrar_erro(etapa, erro):
+    return Diagnostico(etapa, f"{type(erro).__name__}: {erro}", format_exc())
+
+
+def carregar(caminho, algoritmo, com_estados):
+    from src.graphs import labirinto
+
+    if not labirinto.validar_labirinto(caminho):
+        return None, None
+
+    linhas = Path(caminho).read_text(encoding="utf-8").splitlines()
+    resultado = Resultado()
+    try:
+        from src.graphs import algorithms
+    except Exception as erro:
+        resultado.erros.append(registrar_erro("Importação de graphs.algorithms", erro))
+    try:
+        mapa = labirinto.gerar_labirinto(caminho)
+    except Exception as erro:
+        resultado.erros.append(registrar_erro("gerar_labirinto", erro))
+    if resultado.erros:
+        return linhas, resultado
+
+    if com_estados:
+        try:
+            from src.graphs.algorithms import (
+                converter_grafo_estados,
+            )
+            from src.graphs.labirinto import (
+                preparar_estados,
+            )
+
+            modelos, origem, saida = preparar_estados(mapa)
+            transicoes, camadas = algorithms.bfs_grafo_estados_exploracao(modelos, origem, saida)
+            lista_nos, inicio, alvo, nos_por_estado = converter_grafo_estados(
+                transicoes, camadas, origem, saida
+            )
+
+            vertices = {alvo: Vertice(posicao(alvo), "G", alvo=True)}
+            camadas_visuais = {}
+            for camada in camadas:
+                camada_visual = camadas_visuais.setdefault(camada.chaves, [])
+                for estado in camada.lista_nos_estados:
+                    casa = estado.no_pos
+                    vertice = Vertice(posicao(casa), casa.tipo, estado.chaves, tuple(sorted(estado.bonus)))
+                    vertices[nos_por_estado[estado]] = vertice
+                    camada_visual.append(vertice)
+            grafo = Grafo(lista_nos, vertices, inicio, alvo, camadas_visuais)
+        except Exception as erro:
+            resultado.erros.append(registrar_erro("Construção do grafo de estados", erro))
+            return linhas, resultado
+        resultado.camadas = grafo.camadas
+        try:
+            armadilhas = algorithms.bfs_estados_armadilha(transicoes, camadas)
+            if armadilhas is None:
+                resultado.erro_armadilhas = Diagnostico(
+                    "bfs_estados_armadilha", "A função retornou None. O realce está indisponível."
+                )
+            else:
+                resultado.armadilhas = {grafo.vertices[nos_por_estado[estado]] for estado in armadilhas}
+        except Exception as erro:
+            resultado.erro_armadilhas = registrar_erro("bfs_estados_armadilha", erro)
+    else:
+        grafo = grafo_padrao(mapa)
+
+    try:
+        executar(algoritmo, grafo, resultado, labirinto, algorithms)
+    except Exception as erro:
+        resultado.erros.append(registrar_erro(algoritmo, erro))
+    return linhas, resultado
+
+
+def desenhar(linhas, resultado, indice, camada, realcar):
+    quadros = resultado.quadros
+    quadro = quadros[indice] if quadros else None
+    atual = quadro.estado if quadro else None
+    arco = quadro.arco if quadro else None
+
+    def visivel(estado):
+        return camada is None or estado.chaves == camada
+
+    visitas = {q.estado.posicao for q in quadros[:indice + 1] if visivel(q.estado)}
+    estados_por_posicao = {}
+    for chaves, estados in resultado.camadas.items():
+        if camada is None or chaves == camada:
+            for estado in estados:
+                estados_por_posicao[estado.posicao] = estados_por_posicao.get(estado.posicao, 0) + 1
+    armadilhas_por_posicao = {}
+    if realcar and resultado.armadilhas is not None:
+        for estado in resultado.armadilhas:
+            if visivel(estado):
+                armadilhas_por_posicao[estado.posicao] = armadilhas_por_posicao.get(estado.posicao, 0) + 1
+
+    extremidades = {}
+    if arco:
+        cor = CLASSES_DFS[arco.classe][1]
+        extremidades = {estado.posicao: cor for estado in (arco.origem, arco.destino) if visivel(estado)}
+
+    colunas = len(linhas[0])
+    fonte = max(7, min(16, round(780 / colunas)))
+    html = [
+        '<div class="lab-painel" tabindex="0" aria-label="Mapa do labirinto">',
+        f'<div class="lab-grade" style="--colunas:{colunas};--largura:{colunas * 42}px;'
+        f'--minimo:{colunas * 10}px;--fonte:{fonte}px">',
+    ]
     for r, linha in enumerate(linhas):
-        for c in range(W):
-            ch = linha[c] if c < len(linha) else "#"
-            if ch == "#":
-                html.append('<div class="w"></div>'); continue
-            cls, dentro = "", ""
-            if ch == "S": cls, dentro = "st", "S"
-            elif ch == "G": cls, dentro = "go", "G"
-            elif ch == ",": cls = "sand"
-            elif ch == "~": cls = "water"
-            elif ch in "abcd": cls, dentro = "key", f"<span>{ch}</span>"
-            elif ch in "ABCD": cls, dentro = "door", ch
-            elif ch in SETAS: cls, dentro = "conv", SETAS[ch]
-            elif ch in "+*": cls, dentro = "bon", f"<span>{ch}</span>"
-            elif ch != ".": dentro = ch
-            p = (r, c)
-            if p in rastro:
-                dentro += f'<i class="ov" style="background:{cor(rastro[p])};opacity:.4"></i>'
-            if realcar_armadilha and p in armadilhas:
-                dentro += '<i class="trap"></i>'
-            if p == atual["pos"]:
-                fundo = "#d6336c" if atual["armadilha"] else cor(chave_camada(atual["chaves"]))
-                dentro += f'<b class="ag" style="background:{fundo}"></b>'
-            html.append(f'<div class="{cls}" title="linha {r}, coluna {c}">{dentro}</div>')
+        for c, casa in enumerate(linha):
+            pos = (r, c)
+            classe, simbolo = CASAS.get(casa, ("", escape(casa)))
+            titulo = f"Linha {r}, coluna {c} · {casa}"
+            if classe != "parede" and resultado.camadas:
+                quantidade = estados_por_posicao.get(pos, 0)
+                titulo += f" · estados na vista {quantidade}"
+                if not quantidade:
+                    classe += " fora-da-camada"
+
+            conteudo = [simbolo]
+            if pos in visitas:
+                conteudo.append('<i class="lab-rastro"></i>')
+            if pos in armadilhas_por_posicao:
+                titulo += f" · estados-armadilha {armadilhas_por_posicao[pos]}"
+                conteudo.append('<i class="lab-armadilha"></i>')
+            if pos in extremidades:
+                conteudo.append(f'<i class="lab-arco" style="--arco:{extremidades[pos]}"></i>')
+            if atual and atual.posicao == pos and visivel(atual):
+                titulo += " · estado atual"
+                marcador = "lab-atual encerrado" if atual.alvo else "lab-atual"
+                conteudo.append(f'<i class="{marcador}"></i>')
+            html.append(f'<div class="lab-celula {classe}" title="{escape(titulo)}">{"".join(conteudo)}</div>')
     html.append("</div></div>")
     return "".join(html)
 
 
-# ------------------------------------------------------------ app
+def nome_camada(chaves):
+    return f"Chaves {', '.join(chaves)}" if chaves else "Sem chaves"
+
+
+def mostrar_estado(quadro, algoritmo):
+    st.subheader("Estado atual")
+    estado = quadro.estado
+    linha, coluna = estado.posicao
+    if estado.alvo:
+        st.markdown(f"**ALVO** · linha {linha}, coluna {coluna}")
+    else:
+        st.markdown(f"**Linha {linha}, coluna {coluna}** · casa `{estado.casa}`")
+    chaves = "—" if estado.chaves is None else nome_camada(estado.chaves)
+    st.markdown(f"**Chaves** · {chaves}  \n**Bônus consumidos** · {estado.bonus_exibido}")
+    rotulo_custo = "Custo acumulado na árvore DFS" if algoritmo == "DFS" else "Custo acumulado"
+    st.metric(rotulo_custo, quadro.custo)
+    if quadro.arco:
+        arco = quadro.arco
+        st.write(f"**{CLASSES_DFS[arco.classe][0]} · {arco.movimento}**")
+        st.text(f"De {arco.origem.rotulo}\nPara {arco.destino.rotulo}")
+
+
+def controlar_animacao(ultimo, periodo):
+    sessao = st.session_state
+    if sessao.tocando and monotonic() >= sessao.proximo_passo:
+        sessao.passo = min(sessao.passo + 1, ultimo)
+        sessao.proximo_passo = monotonic() + periodo
+        if sessao.passo == ultimo:
+            sessao.tocando = False
+            st.rerun()
+
+    def mover(indice):
+        sessao.passo = indice
+        if sessao.tocando:
+            sessao.tocando = False
+            sessao.pausar_timer = True
+
+    inicio, anterior, reproduzir, seguinte = st.columns(4)
+    with inicio:
+        st.button("Início", disabled=sessao.passo == 0, on_click=mover, args=(0,), use_container_width=True)
+    with anterior:
+        st.button("Voltar", disabled=sessao.passo == 0, on_click=mover,
+                  args=(max(0, sessao.passo - 1),), use_container_width=True)
+    with reproduzir:
+        texto = "Pausar" if sessao.tocando else "Reproduzir"
+        if st.button(texto, type="primary", use_container_width=True):
+            if sessao.passo == ultimo:
+                sessao.passo = 0
+            sessao.tocando = not sessao.tocando
+            sessao.proximo_passo = monotonic() + periodo
+            st.rerun()
+    with seguinte:
+        st.button("Avançar", disabled=sessao.passo == ultimo, on_click=mover,
+                  args=(min(ultimo, sessao.passo + 1),), use_container_width=True)
+
+    if sessao.pausar_timer:
+        sessao.pausar_timer = False
+        st.rerun()
+
+    def pausar():
+        mover(sessao.passo)
+
+    st.slider("Quadro", min_value=0, max_value=ultimo, key="passo", on_change=pausar)
+
+
+def mostrar_diagnostico(diagnostico, fatal=True):
+    exibir = st.error if fatal else st.warning
+    exibir(f"{diagnostico.etapa} · {diagnostico.mensagem}")
+    if diagnostico.traceback:
+        with st.expander(f"Debug · {diagnostico.etapa}"):
+            st.code(diagnostico.traceback, language="python")
+
+
+def mostrar_resultado(resultado, algoritmo):
+    if resultado.aviso:
+        st.warning(resultado.aviso)
+    if resultado.erro_armadilhas:
+        mostrar_diagnostico(resultado.erro_armadilhas, fatal=False)
+    if resultado.erros:
+        for diagnostico in resultado.erros:
+            mostrar_diagnostico(diagnostico)
+        return
+    if resultado.tem_ciclo_dfs is not None:
+        st.subheader("Arcos examinados pela DFS")
+        ciclo = "Sim" if resultado.tem_ciclo_dfs else "Não"
+        st.write(f"**Ciclo encontrado** · {ciclo}")
+        colunas = st.columns(4)
+        for coluna, (classe, total) in zip(colunas, resultado.contagem_dfs.items()):
+            coluna.metric(CLASSES_DFS[classe][0], total)
+        st.caption("A DFS examina os vizinhos na ordem N, L, S, O.")
+        with st.expander("Classificação dos arcos em ordem de exame"):
+            linhas = []
+            for quadro in resultado.quadros[1:]:
+                arco = quadro.arco
+                linhas.append({
+                    "Origem": arco.origem.rotulo,
+                    "Destino": arco.destino.rotulo,
+                    "Movimento": arco.movimento,
+                    "Classificação": CLASSES_DFS[arco.classe][0],
+                })
+            if linhas:
+                st.dataframe(linhas, hide_index=True, use_container_width=True)
+            else:
+                st.info("Nenhum arco examinado.")
+        return
+    if resultado.ciclo_negativo:
+        st.warning("O Bellman-Ford retornou um ciclo negativo.")
+        if resultado.quadros:
+            st.metric("Custo do ciclo", resultado.quadros[-1].custo)
+            with st.expander("Sequência do ciclo"):
+                st.text("\n".join(q.estado.rotulo for q in resultado.quadros))
+        return
+    if not resultado.quadros:
+        st.info("O retorno do algoritmo não contém um caminho até ALVO.")
+        return
+
+    st.subheader("Caminho até ALVO")
+    passos, custo = st.columns(2)
+    passos.metric("Menor número de passos" if algoritmo == "BFS" else "Passos", len(resultado.quadros) - 1)
+    custo.metric("Menor custo" if resultado.custo_minimo else "Custo do caminho", resultado.quadros[-1].custo)
+    if resultado.camadas:
+        st.caption("A contagem inclui a transição G → ALVO, com custo zero.")
+
+
 def main():
     st.set_page_config(page_title="Labirinto interativo", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
-    ss = st.session_state
-    ss.setdefault("idx", 0); ss.setdefault("tocando", False); ss.setdefault("avancar", False)
-
-    def reiniciar():
-        ss.idx, ss.tocando = 0, False
-
     st.title("Labirinto interativo")
-    st.caption("Visualização dos algoritmos e mapas do projeto (labirinto.py e src/graphs/algorithms.py).")
-
-    lab_mod, alg_mod, erros_import = importar_projeto()
-    for e in erros_import:
-        st.error("```\n" + e + "\n```")
-    if lab_mod is None:
+    mapas = sorted(caminho for caminho in PASTA_MAPAS.rglob("*") if caminho.is_file())
+    if not mapas:
+        st.warning("Nenhum mapa encontrado na pasta mapas/.")
         return
-
-    mapas = sorted(glob.glob(os.path.join(PASTA_MAPAS, "*.txt")))
-    algs = algoritmos_disponiveis(lab_mod, alg_mod)
 
     with st.sidebar:
         st.header("Configuração")
-        if not mapas:
-            st.warning("Nenhum mapa encontrado. Coloque os arquivos .txt em `mapas/` na raiz do repositório.")
-            return
-        mapa = st.selectbox("Mapa", mapas, format_func=os.path.basename, key="mapa", on_change=reiniciar)
-        if not algs:
-            st.warning("Nenhum algoritmo encontrado no projeto.")
-            return
-        nome_alg = st.selectbox("Algoritmo", list(algs), key="alg", on_change=reiniciar)
-        velocidade = st.slider("Velocidade (passos/s)", 0.5, 8.0, 1.5, 0.5)
-        realcar = st.toggle("Realçar estados-armadilha", value=True)
+        mapa = st.selectbox("Mapa", mapas, format_func=lambda caminho: str(caminho.relative_to(PASTA_MAPAS)))
+        tipo = st.radio("Tipo de grafo", ("Grafo de estados", "Grafo padrão"))
+        algoritmo = st.selectbox("Algoritmo", ALGORITMOS)
+        velocidade = st.slider("Velocidade (quadros/s)", 0.25, 4.0, 1.0, 0.25)
+        realcar = st.toggle("Realçar estados-armadilha", value=True) if tipo == "Grafo de estados" else False
 
-    texto = ler_texto(mapa, os.path.getmtime(mapa))
-    linhas = [l for l in texto.replace("\r", "").split("\n") if l]
-
-    # --- chama o código do projeto
-    etapa = "validar_labirinto"
+    sessao = st.session_state
     try:
-        valido = lab_mod.validar_labirinto(mapa)
-        if valido is False:
-            st.warning("`validar_labirinto` reprovou este mapa. Tentando gerar mesmo assim.")
-        etapa = "gerar_labirinto"
-        L = lab_mod.gerar_labirinto(mapa)
-        etapa = nome_alg
-        resultado = algs[nome_alg](L)
-        etapa = "leitura do resultado"
-        quadros = interpretar_resultado(resultado, L)
-    except Exception as e:
-        st.error(f"O código do projeto falhou em **{etapa}**: `{type(e).__name__}: {e}`")
-        with st.expander("Traceback completo"):
-            st.code(traceback.format_exc())
-        st.markdown(desenhar(linhas, [{"pos": (-1, -1), "chaves": None, "armadilha": False}], 0,
-                             lambda k: "#3b5bdb", False), unsafe_allow_html=True)
+        arquivo = mapa.stat()
+        versao = (arquivo.st_mtime_ns, arquivo.st_size)
+        com_estados = tipo == "Grafo de estados"
+        selecao = (str(mapa), versao, algoritmo, com_estados)
+        if sessao.get("selecao") != selecao or "resultado_mapa" not in sessao:
+            sessao.update(passo=0, tocando=False, pausar_timer=False)
+            sessao.pop("camada", None)
+            with st.spinner("Executando o algoritmo…"):
+                sessao.resultado_mapa = carregar(mapa, algoritmo, com_estados)
+            sessao.selecao = selecao
+        linhas, resultado = sessao.resultado_mapa
+    except Exception as erro:
+        st.error(f"Falha ao preparar {mapa.name} para {algoritmo} · {type(erro).__name__}: {erro}")
+        with st.expander("Debug · traceback completo"):
+            st.code(format_exc(), language="python")
+        return
+    if resultado is None:
+        st.error(f"O mapa {mapa.name} foi reprovado por validar_labirinto.")
         return
 
-    ultimo = len(quadros) - 1
-    camadas = []
-    for q in quadros:
-        k = chave_camada(q["chaves"])
-        if k not in camadas:
-            camadas.append(k)
-    cor = lambda k: CORES_CAMADA[(camadas.index(k) if k in camadas else 0) % len(CORES_CAMADA)]
+    mostrar_resultado(resultado, algoritmo)
+    periodo = 1.0 / velocidade
 
-    if ss.avancar:
-        ss.avancar = False
-        if ss.tocando:
-            ss.idx = min(ss.idx + 1, ultimo)
-            if ss.idx >= ultimo:
-                ss.tocando = False
-    ss.idx = min(ss.idx, ultimo)
+    def visualizacao():
+        quadros = resultado.quadros
+        if len(quadros) > 1:
+            controlar_animacao(len(quadros) - 1, periodo)
+        passo = sessao.get("passo", 0)
+        quadro = quadros[passo] if quadros else None
 
-    col_mapa, col_estado = st.columns([2.4, 1.6], gap="large")
-    with col_mapa:
-        def mover(d):
-            ss.tocando = False; ss.idx = max(0, min(ultimo, ss.idx + d))
+        camada = None
+        if resultado.camadas:
+            opcoes = [SEGUIR_CAMADA, TODAS_CAMADAS, *resultado.camadas]
+            exibicao = st.selectbox("Camada exibida", opcoes, key="camada",
+                                   format_func=lambda opcao: nome_camada(opcao) if opcao in resultado.camadas else opcao)
+            if exibicao == SEGUIR_CAMADA and quadro:
+                camada = quadro.estado.chaves
+            elif exibicao in resultado.camadas:
+                camada = exibicao
 
-        def alternar():
-            if ss.tocando:
-                ss.tocando = False
-            else:
-                if ss.idx >= ultimo: ss.idx = 0
-                ss.tocando = True
+        mapa_col, estado_col = st.columns([3, 1], gap="large")
+        with mapa_col:
+            st.markdown(desenhar(linhas, resultado, passo, camada, realcar), unsafe_allow_html=True)
+            legenda = "S partida · G saída"
+            if quadro:
+                legenda += " · círculo indica o estado atual"
+            if realcar and resultado.armadilhas is not None:
+                legenda += " · listras indicam estados-armadilha"
+            st.caption(legenda)
+            if quadro and camada is not None and camada != quadro.estado.chaves:
+                st.info("O estado atual está em outra camada.")
+            if realcar and resultado.armadilhas is not None:
+                armadilhas = [e.rotulo for e in sorted(resultado.armadilhas, key=lambda e: (e.posicao, e.chaves, e.bonus))
+                              if camada is None or e.chaves == camada]
+                with st.expander(f"Estados-armadilha na vista ({len(armadilhas)})"):
+                    if armadilhas:
+                        st.dataframe({"Estado": armadilhas}, hide_index=True, use_container_width=True)
+                    else:
+                        st.write("Nenhum estado-armadilha na vista.")
+        with estado_col:
+            if quadro:
+                mostrar_estado(quadro, algoritmo)
 
-        b = st.columns([1.2, 1.2, 1.3, 1.2, 1])
-        b[0].button("⏮ Início", on_click=lambda: mover(-ss.idx), use_container_width=True)
-        b[1].button("◀ Passo", on_click=mover, args=(-1,), use_container_width=True)
-        b[2].button("⏸ Pausar" if ss.tocando else ("↻ Repetir" if ss.idx >= ultimo else "▶ Play"),
-                    on_click=alternar, type="primary", use_container_width=True)
-        b[3].button("Passo ▶", on_click=mover, args=(1,), use_container_width=True)
-        if ultimo > 0:
-            st.slider("Passo", 0, ultimo, key="idx", label_visibility="collapsed",
-                      on_change=lambda: ss.update(tocando=False))
-
-        q = quadros[ss.idx]
-        if ss.idx == 0:
-            msg, cls = f"Início em S (linha {q['pos'][0]}, coluna {q['pos'][1]}).", ""
-        else:
-            ant = quadros[ss.idx - 1]
-            msg, cls = f"Andou para linha {q['pos'][0]}, coluna {q['pos'][1]} (célula `{q['tipo']}`).", ""
-            if chave_camada(ant["chaves"]) != chave_camada(q["chaves"]):
-                msg += f" Mudou de camada: chaves {ant['chaves']} → {q['chaves']}."
-            if q["armadilha"]:
-                msg += " Estado-armadilha."; cls = "bad"
-            if ss.idx == ultimo:
-                msg += " Chegou em G."; cls = "ok"
-        st.markdown(f'<div class="ev {cls}">{msg}</div>', unsafe_allow_html=True)
-        st.markdown(desenhar(linhas, quadros, ss.idx, cor, realcar), unsafe_allow_html=True)
-
-    with col_estado:
-        st.subheader("Estado atual")
-        st.metric("Custo acumulado", "—" if q["custo"] is None else q["custo"])
-        st.markdown(
-            f"**Passo:** {ss.idx} de {ultimo}  \n"
-            f"**Posição:** linha {q['pos'][0]}, coluna {q['pos'][1]}  \n"
-            f"**Chaves:** {'—' if q['chaves'] is None else q['chaves']}  \n"
-            f"**Bônus consumidos:** {'—' if q['bonus'] is None else q['bonus']}  \n"
-            f"**Camada:** <span class='dot' style='background:{cor(chave_camada(q['chaves']))}'></span>"
-            f"{chave_camada(q['chaves']) or 'sem chave'}", unsafe_allow_html=True)
-        st.caption("“—” = o algoritmo não devolveu essa informação.")
-
-    if ss.tocando:
-        time.sleep(1.0 / velocidade)
-        ss.avancar = True
-        st.rerun()
+    if hasattr(st, "fragment"):
+        st.fragment(run_every=periodo if sessao.tocando else None)(visualizacao)()
+    else:
+        visualizacao()
+        if sessao.tocando:
+            sleep(max(0.0, sessao.proximo_passo - monotonic()))
+            st.rerun()
 
 
 if __name__ == "__main__":

@@ -237,6 +237,29 @@ def gerar_labirinto(caminho_do_labirinto):
     
     return Labirinto(estado_inicial,estado_final,lista_nos,metricas)
 
+def preparar_estados(labirinto):
+    """Prepara a entrada da BFS a partir do Labirinto retornado por gerar_labirinto."""
+    modelos = []
+    inicio = None
+    fim = None
+
+    for no in labirinto.lista_nos:
+        modelo = No_estados("-", "-", "Não Visitado", no)
+        if no.tipo == "S":
+            inicio = modelo
+        elif no.tipo == "G":
+            fim = modelo
+        elif no.tipo in ("A", "B", "C", "D"):
+            modelo.bloqueado = 1
+        modelos.append(modelo)
+
+    if inicio is None or fim is None:
+        raise ValueError("O labirinto precisa ter uma célula S e uma célula G.")
+    return modelos, inicio, fim
+
+
+
+
 def ligar_elementos_lista_nos(lista_nos):
     num_arestas = 0
     for no_1 in lista_nos:
@@ -250,7 +273,7 @@ def ligar_elementos_lista_nos(lista_nos):
                     num_arestas += 1
                     no_1.grau_saida += 1
                     no_2.grau_entrada += 1
-                if no_2.tipo != ">" and no_2.tip_elemento.chaveso != "v" and no_2.tipo != "^":    
+                if no_2.tipo != ">" and no_2.tipo != "v" and no_2.tipo != "^":    
                     no_2.adicionar_adjacencia("O",Aresta(no_2,no_1,custo_1))
                     num_arestas += 1
                     no_2.grau_saida += 1
@@ -273,7 +296,7 @@ def ligar_elementos_lista_nos(lista_nos):
 
 def buscar_no_estado_a_partir_posicao(lista_nos_estados,no_posicao_alvo):
     for i in lista_nos_estados:
-        if i == no_posicao_alvo:
+        if i.no_pos == no_posicao_alvo:
             return i
         
 def gerar_grafo_estados(labirinto):
