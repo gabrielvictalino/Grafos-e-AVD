@@ -1,7 +1,9 @@
-from graphs.labirinto import buscar_no_estado_a_partir_posicao
-from graphs.labirinto import Camada
-from graphs.labirinto import No_estados
-from graphs.labirinto import dicionario_direcoes
+from src.graphs.labirinto import (
+    buscar_no_estado_a_partir_posicao,
+    Camada,
+    No_estados,
+    dicionario_direcoes,
+)
 import matplotlib.pyplot as plt
 import os
 
