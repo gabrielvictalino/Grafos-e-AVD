@@ -1,8 +1,9 @@
 # [IA] Gemini Interface de linha de comando (CLI) conectada ao src/solve.py
+# [IA] Antigravity (Gemini) – adiciona opção --exportar-parte1 para gerar os arquivos obrigatórios da Parte 1
 import argparse
 from pathlib import Path
 from src.graphs.io import carregar_grafo_tmdb
-from src.solve import executar_algoritmo_parte2, executar_benchmark_parte2
+from src.solve import executar_algoritmo_parte2, executar_benchmark_parte2, exportar_parte1
 
 
 def criar_parser() -> argparse.ArgumentParser:
@@ -13,6 +14,13 @@ def criar_parser() -> argparse.ArgumentParser:
     entrada = parser.add_mutually_exclusive_group(required=True)
     entrada.add_argument("--mapa", type=str, help="Caminho do mapa (.txt) da Parte 1")
     entrada.add_argument("--dataset", type=str, help="Caminho da pasta ou CSV da Parte 2")
+    entrada.add_argument(
+        "--exportar-parte1",
+        nargs="?",
+        const="mapas",
+        type=str,
+        help="Exporta todos os arquivos obrigatórios da Parte 1 a partir da pasta de mapas (padrão: mapas)",
+    )
 
     parser.add_argument(
         "--alg",
@@ -57,6 +65,12 @@ def main() -> None:
             executar_algoritmo_parte2(lista_nos, mapa_nos, args.alg, args.source, args.target, out_dir)
         else:
             parser.error("Informe --alg ou --benchmark para --dataset.")
+
+    elif args.exportar_parte1 is not None:
+        arquivos = exportar_parte1(args.exportar_parte1, out_dir)
+        print(f"[OK] {len(arquivos)} arquivos exportados em {out_dir}:")
+        for arq in arquivos:
+            print(f"  - {arq}")
 
     elif args.mapa:
         print(f"[INFO] Executando Parte 1 para o mapa: {args.mapa}")

@@ -51,6 +51,7 @@ class Labirinto:
         self.dicionario_graus_entrada = {}
         self.dicionario_graus_saida = {}
         self.becos = {}
+    # exclui nó virtual ALVO das métricas de grau e filtra becos fora de G
     def calcular_graus_estado(self, arestas_geradas, camadas):
 
         estados_gerados = {
@@ -59,12 +60,12 @@ class Labirinto:
             for estado in camada.lista_nos_estados
         }
 
-        estados_gerados.add("ALVO")
-
         graus_entrada = {estado: 0 for estado in estados_gerados}
         graus_saida = {estado: 0 for estado in estados_gerados}
 
         for origem, destino, movimento, casa, peso in arestas_geradas:
+            if destino == "ALVO":
+                continue
             graus_saida[origem] += 1
             graus_entrada[destino] += 1
         self.dicionario_graus_entrada = graus_entrada
@@ -73,7 +74,7 @@ class Labirinto:
         becos = {
             chave: valor
             for chave, valor in graus_saida.items()
-            if valor == 0 and chave != "ALVO"
+            if valor == 0 and chave.no_pos.tipo != "G"
         }
         self.becos = becos 
         self.maior_grau_entrada = max(graus_entrada.values(), default = 0)
@@ -107,6 +108,8 @@ class Metricas:
         self.tamanho = 0
         self.num_estados = 0
         self.teto_teorico = 0
+        self.num_chaves = 0
+        self.num_bonus = 0
     
     
     def setOrdem(self,ordem):
@@ -114,17 +117,22 @@ class Metricas:
     def setTamanho(self,tamanho):
         self.tamanho = tamanho
     def definirDensidade(self):
-        if self.ordem>2:
+        #corrige limiar de densidade
+        if self.ordem >= 2:
             self.densidade = self.tamanho/(self.ordem*(self.ordem-1))
         else:
             self.densidade = 0
     def definir_teto(self,num_chaves,num_bonus):
-        self.teto_teorico = 2*self.ordem*num_chaves*num_bonus
+        # corrige fórmula do teto teórico
+        self.num_chaves = num_chaves
+        self.num_bonus = num_bonus
+        self.teto_teorico = self.ordem * (2 ** num_chaves) * (2 ** num_bonus)
     def definir_num_estados(self,camadas):
+        # conta estados diretamente de lista_nos_estados sem descontar ALVO
         contador_estados = 0
         for camada in camadas:
-            contador_estados += len(camada)
-        self.num_estados = contador_estados -1 #Estado alvo. 
+            contador_estados += len(camada.lista_nos_estados)
+        self.num_estados = contador_estados
     
                     
         
@@ -147,6 +155,9 @@ class Camada:
         self.arestas_transicao = []
 
         for origem, destino, movimento, casa, peso in arestas_geradas:
+            # ignora arcos virtuais até ALVO e corrige chamada a definirDensidade
+            if destino == "ALVO":
+                continue
 
             if origem in estados_camada and destino not in estados_camada:
                 self.arestas_transicao.append(
@@ -157,7 +168,7 @@ class Camada:
                 tamanho += 1
 
         self.metricas.setTamanho(tamanho)
-        self.metricas.definirDensidade(self)        
+        self.metricas.definirDensidade()
         
         
         
@@ -222,14 +233,15 @@ def gerar_labirinto(caminho_do_labirinto):
     estado_final = 0
     ordem = 0
     lista_nos = []
-    num_chaves = 0
+    #contabiliza chaves distintas do teto teórico
+    chaves_unicas = set()
     num_bonus = 0
     arquivo = open(caminho_do_labirinto,"r")
     for indice_linha,linha in enumerate(arquivo):
         for indice_caractere,caractere in enumerate(linha):
             if caractere !=  "#" and caractere != "\n":
                 if caractere in ["a","b","c","d"]:
-                    num_chaves += 1
+                    chaves_unicas.add(caractere)
                 if caractere == "+":
                     num_bonus += 1
                 ordem += 1
@@ -240,6 +252,7 @@ def gerar_labirinto(caminho_do_labirinto):
                     estado_final = no
                 lista_nos.append(no)
     arquivo.close()
+    num_chaves = len(chaves_unicas)
     metricas = Metricas()
     metricas.setOrdem(ordem)
     tamanho = ligar_elementos_lista_nos(lista_nos)

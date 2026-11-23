@@ -1,0 +1,237 @@
+{
+  "m01": {
+    "arquivo": "m01_terreno.txt",
+    "G_pos": {
+      "ordem": 24,
+      "tamanho": 48,
+      "densidade": 0.08695652173913043
+    },
+    "G_est": {
+      "ordem": 24,
+      "tamanho": 46,
+      "densidade": 0.08333333333333333
+    },
+    "num_chaves": 0,
+    "num_bonus": 0,
+    "teto_teorico": 24,
+    "taxa_ocupacao": 1.0,
+    "maior_grau_entrada": {
+      "estado": "(1,1)|-|{}",
+      "grau": 2
+    },
+    "maior_grau_saida": {
+      "estado": "(1,1)|-|{}",
+      "grau": 2
+    },
+    "multiplicidade_maxima": 1,
+    "casas_com_multiplicidade_maxima": 24,
+    "num_becos": 0,
+    "becos": []
+  },
+  "m02": {
+    "arquivo": "m02_uma_chave.txt",
+    "G_pos": {
+      "ordem": 23,
+      "tamanho": 44,
+      "densidade": 0.08695652173913043
+    },
+    "G_est": {
+      "ordem": 39,
+      "tamanho": 74,
+      "densidade": 0.04993252361673414
+    },
+    "num_chaves": 1,
+    "num_bonus": 0,
+    "teto_teorico": 46,
+    "taxa_ocupacao": 0.8478260869565217,
+    "maior_grau_entrada": {
+      "estado": "(1,1)|-|{}",
+      "grau": 2
+    },
+    "maior_grau_saida": {
+      "estado": "(1,1)|-|{}",
+      "grau": 2
+    },
+    "multiplicidade_maxima": 2,
+    "casas_com_multiplicidade_maxima": 16,
+    "num_becos": 0,
+    "becos": []
+  },
+  "m03": {
+    "arquivo": "m03_tres_chaves.txt",
+    "G_pos": {
+      "ordem": 76,
+      "tamanho": 168,
+      "densidade": 0.029473684210526315
+    },
+    "G_est": {
+      "ordem": 213,
+      "tamanho": 466,
+      "densidade": 0.010319780317122863
+    },
+    "num_chaves": 3,
+    "num_bonus": 0,
+    "teto_teorico": 608,
+    "taxa_ocupacao": 0.3503289473684211,
+    "maior_grau_entrada": {
+      "estado": "(1,12)|ab|{}",
+      "grau": 3
+    },
+    "maior_grau_saida": {
+      "estado": "(3,4)|abc|{}",
+      "grau": 3
+    },
+    "multiplicidade_maxima": 4,
+    "casas_com_multiplicidade_maxima": 12,
+    "num_becos": 0,
+    "becos": []
+  },
+  "m04": {
+    "arquivo": "m04_esteiras.txt",
+    "G_pos": {
+      "ordem": 24,
+      "tamanho": 40,
+      "densidade": 0.07246376811594203
+    },
+    "G_est": {
+      "ordem": 37,
+      "tamanho": 66,
+      "densidade": 0.04954954954954955
+    },
+    "num_chaves": 1,
+    "num_bonus": 0,
+    "teto_teorico": 48,
+    "taxa_ocupacao": 0.7708333333333334,
+    "maior_grau_entrada": {
+      "estado": "(3,8)|-|{}",
+      "grau": 3
+    },
+    "maior_grau_saida": {
+      "estado": "(3,8)|-|{}",
+      "grau": 3
+    },
+    "multiplicidade_maxima": 2,
+    "casas_com_multiplicidade_maxima": 17,
+    "num_becos": 2,
+    "becos": [
+      "(1,3)|-|{}",
+      "(1,3)|a|{}"
+    ]
+  },
+  "m05": {
+    "arquivo": "m05_bonus.txt",
+    "G_pos": {
+      "ordem": 44,
+      "tamanho": 92,
+      "densidade": 0.048625792811839326
+    },
+    "G_est": {
+      "ordem": 215,
+      "tamanho": 438,
+      "densidade": 0.009519669637035428
+    },
+    "num_chaves": 0,
+    "num_bonus": 3,
+    "teto_teorico": 352,
+    "taxa_ocupacao": 0.6107954545454546,
+    "maior_grau_entrada": {
+      "estado": "(3,2)|-|{0,1,2}",
+      "grau": 4
+    },
+    "maior_grau_saida": {
+      "estado": "(3,1)|-|{0,1,2}",
+      "grau": 3
+    },
+    "multiplicidade_maxima": 6,
+    "casas_com_multiplicidade_maxima": 21,
+    "num_becos": 0,
+    "becos": []
+  },
+  "m06": {
+    "arquivo": "m06_fonte.txt",
+    "G_pos": {
+      "ordem": 24,
+      "tamanho": 48,
+      "densidade": 0.08695652173913043
+    },
+    "G_est": {
+      "ordem": 24,
+      "tamanho": 46,
+      "densidade": 0.08333333333333333
+    },
+    "num_chaves": 0,
+    "num_bonus": 0,
+    "teto_teorico": 24,
+    "taxa_ocupacao": 1.0,
+    "maior_grau_entrada": {
+      "estado": "(1,1)|-|{}",
+      "grau": 2
+    },
+    "maior_grau_saida": {
+      "estado": "(1,1)|-|{}",
+      "grau": 2
+    },
+    "multiplicidade_maxima": 1,
+    "casas_com_multiplicidade_maxima": 24,
+    "num_becos": 0,
+    "becos": []
+  },
+  "m07": {
+    "arquivo": "m07_impossivel.txt",
+    "G_pos": {
+      "ordem": 31,
+      "tamanho": 70,
+      "densidade": 0.07526881720430108
+    },
+    "G_est": {
+      "ordem": 16,
+      "tamanho": 38,
+      "densidade": 0.15833333333333333
+    },
+    "num_chaves": 1,
+    "num_bonus": 0,
+    "teto_teorico": 62,
+    "taxa_ocupacao": 0.25806451612903225,
+    "maior_grau_entrada": {
+      "estado": "(3,1)|-|{}",
+      "grau": 3
+    },
+    "maior_grau_saida": {
+      "estado": "(3,1)|-|{}",
+      "grau": 3
+    },
+    "multiplicidade_maxima": 1,
+    "casas_com_multiplicidade_maxima": 16,
+    "num_becos": 0,
+    "becos": []
+  },
+  "m08": {
+    "arquivo": "m08_grande.txt",
+    "G_pos": {
+      "ordem": 1169,
+      "tamanho": 2576,
+      "densidade": 0.0018866376835370356
+    },
+    "G_est": {
+      "ordem": 2919,
+      "tamanho": 6364,
+      "densidade": 0.0007471551398849588
+    },
+    "num_chaves": 4,
+    "num_bonus": 0,
+    "teto_teorico": 18704,
+    "taxa_ocupacao": 0.156062874251497,
+    "maior_grau_entrada": {
+      "estado": "(3,15)|abcd|{}",
+      "grau": 4
+    },
+    "maior_grau_saida": {
+      "estado": "(3,15)|abcd|{}",
+      "grau": 4
+    },
+    "multiplicidade_maxima": 5,
+    "casas_com_multiplicidade_maxima": 165,
+    "num_becos": 0,
+    "becos": []
+  }
+}
