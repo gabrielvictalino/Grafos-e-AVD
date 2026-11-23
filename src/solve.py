@@ -1,12 +1,12 @@
-# [IA] Gemini Orquestração de execução única, reconstrução de caminho e benchmark de escalabilidade (Parte 2)
-# [IA] Antigravity (Gemini) – orquestração da geração e exportação dos arquivos obrigatórios da Parte 1
+"""Execução de algoritmos e benchmark do dataset da Parte 2."""
+
 import csv
 import json
 import math
 import re
 import time
 from pathlib import Path
-from src.graphs.io import carregar_grafo_tmdb
+
 from src.graphs.algorithms import (
     bellman_ford,
     bfs,
@@ -18,8 +18,13 @@ from src.graphs.algorithms import (
     exportar_arestas,
     formatar_estado,
 )
-from src.graphs.labirinto import No_estados, gerar_labirinto, preparar_estados, validar_labirinto
-
+from src.graphs.labirinto import (
+    No_estados,
+    gerar_labirinto,
+    preparar_estados,
+    validar_labirinto,
+)
+from src.graphs.io import carregar_grafo_tmdb
 
 def reconstruir_caminho(anteriores: dict, origem, destino) -> list[str]:
     if destino not in anteriores or anteriores[destino] is None and destino != origem:
@@ -137,7 +142,8 @@ def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoe
     print(f"\n[OK] Relatório consolidado salvo em {report_path}")
 
 
-# [IA] Antigravity (Gemini) – funções auxiliares e exportação completa da Parte 1 (páginas 5, 6 e 7)
+
+# Exportação e métricas dos mapas da Parte 1.
 _ORDEM_DIRECOES = ("N", "L", "S", "O")
 
 
@@ -405,7 +411,7 @@ def exportar_parte1(entrada_mapas: str | Path = "mapas", out_dir: str | Path = "
             linhas_solucoes.append([mapa_id, "DIJKSTRA", passos_dijk, custo_dijk, "OK", rotulos_dijk])
 
         # 4c) Bellman-Ford
-        bf_dist, bf_ant, (bf_tem_ciclo, bf_ciclo) = bellman_ford(lista_nos, no_ini)
+        bf_dist, bf_ant, bf_tem_ciclo, bf_ciclo = bellman_ford(lista_nos, no_ini)
         if bf_tem_ciclo:
             linhas_solucoes.append([mapa_id, "BELLMAN_FORD", "", "", "CICLO_NEGATIVO", ""])
         elif not math.isfinite(bf_dist[alvo]):

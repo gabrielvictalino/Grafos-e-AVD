@@ -335,12 +335,13 @@ def formatar_estado(estado):
     return f"({linha},{coluna})|{chaves}|{bonus_formatado}"
 
 
-def converter_grafo_estados(arestas_geradas, camadas, estado_inicial, estado_final):
+def converter_grafo_estados(arestas_geradas, camadas, estado_inicial, estado_final, incluir_alvo=True):
     """Retorna (lista_nos, inicio, alvo, nos_por_estado).
     estado_inicial e estado_final são os No_estados de preparar_estados.
     nos_por_estado associa cada estado original ao No correspondente e também
-    contém a entrada "ALVO". A saída física fornece a posição do alvo virtual,
-    inclusive quando a exploração não alcança nenhuma instância de G.
+    contém a entrada "ALVO" quando incluir_alvo=True. A saída física fornece a
+    posição do alvo virtual, inclusive quando a exploração não alcança nenhuma
+    instância de G.
     """
     nos_por_estado = {}
     for camada in camadas:
@@ -348,14 +349,18 @@ def converter_grafo_estados(arestas_geradas, camadas, estado_inicial, estado_fin
             casa = estado.no_pos
             # O Dijkstra do projeto para no primeiro No de tipo G.
             # Reservamos esse tipo para o ALVO comum a todas as saídas.
-            tipo = "." if casa.tipo == "G" else casa.tipo
+            tipo = "." if (incluir_alvo and casa.tipo == "G") else casa.tipo
             nos_por_estado[estado] = No(casa.posicao_linha, casa.posicao_coluna, tipo)
 
-    saida = estado_final.no_pos
-    alvo = No(saida.posicao_linha, saida.posicao_coluna, "G")
-    nos_por_estado["ALVO"] = alvo
+    alvo = None
+    if incluir_alvo:
+        saida = estado_final.no_pos
+        alvo = No(saida.posicao_linha, saida.posicao_coluna, "G")
+        nos_por_estado["ALVO"] = alvo
 
     for origem, destino, movimento, _, peso in arestas_geradas:
+        if not incluir_alvo and destino == "ALVO":
+            continue
         no_origem = nos_por_estado[origem]
         no_destino = nos_por_estado[destino]
         # G tem um único arco virtual. Usamos o primeiro slot de adjacência.

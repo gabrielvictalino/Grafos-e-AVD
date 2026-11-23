@@ -9,12 +9,10 @@ from math import isfinite
 from pathlib import Path
 from time import monotonic, sleep
 from traceback import format_exc
-from typing import TYPE_CHECKING
 
 import streamlit as st
-
-if TYPE_CHECKING:
-    from src.graphs import labirinto
+from src.graphs import algorithms as graph_algorithms
+from src.graphs import labirinto as maze
 
 
 RAIZ = Path(__file__).resolve().parent
@@ -151,10 +149,10 @@ class Resultado:
 
 @dataclass
 class Grafo:
-    lista_nos: list[labirinto.No]
-    vertices: dict[labirinto.No, Vertice]
-    inicio: labirinto.No
-    fim: labirinto.No
+    lista_nos: list[maze.No]
+    vertices: dict[maze.No, Vertice]
+    inicio: maze.No
+    fim: maze.No
     camadas: dict[str, list[Vertice]] = field(default_factory=dict)
 
 
@@ -213,12 +211,12 @@ def quadros_do_caminho(caminho, grafo, distancias=None):
     return quadros
 
 
-def executar(algoritmo, grafo, resultado, labirinto, algorithms):
+def executar(algoritmo, grafo, resultado):
     com_estados = bool(grafo.camadas)
     nos = grafo.lista_nos
 
     if algoritmo == "DFS":
-        dfs = algorithms.dfs(nos, grafo.inicio, detalhado=True)
+        dfs = graph_algorithms.dfs(nos, grafo.inicio, detalhado=True)
         distancias = dfs["distancias"]
         resultado.quadros.append(Quadro(grafo.vertices[grafo.inicio], distancias[grafo.inicio]))
         for u, v, classe in dfs["classificacao"]:
@@ -237,20 +235,20 @@ def executar(algoritmo, grafo, resultado, labirinto, algorithms):
 
     if algoritmo == "BFS":
         # A BFS original recebe uma lista de invólucros de No, inclusive no grafo padrão.
-        modelos = {no: labirinto.No_estados("-", "-", "Não Visitado", no) for no in nos}
-        caminho = algorithms.bfs(modelos.values(), modelos[grafo.inicio], modelos[grafo.fim])
+        modelos = {no: maze.No_estados("-", "-", "Não Visitado", no) for no in nos}
+        caminho = graph_algorithms.bfs(modelos.values(), modelos[grafo.inicio], modelos[grafo.fim])
         resultado.quadros = quadros_do_caminho(caminho or [], grafo)
         return
 
     if algoritmo == "Dijkstra":
-        distancias, anteriores,tem_pesos_negativos = algorithms.dijkstra(nos, grafo.inicio)
+        distancias, anteriores,tem_pesos_negativos = graph_algorithms.dijkstra(nos, grafo.inicio)
         if tem_pesos_negativos:
             resultado.aviso = (
                 "O Dijkstra retornou um resultado para um grafo com pesos negativos."
                 "O custo devolvido pode divergir do mínimo."
             )
     elif algoritmo == "Bellman-Ford":
-        distancias, anteriores, (tem_ciclo, ciclo) = algorithms.bellman_ford(nos, grafo.inicio)
+        distancias, anteriores, tem_ciclo, ciclo = graph_algorithms.bellman_ford(nos, grafo.inicio)
         resultado.ciclo_negativo = tem_ciclo
         if tem_ciclo:
             resultado.quadros = quadros_do_caminho(ciclo, grafo)
@@ -268,19 +266,13 @@ def registrar_erro(etapa, erro):
 
 
 def carregar(caminho, algoritmo, com_estados):
-    from src.graphs import labirinto
-
-    if not labirinto.validar_labirinto(caminho):
+    if not maze.validar_labirinto(caminho):
         return None, None
 
     linhas = Path(caminho).read_text(encoding="utf-8").splitlines()
     resultado = Resultado()
     try:
-        from src.graphs import algorithms
-    except Exception as erro:
-        resultado.erros.append(registrar_erro("Importação de graphs.algorithms", erro))
-    try:
-        mapa = labirinto.gerar_labirinto(caminho)
+        mapa = maze.gerar_labirinto(caminho)
     except Exception as erro:
         resultado.erros.append(registrar_erro("gerar_labirinto", erro))
     if resultado.erros:
@@ -288,16 +280,9 @@ def carregar(caminho, algoritmo, com_estados):
 
     if com_estados:
         try:
-            from src.graphs.algorithms import (
-                converter_grafo_estados,
-            )
-            from src.graphs.labirinto import (
-                preparar_estados,
-            )
-
-            modelos, origem, saida = preparar_estados(mapa)
-            transicoes, camadas = algorithms.bfs_grafo_estados_exploracao(modelos, origem, saida)
-            lista_nos, inicio, alvo, nos_por_estado = converter_grafo_estados(
+            modelos, origem, saida = maze.preparar_estados(mapa)
+            transicoes, camadas = graph_algorithms.bfs_grafo_estados_exploracao(modelos, origem, saida)
+            lista_nos, inicio, alvo, nos_por_estado = graph_algorithms.converter_grafo_estados(
                 transicoes, camadas, origem, saida
             )
 
@@ -316,7 +301,7 @@ def carregar(caminho, algoritmo, com_estados):
             return linhas, resultado
         resultado.camadas = grafo.camadas
         try:
-            armadilhas = algorithms.bfs_estados_armadilha(transicoes, camadas)
+            armadilhas = graph_algorithms.bfs_estados_armadilha(transicoes, camadas)
             if armadilhas is None:
                 resultado.erro_armadilhas = Diagnostico(
                     "bfs_estados_armadilha", "A função retornou None. O realce está indisponível."
@@ -329,7 +314,7 @@ def carregar(caminho, algoritmo, com_estados):
         grafo = grafo_padrao(mapa)
 
     try:
-        executar(algoritmo, grafo, resultado, labirinto, algorithms)
+        executar(algoritmo, grafo, resultado)
     except Exception as erro:
         resultado.erros.append(registrar_erro(algoritmo, erro))
     return linhas, resultado

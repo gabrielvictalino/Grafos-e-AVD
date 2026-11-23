@@ -7,7 +7,7 @@ Para gerar o relatório de escalabilidade e os gráficos de comparação:
 
 ```bash
 python -m src.cli --dataset data/dataset_parte2/tmdb_limpo.csv.gz --benchmark --out out/parte2
-python viz_parte2.py out/parte2/parte2_report.json --out out/parte2
+python -m src.viz out/parte2/parte2_report.json --out out/parte2
 ```
 
 O benchmark grava médias de tempo em `parte2_report.json`. O visualizador salva
