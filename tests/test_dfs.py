@@ -1,13 +1,67 @@
 # [IA] Antigravity (Gemini) – testes unitários do algoritmo DFS (detecção de ciclo e classificação de arcos em grafo dirigido)
 
 import math
+import sys
+from pathlib import Path
 
 import networkx as nx
 import pytest
 
-from conftest import construir_grafo_dirigido
-from graphs.algorithms import dfs
-from graphs.labirinto import No
+RAIZ = Path(__file__).resolve().parents[1]
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
+
+from src.graphs.algorithms import dfs  # noqa: E402
+from src.graphs.labirinto import Aresta, No  # noqa: E402
+
+_DIRECOES_PADRAO = ("N", "L", "S", "O")
+
+
+def _construir_grafo_dirigido(vertices, arestas):
+    nos_por_nome = {}
+    lista_nos = []
+
+    for indice, item in enumerate(vertices):
+        nome, tipo = item if isinstance(item, tuple) else (item, ".")
+        if nome in nos_por_nome:
+            raise ValueError(f"Vértice duplicado: {nome}")
+        no = No(indice, 0, tipo)
+        nos_por_nome[nome] = no
+        lista_nos.append(no)
+
+    grafo_nx = nx.DiGraph()
+    for nome in nos_por_nome:
+        grafo_nx.add_node(nome)
+
+    direcoes_usadas = {nome: set() for nome in nos_por_nome}
+
+    for item in arestas:
+        if len(item) == 3:
+            origem_nome, destino_nome, peso = item
+            direcao = None
+        elif len(item) == 4:
+            origem_nome, destino_nome, peso, direcao = item
+        else:
+            raise ValueError(f"Aresta inválida: {item}")
+
+        if direcao is None:
+            disponiveis = [d for d in _DIRECOES_PADRAO if d not in direcoes_usadas[origem_nome]]
+            if not disponiveis:
+                raise ValueError(f"Vértice {origem_nome} excedeu o limite de 4 arestas de saída.")
+            direcao = disponiveis[0]
+        elif direcao not in _DIRECOES_PADRAO or direcao in direcoes_usadas[origem_nome]:
+            raise ValueError(f"Direção inválida ou duplicada '{direcao}' na aresta {item}.")
+
+        direcoes_usadas[origem_nome].add(direcao)
+        no_origem = nos_por_nome[origem_nome]
+        no_destino = nos_por_nome[destino_nome]
+
+        no_origem.adicionar_adjacencia(direcao, Aresta(no_origem, no_destino, peso))
+        no_origem.grau_saida += 1
+        no_destino.grau_entrada += 1
+        grafo_nx.add_edge(origem_nome, destino_nome, weight=peso)
+
+    return nos_por_nome, lista_nos, grafo_nx
 
 
 def test_dfs_classificacao_todos_tipos_de_arcos_e_ciclo():
@@ -20,7 +74,7 @@ def test_dfs_classificacao_todos_tipos_de_arcos_e_ciclo():
         ("C", "A", 1, "N"),
         ("D", "C", 1, "N"),
     ]
-    nos, lista_nos, grafo_nx = construir_grafo_dirigido(vertices, arestas)
+    nos, lista_nos, grafo_nx = _construir_grafo_dirigido(vertices, arestas)
 
     resultado = dfs(lista_nos, nos["A"], detalhado=True)
 
@@ -63,7 +117,7 @@ def test_dfs_dag_sem_ciclo():
         ("B", "D", 1, "N"),
         ("C", "D", 1, "N"),
     ]
-    nos, lista_nos, grafo_nx = construir_grafo_dirigido(vertices, arestas)
+    nos, lista_nos, grafo_nx = _construir_grafo_dirigido(vertices, arestas)
 
     resultado = dfs(lista_nos, nos["A"], detalhado=True)
 
@@ -80,7 +134,7 @@ def test_dfs_dag_sem_ciclo():
 def test_dfs_autolaco_classificado_como_retorno():
     vertices = ["A"]
     arestas = [("A", "A", 1, "N")]
-    nos, lista_nos, _ = construir_grafo_dirigido(vertices, arestas)
+    nos, lista_nos, _ = _construir_grafo_dirigido(vertices, arestas)
 
     resultado = dfs(lista_nos, nos["A"], detalhado=True)
 
@@ -95,7 +149,7 @@ def test_dfs_modo_padrao_retorna_distancias_e_anteriores():
         ("A", "B", 2),
         ("B", "C", 3),
     ]
-    nos, lista_nos, _ = construir_grafo_dirigido(vertices, arestas)
+    nos, lista_nos, _ = _construir_grafo_dirigido(vertices, arestas)
 
     retorno = dfs(lista_nos, nos["A"])
 
@@ -111,7 +165,7 @@ def test_dfs_modo_padrao_retorna_distancias_e_anteriores():
 
 
 def test_dfs_origem_fora_da_lista_gera_erro():
-    _, lista_nos, _ = construir_grafo_dirigido(["A", "B"], [("A", "B", 1)])
+    _, lista_nos, _ = _construir_grafo_dirigido(["A", "B"], [("A", "B", 1)])
     no_externo = No(99, 99, ".")
 
     with pytest.raises(ValueError):
