@@ -238,7 +238,7 @@ def executar(algoritmo, grafo, resultado, labirinto, algorithms):
     if algoritmo == "BFS":
         # A BFS original recebe uma lista de invólucros de No, inclusive no grafo padrão.
         modelos = {no: labirinto.No_estados("-", "-", "Não Visitado", no) for no in nos}
-        caminho = algorithms.bfs_grafo_nos(modelos.values(), modelos[grafo.inicio], modelos[grafo.fim])
+        caminho = algorithms.bfs(modelos.values(), modelos[grafo.inicio], modelos[grafo.fim])
         resultado.quadros = quadros_do_caminho(caminho or [], grafo)
         return
 
@@ -250,19 +250,11 @@ def executar(algoritmo, grafo, resultado, labirinto, algorithms):
                 "O custo devolvido pode divergir do mínimo."
             )
     elif algoritmo == "Bellman-Ford":
-        distancias, anteriores, *informacao_ciclo = algorithms.bellman_ford(nos, grafo.inicio)
-        if informacao_ciclo:
-            tem_ciclo, ciclo = informacao_ciclo
-            if tem_ciclo:
-                resultado.ciclo_negativo = True
-                if ciclo:
-                    sequencia = list(ciclo)
-                    if len(sequencia) == 1 or sequencia[-1] is not sequencia[0]:
-                        sequencia.append(sequencia[0])
-                    resultado.quadros = quadros_do_caminho(sequencia, grafo)
-                return
-        elif tem_pesos_negativos:
-            resultado.aviso = "A versão atual do Bellman-Ford ainda não informa ciclos negativos."
+        distancias, anteriores, (tem_ciclo, ciclo) = algorithms.bellman_ford(nos, grafo.inicio)
+        resultado.ciclo_negativo = tem_ciclo
+        if tem_ciclo:
+            resultado.quadros = quadros_do_caminho(ciclo, grafo)
+            return
     else:
         raise ValueError(f"Algoritmo desconhecido: {algoritmo}")
 
@@ -510,12 +502,14 @@ def mostrar_resultado(resultado, algoritmo):
                 st.info("Nenhum arco examinado.")
         return
     if resultado.ciclo_negativo:
-        st.warning("O Bellman-Ford retornou um ciclo negativo.")
+        st.warning("O Bellman-Ford detectou um ciclo negativo alcançável a partir de S.")
         if resultado.quadros:
             st.metric("Custo do ciclo", resultado.quadros[-1].custo)
             with st.expander("Sequência do ciclo"):
                 st.text("\n".join(q.estado.rotulo for q in resultado.quadros))
         return
+    if algoritmo == "Bellman-Ford":
+        st.info("O Bellman-Ford não detectou ciclos negativos alcançáveis a partir de S.")
     if not resultado.quadros:
         st.info("O retorno do algoritmo não contém um caminho até ALVO.")
         return

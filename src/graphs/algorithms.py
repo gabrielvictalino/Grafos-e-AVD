@@ -418,7 +418,7 @@ def dfs(lista_nos, origem, detalhado=False):
 
     return distancias, anteriores
 
-def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
+def bfs(lista_nos_estados,estado_inicial,estado_final):
     
     estado_inicial.estado_de_visualizacao = "Visitado"
     
