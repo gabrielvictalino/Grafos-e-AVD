@@ -185,7 +185,14 @@ def validar_labirinto(caminho_do_labirinto):
         all(elemento == lista_quantidade_linhas[0]
             for elemento in lista_quantidade_linhas)
     )
-
+    resultado_paredes = (
+        len(lista_quantidade_linhas) > 0
+        and all(caractere == "#" for caractere in lista_quantidade_linhas[0])
+        and all(caractere == "#" for caractere in lista_quantidade_linhas[-1])
+        and all(linha[0] == "#" and linha[-1] == "#" for linha in lista_quantidade_linhas)
+    )
+    if not resultado_paredes:
+        print("O labirinto não está envolto de paredes")
     if not resultado_tamanho_igual:
         print("Número de linhas e colunas diferentes")
 
@@ -199,7 +206,7 @@ def validar_labirinto(caminho_do_labirinto):
     if not resultado_tamanho_igual:
         return False
 
-    if numeroS != 1 or numeroG != 1:
+    if numeroS != 1 or numeroG < 1:
         return False
 
     print("Validado")

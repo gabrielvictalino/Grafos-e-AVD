@@ -13,7 +13,7 @@ dicionario_direcoes_ao_contrario = {0:"N", 1: "L", 2:"S", 3:"O"}
 def dijkstra(lista_nos, origem):
     for no in lista_nos:
         for i in no.lista_arestas:
-            if i <0 and i.custo:
+            if i !=0 and i.custo<0:
                 return None,None,True
                 
     anteriores={} # Para escrever o caminho no final
@@ -163,35 +163,78 @@ def dijkstra(lista_nos, origem):
 
 
 
-def bellman_ford(listas_nos,origem):
-    anteriores={}
-    distancias={}
-    arestas=[]
+def bellman_ford(listas_nos, origem):
+    anteriores = {}
+    distancias = {}
+    arestas = []
+
     for no in listas_nos:
-        distancias[no]= float('inf')
-        anteriores[no]= None
+        distancias[no] = float('inf')
+        anteriores[no] = None
+
         for i in no.lista_arestas:
             if i != 0:
                 arestas.append(i)
-    distancias[origem]= 0
-    
-    for i in range (len(listas_nos)-1):
-        mudou =False
+
+    distancias[origem] = 0
+
+    # Relaxamento das arestas
+    for i in range(len(listas_nos) - 1):
+        mudou = False
+
         for aresta in arestas:
             org = aresta.origem
             dest = aresta.destino
             peso = aresta.custo
-            
-            if distancias[org]!= float('inf'):
-                if distancias[org] + peso< distancias[dest]:
-                    distancias[dest]=distancias[org] + peso
-                    anteriores[dest]=org
-                    mudou= True
-                
+
+            if distancias[org] != float('inf'):
+                if distancias[org] + peso < distancias[dest]:
+                    distancias[dest] = distancias[org] + peso
+                    anteriores[dest] = org
+                    mudou = True
+
         if not mudou:
             break
 
-    return distancias, anteriores
+    # Passagem adicional para detectar ciclo negativo
+    mudou = False
+    atual = None
+    ciclo = []
+
+    for aresta in arestas:
+        org = aresta.origem
+        dest = aresta.destino
+        peso = aresta.custo
+
+        if distancias[org] != float('inf'):
+            if distancias[org] + peso < distancias[dest]:
+                distancias[dest] = distancias[org] + peso
+                anteriores[dest] = org
+                mudou = True
+                atual = dest
+
+    if mudou:
+
+        # Entra no ciclo
+        for _ in range(len(anteriores)):
+            atual = anteriores[atual]
+
+        # Reconstrói o ciclo
+        inicio_ciclo = atual
+        ciclo = [inicio_ciclo]
+
+        atual = anteriores[inicio_ciclo]
+
+        while atual != inicio_ciclo:
+            ciclo.append(atual)
+            atual = anteriores[atual]
+
+        ciclo.append(inicio_ciclo)
+        ciclo.reverse()
+
+
+    return distancias, anteriores, (mudou,ciclo)
+
 
 
 # def bellman_ford_estados(lista_nos_estados, origem):
