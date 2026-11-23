@@ -3,7 +3,7 @@ import json
 import time
 from pathlib import Path
 from src.graphs.io import carregar_grafo_tmdb
-from src.graphs.algorithms import dijkstra, bellman_ford, dfs  # inclua bfs quando criar
+from src.graphs.algorithms import bfs, dijkstra, bellman_ford, dfs
 
 
 def reconstruir_caminho(anteriores: dict, origem, destino) -> list[str]:
@@ -27,10 +27,18 @@ def executar_algoritmo_parte2(lista_nos, mapa_nos, alg: str, source_id: str, tar
     destino = mapa_nos.get(target_id) if target_id else None
 
     inicio = time.perf_counter()
-    if alg == "DIJKSTRA":
-        distancias, anteriores = dijkstra(lista_nos, origem)
+    if alg == "BFS":
+        distancias, anteriores = bfs(lista_nos, origem)
+    elif alg == "DIJKSTRA":
+        distancias, anteriores, peso_negativo = dijkstra(lista_nos, origem)
+        if peso_negativo:
+            raise ValueError("Dijkstra não pode ser executado em grafos com pesos negativos.")
     elif alg == "BELLMAN_FORD":
-        distancias, anteriores = bellman_ford(lista_nos, origem)
+        distancias, anteriores, tem_ciclo_negativo, ciclo_negativo = bellman_ford(
+            lista_nos, origem
+        )
+        if tem_ciclo_negativo:
+            raise ValueError(f"O grafo contém ciclo negativo: {ciclo_negativo}")
     elif alg == "DFS":
         distancias, anteriores = dfs(lista_nos, origem)
     else:
@@ -47,6 +55,7 @@ def executar_algoritmo_parte2(lista_nos, mapa_nos, alg: str, source_id: str, tar
     }
 
     saida_path = out_dir / f"resultado_{alg.lower()}_{source_id}.json"
+    saida_path.parent.mkdir(parents=True, exist_ok=True)
     with open(saida_path, "w", encoding="utf-8") as f:
         json.dump(resultado, f, indent=2, ensure_ascii=False)
 
@@ -59,6 +68,9 @@ def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoe
     Roda os algoritmos em 3 escalas (10%, 50% e 100%) com média de 5 execuções
     e salva out/parte2/parte2_report.json.
     """
+    if repeticoes < 1:
+        raise ValueError("O número de repetições precisa ser pelo menos 1.")
+
     tamanhos = [
         ("10%", 41_624),
         ("50%", 208_121),
@@ -79,6 +91,7 @@ def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoe
         tempos = {}
 
         for nome_alg, fn, grafo, fonte in [
+            ("BFS", bfs, nos_orig, origem_orig),
             ("DFS", dfs, nos_orig, origem_orig),
             ("DIJKSTRA", dijkstra, nos_pos, origem_pos),
             ("BELLMAN_FORD", bellman_ford, nos_orig, origem_orig),
@@ -102,6 +115,7 @@ def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoe
         })
 
     report_path = out_dir / "parte2_report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(relatorio, f, indent=2, ensure_ascii=False)
 

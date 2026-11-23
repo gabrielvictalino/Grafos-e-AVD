@@ -3,7 +3,6 @@
 from src.graphs.labirinto import Camada, No_estados, buscar_no_estado_a_partir_posicao
 from src.graphs.estados import (
     adicionar_estado_a_camada,
-    bfs,
     bfs_estados_armadilha,
     bfs_grafo_estados_exploracao,
     bfs_grafo_nos,
@@ -14,6 +13,31 @@ from src.graphs.estados import (
     verificar_chaves,
 )
 from src.viz import exportar_arestas, exportar_heatmap
+from collections import deque
+
+
+def bfs(lista_nos, origem):
+    """Retorna níveis e predecessores da BFS a partir de ``origem``."""
+    if origem not in lista_nos:
+        raise ValueError("A origem deve pertencer à lista de nós.")
+
+    niveis = {no: float("inf") for no in lista_nos}
+    anteriores = {no: None for no in lista_nos}
+    niveis[origem] = 0
+    fila = deque([origem])
+
+    while fila:
+        atual = fila.popleft()
+        for aresta in atual.lista_arestas:
+            if aresta == 0:
+                continue
+            vizinho = aresta.destino
+            if niveis[vizinho] == float("inf"):
+                niveis[vizinho] = niveis[atual] + 1
+                anteriores[vizinho] = atual
+                fila.append(vizinho)
+
+    return niveis, anteriores
 
 def dijkstra(lista_nos, origem):
     for no in lista_nos:
@@ -121,7 +145,7 @@ def bellman_ford(listas_nos, origem):
         ciclo.reverse()
 
 
-    return distancias, anteriores, (mudou,ciclo)
+    return distancias, anteriores, mudou, ciclo
 
 
 def dfs(lista_nos, origem, detalhado=False):

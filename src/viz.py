@@ -5,6 +5,7 @@ import os
 
 from src.graphs.estados import formatar_estado
 
+
 def exportar_arestas(lista_arestas, nome_mapa):
 
     diretorio = "out/parte1"
