@@ -185,12 +185,17 @@ def validar_labirinto(caminho_do_labirinto):
         all(elemento == lista_quantidade_linhas[0]
             for elemento in lista_quantidade_linhas)
     )
+    linhas = texto.splitlines()
+
     resultado_paredes = (
-        len(lista_quantidade_linhas) > 0
-        and all(caractere == "#" for caractere in lista_quantidade_linhas[0])
-        and all(caractere == "#" for caractere in lista_quantidade_linhas[-1])
-        and all(linha[0] == "#" and linha[-1] == "#" for linha in lista_quantidade_linhas)
+        len(linhas) > 0
+        and all(linhas)
+        and all(caractere == "#" for caractere in linhas[0])
+        and all(caractere == "#" for caractere in linhas[-1])
+        and all(linha[0] == "#" and linha[-1] == "#" for linha in linhas)
     )
+
+    
     if not resultado_paredes:
         print("O labirinto não está envolto de paredes")
     if not resultado_tamanho_igual:
