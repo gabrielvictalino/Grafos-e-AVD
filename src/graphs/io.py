@@ -1,4 +1,4 @@
-# [IA] Gemini Leitura do dataset limpo e construção do grafo de objetos compatível com algorithms.py
+
 from itertools import combinations
 from pathlib import Path
 import pandas as pd

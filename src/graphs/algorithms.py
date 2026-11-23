@@ -1,28 +1,57 @@
-from src.graphs.labirinto import buscar_no_estado_a_partir_posicao
-from src.graphs.labirinto import Camada
-from src.graphs.labirinto import No_estados
-import matplotlib.pyplot as plt
-import os
+"""Algoritmos gerais de busca e caminhos mínimos."""
 
-import csv
-import os
+from src.graphs.labirinto import Camada, No_estados, buscar_no_estado_a_partir_posicao
+from src.graphs.estados import (
+    adicionar_estado_a_camada,
+    bfs_estados_armadilha,
+    bfs_grafo_estados_exploracao,
+    bfs_grafo_nos,
+    converter_grafo_estados,
+    formatar_estado,
+    verificar_bonus,
+    verificar_bloqueio,
+    verificar_chaves,
+)
+from src.viz import exportar_arestas, exportar_heatmap
+from collections import deque
 
-dicionario_direcoes = {"N":0, "L": 1, "S":2, "O":3}
-dicionario_direcoes_ao_contrario = {0:"N", 1: "L", 2:"S", 3:"O"}
+
+def bfs(lista_nos, origem):
+    """Retorna níveis e predecessores da BFS a partir de ``origem``."""
+    if origem not in lista_nos:
+        raise ValueError("A origem deve pertencer à lista de nós.")
+
+    niveis = {no: float("inf") for no in lista_nos}
+    anteriores = {no: None for no in lista_nos}
+    niveis[origem] = 0
+    fila = deque([origem])
+
+    while fila:
+        atual = fila.popleft()
+        for aresta in atual.lista_arestas:
+            if aresta == 0:
+                continue
+            vizinho = aresta.destino
+            if niveis[vizinho] == float("inf"):
+                niveis[vizinho] = niveis[atual] + 1
+                anteriores[vizinho] = atual
+                fila.append(vizinho)
+
+    return niveis, anteriores
 
 def dijkstra(lista_nos, origem):
     for no in lista_nos:
         for i in no.lista_arestas:
             if i !=0 and i.custo<0:
                 return None,None,True
-                
+
     anteriores={} # Para escrever o caminho no final
     distancias= {} #guarda o menor custo
     visitados={} #fechados
     for no in lista_nos:
         distancias[no] = float('inf')
         visitados[no] = False
-        
+
         anteriores[no] = None
     distancias[origem] = 0
     while True:
@@ -44,123 +73,6 @@ def dijkstra(lista_nos, origem):
                     distancias[v] = distancias[u] + aresta.custo
                     anteriores[v] = u
     return distancias, anteriores,False
-
-
-
-
-# def dijkstra_estados(lista_nos_estados, origem, final):
-
-#     anteriores = {}
-#     distancias = {}
-#     visitados = {}
-
-#     camadas = [Camada()]
-#     camadas[0].chaves = ""
-
-#     origem.chaves = ""
-#     origem.estado_de_visualizacao = "Visitado"
-
-#     lista_estados_gerados = [origem]
-
-#     # Identifica os estados por posição e chaves.
-#     estados = {
-#         (origem.no_pos, origem.chaves): origem
-#     }
-
-#     anteriores[origem] = None
-#     distancias[origem] = 0
-#     visitados[origem] = False
-
-#     estado_final = None
-
-#     while True:
-
-#         u = None
-#         menor_distancia = float('inf')
-
-#         # Seleciona o estado de menor custo.
-#         for no in lista_estados_gerados:
-
-#             if not visitados[no] and distancias[no] < menor_distancia:
-#                 menor_distancia = distancias[no]
-#                 u = no
-
-#         if u is None:
-#             break
-
-#         # Finaliza o estado atual.
-#         visitados[u] = True
-#         u.estado_de_visualizacao = "Encerrado"
-
-#         # Adiciona à camada correspondente.
-#         adicionar_estado_a_camada(camadas, u)
-
-#         # Verifica se chegou ao destino.
-#         if u.no_pos.tipo == "G":
-#             estado_final = u
-#             break
-
-#         # Analisa as arestas.
-#         for aresta in u.no_pos.lista_arestas:
-
-#             if aresta == 0:
-#                 continue
-
-#             v = buscar_no_estado_a_partir_posicao(
-#                 lista_nos_estados,
-#                 aresta.destino
-#             )
-
-#             if v is None:
-#                 continue
-
-#             # Verifica se pode atravessar a porta.
-#             if verificar_bloqueio(v, u.chaves):
-#                 continue
-
-#             # Cria um estado independente do objeto original.
-#             v = No_estados(
-#                 "-", "-",
-#                 v.no_pos.tipo,
-#                 "Não Visitado",
-#                 v.no_pos
-#             )
-
-#             # Herda as chaves do estado atual.
-#             v.chaves = u.chaves
-
-#             # Verifica se o destino contém uma nova chave.
-#             camadas, v = verificar_chaves(v, camadas)
-
-#             # Identifica o estado resultante.
-#             identificador = (v.no_pos, v.chaves)
-
-#             # Reutiliza um estado que já existe.
-#             if identificador in estados:
-#                 v = estados[identificador]
-
-#             else:
-#                 estados[identificador] = v
-#                 lista_estados_gerados.append(v)
-
-#                 distancias[v] = float('inf')
-#                 anteriores[v] = None
-#                 visitados[v] = False
-
-#             # Relaxamento da aresta.
-#             if not visitados[v]:
-
-#                 nova_distancia = distancias[u] + aresta.custo
-
-#                 if nova_distancia < distancias[v]:
-
-#                     distancias[v] = nova_distancia
-#                     anteriores[v] = u
-
-#                     v.estado_de_visualizacao = "Visitado"
-
-#     return distancias, anteriores, camadas
-
 
 
 def bellman_ford(listas_nos, origem):
@@ -233,98 +145,7 @@ def bellman_ford(listas_nos, origem):
         ciclo.reverse()
 
 
-    return distancias, anteriores, (mudou,ciclo)
-
-
-
-# def bellman_ford_estados(lista_nos_estados, origem):
-
-#     camadas = [Camada()]
-#     camadas[0].chaves = ""
-
-#     origem.chaves = ""
-
-#     estados = {
-#         (origem.no_pos, origem.chaves): origem
-#     }
-
-#     lista_estados_gerados = [origem]
-
-#     anteriores = {origem: None}
-#     distancias = {origem: 0}
-#     # Número de passagens sem assumir que os estados
-#     # já foram todos gerados.
-#     while True:
-
-#         mudou = False
-#         criou_estado = False
-
-#         # Cópia dos estados existentes nesta passagem.
-#         for org in lista_estados_gerados[:]:
-
-#             if distancias[org] == float('inf'):
-#                 continue
-
-#             for aresta in org.no_pos.lista_arestas:
-
-#                 if aresta == 0:
-#                     continue
-
-#                 dest_original = buscar_no_estado_a_partir_posicao(
-#                     lista_nos_estados,
-#                     aresta.destino
-#                 )
-
-#                 if dest_original is None:
-#                     continue
-
-#                 # Verifica o bloqueio da porta.
-#                 if verificar_bloqueio(dest_original, org.chaves):
-#                     continue
-
-#                 # Cria um estado de destino independente.
-#                 dest = No_estados(
-#                     org.chaves,
-#                     "-",
-#                     dest_original.no_pos.tipo,
-#                     "Não Visitado",
-#                     dest_original.no_pos
-#                 )
-
-#                 # Adquire a chave existente no destino.
-#                 camadas, dest = verificar_chaves(dest, camadas)
-
-#                 identificador = (dest.no_pos, dest.chaves)
-
-#                 # Reutiliza ou registra o estado.
-#                 if identificador in estados:
-#                     dest = estados[identificador]
-
-#                 else:
-#                     estados[identificador] = dest
-#                     lista_estados_gerados.append(dest)
-
-#                     distancias[dest] = float('inf')
-#                     anteriores[dest] = None
-
-#                     criou_estado = True
-
-#                 # Relaxamento.
-#                 peso = aresta.custo
-
-#                 if distancias[org] + peso < distancias[dest]:
-
-#                     distancias[dest] = distancias[org] + peso
-#                     anteriores[dest] = org
-
-#                     mudou = True
-
-#         # Termina quando nenhum estado foi criado
-#         # e nenhuma distância foi melhorada.
-#         if not mudou and not criou_estado:
-#             break
-
-#     return distancias, anteriores
+    return distancias, anteriores, mudou, ciclo
 
 
 def dfs(lista_nos, origem, detalhado=False):
