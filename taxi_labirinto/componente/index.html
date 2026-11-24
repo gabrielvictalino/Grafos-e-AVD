@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{color-scheme:dark;--bg:#132127;--line:#3d5357;--muted:#b0c1bd;--mint:#a6e4cc;--gold:#ffdb85}
+*{box-sizing:border-box}body{margin:0;background:#101b22;color:#f7f5e9;font:14px system-ui,sans-serif}
+main{max-width:1160px;margin:auto}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:#283b41;color:inherit;padding:8px 12px}button:hover{background:#354a50}button:focus-visible,canvas:focus-visible{outline:2px solid var(--gold);outline-offset:-3px}
+.board{position:relative;isolation:isolate;overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#203332}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated;outline:none}
+.hud{position:relative;z-index:1;display:flex;align-items:center;gap:clamp(12px,2vw,28px);padding:10px 16px;background:linear-gradient(105deg,#182929,#253839);border-bottom:3px solid #809075;box-shadow:0 3px 9px #13242155}
+.metric small,.manifest small,.summary dt{font-size:11px;color:var(--muted);display:block}.metric{flex:none}.metric strong{display:block;font:bold 19px ui-monospace,monospace;white-space:nowrap}.fare strong{color:var(--gold)}
+.manifest{border-left:1px solid #465957;padding-left:16px;flex:1;min-width:0}
+#people{display:flex;flex-wrap:wrap;align-items:center;gap:5px 12px;margin-top:3px}.person{display:flex;align-items:center;gap:4px}.portrait{width:23px;height:29px;object-fit:contain;image-rendering:pixelated}.person b{font-size:12px}.person span{display:block;font-size:11px;color:var(--muted)}.hint{font-size:13px;color:#e3ebdf}
+.status{min-height:28px;padding:5px 12px;background:#203332;color:var(--mint);font-size:12px}.warn{color:var(--gold)}
+.footer,.dpad,.legend,.toggles,.replay{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.footer{justify-content:space-between;padding:9px 0}.legend{font-size:12px;color:var(--muted);gap:14px}.legend span{display:inline-flex;gap:4px;align-items:center}.legend img{width:24px;height:24px;image-rendering:pixelated}.dpad button{touch-action:none;min-width:38px}.focus-button{border-color:#b39862;color:var(--gold)}
+.results{margin:8px 0;padding:18px 20px;border:1px solid #496859;border-radius:12px;background:#192e29}.results h2{margin:0 0 12px;font-size:20px}.summary{display:flex;gap:24px;flex-wrap:wrap;margin:0}.summary dd{margin:3px 0;font:bold 20px ui-monospace,monospace}.summary div:last-child dd{color:var(--mint)}.results p{color:#c3d4cb;margin:10px 0}.toggles,.replay{margin-top:12px}.replay input{flex:1}.loading{padding:20px;text-align:center}[hidden]{display:none!important}
+@media(max-width:620px){.hud{gap:8px 16px;flex-wrap:wrap;padding:8px 10px}.metric{display:flex;align-items:baseline;gap:5px}.metric strong{font-size:15px}.manifest{flex-basis:100%;border:0;padding:0}.manifest>small{display:none}.portrait{width:18px;height:23px}.person b,.person span{font-size:10px}.legend{gap:6px}.summary{gap:14px}}
+</style></head>
+<body>
+<div id="loading" class="loading">Preparando seu táxi…</div>
+<main id="game" hidden>
+  <section class="board" aria-label="Tela do jogo">
+    <header class="hud" aria-label="Painel da corrida">
+      <div class="metric fare"><small>Custo</small><strong id="cost">0</strong></div>
+      <div class="metric"><small>Passos</small><strong id="steps">0</strong></div>
+      <div class="metric"><small>A bordo</small><strong id="capacity">0 / 3</strong></div>
+      <div class="metric"><small>Entregas</small><strong id="delivered"></strong></div>
+      <div class="manifest"><small id="manifestTitle">Destinos</small><div id="people"></div></div>
+    </header>
+    <canvas id="map" tabindex="0" role="application" aria-label="Tabuleiro do táxi. Use as setas para dirigir."></canvas>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </section>
+  <div class="footer">
+    <div class="dpad" aria-label="Controles de direção"><button id="focus" class="focus-button">Dirigir</button><button data-dir="O" aria-label="Esquerda">←</button><button data-dir="N" aria-label="Cima">↑</button><button data-dir="S" aria-label="Baixo">↓</button><button data-dir="L" aria-label="Direita">→</button></div>
+    <div class="legend"><span>Rua · 1 ponto</span><span id="legendWorks"><img id="worksIcon" alt="">Obras +2</span><span id="legendFlood"><img id="floodIcon" alt="">Alagamento +4</span></div>
+  </div>
+  <section id="results" class="results" hidden>
+    <h2>Corrida concluída</h2>
+    <dl class="summary"><div><dt>Seu custo</dt><dd id="finalCost"></dd></div><div><dt>Mínimo com Dijkstra</dt><dd id="optimalCost"></dd></div><div><dt>Custo extra</dt><dd id="extra"></dd></div><div><dt>Eficiência</dt><dd id="efficiency"></dd></div></dl>
+    <p id="comparison"></p>
+    <div class="toggles"><label><input type="checkbox" id="playerPath" checked> Seu trajeto · amarelo</label><label><input type="checkbox" id="optimalPath" checked> Dijkstra · verde</label></div>
+    <div class="replay"><button id="play">▶ Rever Dijkstra</button><input id="replay" type="range" min="0" value="0" aria-label="Passo da rota de Dijkstra"><span id="replayLabel"></span></div>
+    <p id="replayState"></p>
+  </section>
+</main>
+<script>
+// Ponte oficial do protocolo de componentes Streamlit v1, sem CDN ou Node.
+const send = (type, extra={}) => window.parent.postMessage({isStreamlitMessage:true,type,...extra}, '*');
+const $=id=>document.getElementById(id), canvas=$('map'), ctx=canvas.getContext('2d');
+let args=null, graph=null, images={}, run=null, current=0, moves=[], route=[], cost=0, facing='N';
+let anim=null, frame=0, held=null, heldTimer=null, lastMove=-Infinity, result=null, replayIndex=null, replayTimer=null, submitting=false;
+const TILE=64, keyMap={ArrowUp:'N',ArrowRight:'L',ArrowDown:'S',ArrowLeft:'O'}, delta={N:[-1,0],L:[0,1],S:[1,0],O:[0,-1]};
+function height(){send('streamlit:setFrameHeight',{height:Math.ceil(document.body.scrollHeight)+6});}
+new ResizeObserver(height).observe(document.body);
+function say(text,warn=false){$('status').textContent=text;$('status').className='status'+(warn?' warn':'');}
+function save(){try{sessionStorage.setItem('taxi:'+run,JSON.stringify({moves,facing}));}catch(_){}}
+function restore(){
+  current=graph.inicio;moves=[];route=[current];cost=0;facing='N';
+  try{const data=JSON.parse(sessionStorage.getItem('taxi:'+run)||'null');
+    if(data&&Array.isArray(data.moves))for(const d of data.moves.slice(0,100000)){
+      const edge=graph.estados[current].saidas[d];if(!edge)break;
+      current=edge[0];cost+=edge[1];moves.push(d);route.push(current);facing=d;
+    }
+  }catch(_){}
+}
+function displayState(){return result&&replayIndex!==null?graph.estados[result.rota_otima[replayIndex]]:graph.estados[current];}
+function updatePanel(){
+  const s=displayState(), replaying=result && replayIndex!==null;
+  $('cost').textContent=replaying ? replayCosts[replayIndex] : cost;
+  $('steps').textContent=replaying ? replayIndex : moves.length;
+  $('capacity').textContent=s.bordo.length+' / 3';
+  const pending=Object.keys(graph.passageiros).filter(p=>!s.entregues.includes(p));
+  $('delivered').textContent=s.entregues.length+' / '+Object.keys(graph.passageiros).length;
+  $('people').replaceChildren();
+  $('manifestTitle').textContent=s.bordo.length?'Destinos a bordo':pending.length?'Aguardando embarque':'Destino final';
+  for(const p of (s.bordo.length ? s.bordo : pending)){
+    const info=graph.passageiros[p], row=document.createElement('div'), portrait=document.createElement('img');
+    row.className='person';portrait.className='portrait';portrait.src=args.sprites['passageiro_'+p];portrait.alt='';
+    const text=document.createElement('div'), title=document.createElement('b'), stop=document.createElement('span');
+    title.style.color=info.cor;title.textContent=info.nome;
+    stop.textContent=p.toUpperCase()+' · '+info.destino;
+    text.append(title,stop);row.append(portrait,text);$('people').append(row);
+  }
+  if(!pending.length) $('people').textContent='G · Casa do motorista';
+  if(result&&replayIndex!==null)$('replayState').textContent=`Dijkstra · posição (${s.pos.join(', ')}) · a bordo: ${s.bordo||'nenhum'} · entregues: ${s.entregues||'nenhum'}`;
+}
+function sprite(name,x,y,size=TILE){const im=images[name];if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,x,y,size,size);}
+function label(text,x,y,color='#f5ead7'){
+  ctx.font='bold 14px ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  const w=Math.max(22,ctx.measureText(text).width+10);ctx.fillStyle='#12222de8';ctx.fillRect(x-w/2,y-10,w,20);ctx.fillStyle=color;ctx.fillText(text,x,y);
+}
+function pathLine(ids,color,offset=0){
+  if(ids.length<2)return;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=4;ctx.globalAlpha=.9;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
+  ids.forEach((id,i)=>{const [r,c]=graph.estados[id].pos;const x=(c+.5)*TILE+offset,y=(r+.5)*TILE+offset;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();ctx.restore();
+}
+// O cenário estático é pintado uma vez por mapa e reutilizado durante a animação.
+let landscape = null, lots = new Map(), replayCosts = [];
+const terrain = {
+  ',': {name:'Obras', sprite:'obras', extra:2, color:'#ffcf8a'},
+  '~': {name:'Alagamento', sprite:'alagamento', extra:4, color:'#aee8f2'}
+};
+function buildingInfo(ch){
+  return ch==='G' ? {predio:'casa_motorista',cor:'#ffe08a'} : graph.passageiros[ch.toLowerCase()];
+}
+function drawStops(state){
+  for(const [ch,{parada:[r,c],lote}] of Object.entries(graph.fachadas)){
+    const p=ch.toLowerCase(), done=ch==='G'?state.final:state.entregues.includes(p);
+    const active=ch==='G'?state.entregues.length===Object.keys(graph.passageiros).length:state.bordo.includes(p);
+    const info=buildingInfo(ch), color=info.cor;
+    const [br,bc]=lote || [r-.5,c-.5];
+    const cx=(bc+.5)*TILE, cy=(br+.5)*TILE, size=lote?56:30;
+    ctx.save();
+    if(!lote){
+      ctx.fillStyle='#bdb49d';ctx.fillRect(cx-16,cy-16,32,32);
+      ctx.fillStyle='#819568';ctx.fillRect(cx-14,cy-14,28,28);
+      sprite(info.predio,cx-14,cy-14,28);
+    }
+    ctx.strokeStyle=active?color:done?'#a7ba9f':'#263a38';
+    ctx.lineWidth=active?4:2;
+    ctx.strokeRect(cx-size/2,cy-size/2,size,size);
+    label(ch+(done?' ✓':''),cx,lote?cy-19:cy-12,done?'#c3d7cb':color);
+    // A marca fica na metade da faixa mais próxima da fachada.
+    const dr=br-r, dc=bc-c, length=Math.hypot(dr,dc);
+    const sx=(c+.5)*TILE+16*dc/length, sy=(r+.5)*TILE+16*dr/length;
+    ctx.translate(sx,sy);
+    ctx.fillStyle='#233334';ctx.strokeStyle=active?color:'#c0c6ab';
+    ctx.lineWidth=active?3:1;ctx.fillRect(-9,-9,18,18);ctx.strokeRect(-9,-9,18,18);
+    ctx.font='bold 13px monospace';ctx.textBaseline='middle';ctx.textAlign='center';ctx.fillStyle=color;ctx.fillText(ch,0,1);
+    ctx.restore();
+  }
+}
+
+function drawNeighborhood(rows) {
+  const width = canvas.width, height = canvas.height;
+  let seed = 977;
+  function random() {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+  ctx.fillStyle = '#899c70';
+  ctx.fillRect(0, 0, width, height);
+  for (let i = 0; i < width * height / 22; i++) {
+    const x = random() * width, y = random() * height;
+    ctx.fillStyle = random() < .55 ? '#728b64' : '#a3ae7d';
+    ctx.fillRect(x|0, y|0, 1 + (random()*4|0), 2);
+  }
+
+  const streets = new Path2D();
+  const markings = new Path2D();
+  const spaces = new Path2D();
+  const neighbors = [[-1,0], [0,1], [1,0], [0,-1]];
+  const isStreet = (r,c) => rows[r]?.[c] !== undefined && rows[r][c] !== '#';
+  rows.forEach((row,r) => [...row].forEach((ch,c) => {
+    if (ch === '#') return;
+    const x = (c+.5)*TILE, y = (r+.5)*TILE;
+    const exits = neighbors.filter(([dr,dc]) => isStreet(r+dr,c+dc));
+    const points = exits.map(([dr,dc]) => [x+dc*32, y+dr*32]);
+    // Em espaços de 2 × 2 células, toda a praça é transitável.
+    if (isStreet(r,c+1) && isStreet(r+1,c) && isStreet(r+1,c+1)) spaces.rect(x,y,TILE,TILE);
+    if (points.length === 2) {
+      const [[ax,ay],[bx,by]] = points;
+      streets.moveTo(ax,ay);
+      streets.quadraticCurveTo(x,y,bx,by);
+      if (ch === '.' && (ax === bx || ay === by)) {
+        markings.moveTo((ax+x)/2,(ay+y)/2);
+        markings.lineTo((bx+x)/2,(by+y)/2);
+      }
+    } else {
+      for (const [ex,ey] of points) {
+        streets.moveTo(x,y);
+        streets.lineTo(ex,ey);
+      }
+    }
+  }));
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // Camadas contínuas de passeio, meio-fio e asfalto ao longo das ruas.
+  for (const [size,color] of [[63,'#718063'],[60,'#c4b79c'],[51,'#e0cfad'],[47,'#575653'],[45,'#535758']]) {
+    ctx.fillStyle = ctx.strokeStyle = color;
+    ctx.lineWidth = size;
+    ctx.fill(spaces);
+    ctx.stroke(spaces);
+    ctx.stroke(streets);
+  }
+  // Grão de asfalto somente sobre a superfície da pista.
+  const surface = ctx.getImageData(0,0,width,height);
+  const pixels = surface.data;
+  for (let i=0; i<pixels.length; i+=4) {
+    if (pixels[i]===83 && pixels[i+1]===87 && pixels[i+2]===88) {
+      const grain = (random()*12|0)-6;
+      pixels[i]+=grain; pixels[i+1]+=grain; pixels[i+2]+=grain;
+    }
+  }
+  ctx.putImageData(surface,0,0);
+  ctx.strokeStyle = '#b6ac85';
+  ctx.lineWidth = 2;
+  ctx.stroke(markings);
+  ctx.restore();
+
+  const buildings = ['casa','loja','predio','mercado'];
+  rows.forEach((row,r) => [...row].forEach((ch,c) => {
+    const x=c*TILE, y=r*TILE;
+    if (ch === '#') {
+      // Jardins, pequenos arbustos e fundações integram os sprites ao terreno.
+      for (let n=0;n<4;n++) {
+        const bx=x+4+random()*56, by=y+4+random()*56;
+        ctx.fillStyle='#617857'; ctx.beginPath();ctx.ellipse(bx,by,4,3,0,0,2*Math.PI);ctx.fill();
+        ctx.fillStyle='#789265';ctx.fillRect(bx-2,by-2,3,2);
+        if(random()<.3){ctx.fillStyle='#e9c48c';ctx.fillRect(bx,by-2,2,2);}
+      }
+      const name=buildings[Math.floor(random()*buildings.length)];
+      const size=56+Math.floor(random()*10);
+      const dx=(random()-.5)*6, dy=(random()-.5)*5;
+      const destination=lots.get(r+','+c);
+      if(destination) sprite(buildingInfo(destination).predio,x+4,y+6,56);
+      else sprite(name,x+(64-size)/2+dx,y+(64-size)/2+dy,size);
+    }
+    const penalty=terrain[ch];
+    if(penalty){
+      sprite(penalty.sprite,x+7,y+9,40);
+      label('+'+penalty.extra,x+47,y+46,penalty.color);
+    }
+  }));
+  return ctx.getImageData(0,0,width,height);
+}
+
+function draw(now=performance.now()){
+  if(!graph)return;const s=displayState(), rows=graph.linhas;
+  ctx.imageSmoothingEnabled=false;
+  if (!landscape) landscape=drawNeighborhood(rows);
+  ctx.putImageData(landscape,0,0);
+  rows.forEach((row,r)=>[...row].forEach((ch,c)=>{
+    const x=c*TILE,y=r*TILE;
+    if(ch==='#')return;
+    if('><^v'.includes(ch))label({'>':'→','<':'←','^':'↑','v':'↓'}[ch],x+32,y+32,'#b7d8e5');
+    if(ch==='S')label('S',x+32,y+49,'#f6d36e');
+    if('abcd'.includes(ch)&&!s.coletados.includes(ch)){sprite('passageiro_'+ch,x+6,y-3,52);label(ch,x+52,y+49,graph.passageiros[ch].cor);}
+  }));
+  if(result){if($('playerPath').checked)pathLine(result.rota_jogador,'#f6d36e',-4);if($('optimalPath').checked)pathLine(result.rota_otima,'#9ff3cf',4);}
+  else {ctx.fillStyle='#f6d36e5c';for(const id of route){const [r,c]=graph.estados[id].pos;ctx.beginPath();ctx.arc((c+.5)*TILE,(r+.5)*TILE,2,0,Math.PI*2);ctx.fill();}}
+  drawStops(s);
+  let [r,c]=s.pos,angle={N:0,L:Math.PI/2,S:Math.PI,O:-Math.PI/2}[facing];
+  if(result&&replayIndex!==null&&replayIndex>0){const prev=graph.estados[result.rota_otima[replayIndex-1]].pos;angle=Math.atan2(c-prev[1],-(r-prev[0]));}
+  if(anim&&!result){const t=Math.min(1,(now-anim.start)/115);r=anim.from[0]+(r-anim.from[0])*t;c=anim.from[1]+(c-anim.from[1])*t;if(t>=1)anim=null;}
+  ctx.save();ctx.translate((c+.5)*TILE,(r+.5)*TILE);ctx.rotate(angle);sprite('carro',-32,-32);ctx.restore();
+  if(anim)frame=requestAnimationFrame(draw);
+}
+function redraw(){cancelAnimationFrame(frame);frame=requestAnimationFrame(draw);}
+function reason(d){const s=graph.estados[current], [dr,dc]=delta[d], ch=graph.linhas[s.pos[0]+dr]?.[s.pos[1]+dc];
+  if(ch==='G')return 'Antes de voltar para casa, entregue todos os passageiros.';
+  if(ch&&'abcd'.includes(ch)&&s.bordo.length===3&&!s.coletados.includes(ch))return 'Táxi cheio! Entregue alguém antes de buscar '+graph.passageiros[ch].nome+'.';
+  if(ch&&'ABCD'.includes(ch)&&!s.coletados.includes(ch.toLowerCase()))return 'Busque '+graph.passageiros[ch.toLowerCase()].nome+' antes de entrar neste destino.';
+  if('><^v'.includes(graph.linhas[s.pos[0]][s.pos[1]]))return 'Mão única: siga a seta marcada na rua.';
+  return 'Há uma construção nessa direção. Procure outra rua.';
+}
+function submit(){if(submitting||result)return;submitting=true;say('Todos em casa! Calculando a comparação com Dijkstra…');send('streamlit:setComponentValue',{value:{partida:run,movimentos:moves},dataType:'json'});}
+function move(d){
+  if(!graph||result||graph.estados[current].final)return;
+  const now=performance.now();if(now-lastMove<args.intervalo-5)return;lastMove=now;
+  const old=graph.estados[current],edge=old.saidas[d];facing=d;
+  if(!edge){say(reason(d),true);redraw();return;}
+  current=edge[0];cost+=edge[1];moves.push(d);route.push(current);const s=graph.estados[current];anim={from:old.pos,start:now};
+  if(s.entregues.length>old.entregues.length){const p=[...s.entregues].find(p=>!old.entregues.includes(p));say(graph.passageiros[p].nome+' desembarcou. “Valeu pela carona!”');}
+  else if(s.coletados.length>old.coletados.length){const p=[...s.coletados].find(p=>!old.coletados.includes(p));say(graph.passageiros[p].nome+' embarcou. Destino: '+graph.passageiros[p].destino+'.');}
+  else if(terrain[graph.linhas[s.pos[0]][s.pos[1]]]){
+    const t=terrain[graph.linhas[s.pos[0]][s.pos[1]]];
+    say(t.name+' · 1 da rua + '+t.extra+' de penalidade = '+edge[1]+' pontos.');
+  }
+  else if(s.entregues.length===Object.keys(graph.passageiros).length)say('Todas as entregas concluídas. Siga para sua casa, G.');
+  else say('');
+  if(s.armadilha)say('Daqui não há caminho de volta para casa. Reinicie a corrida pelo menu.',true);
+  save();updatePanel();redraw();if(s.final){release();setTimeout(submit,160);}
+}
+function release(){held=null;clearInterval(heldTimer);heldTimer=null;}
+function hold(d){if(held===d)return;release();held=d;move(d);heldTimer=setInterval(()=>move(d),args.intervalo);}
+canvas.addEventListener('keydown',e=>{if(keyMap[e.key]){e.preventDefault();if(!e.repeat)hold(keyMap[e.key]);}});
+window.addEventListener('keyup',e=>{if(keyMap[e.key]===held)release();});window.addEventListener('blur',release);canvas.addEventListener('blur',release);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
+$('focus').onclick=()=>{canvas.focus();say('Teclado ativo. Use ↑ ↓ ← → para dirigir.');};
+canvas.addEventListener('pointerdown',()=>canvas.focus());
+document.querySelectorAll('[data-dir]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();canvas.focus();b.setPointerCapture(e.pointerId);hold(b.dataset.dir);});b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);});
+for(const id of ['playerPath','optimalPath'])$(id).onchange=redraw;
+function replayAt(i){replayIndex=i;$('replay').value=i;$('replayLabel').textContent=i+' / '+(result.rota_otima.length-1);updatePanel();redraw();}
+function stopReplay(){clearInterval(replayTimer);replayTimer=null;$('play').textContent='▶ Rever Dijkstra';}
+$('replay').oninput=e=>{stopReplay();replayAt(Number(e.target.value));};
+$('play').onclick=()=>{if(replayTimer){stopReplay();return;}replayAt(0);$('play').textContent='Ⅱ Pausar';replayTimer=setInterval(()=>{if(replayIndex>=result.rota_otima.length-1){stopReplay();return;}replayAt(replayIndex+1);},260);};
+window.addEventListener('message',async event=>{
+  if(event.source!==window.parent||event.data.type!=='streamlit:render')return;
+  args=event.data.args;graph=args.grafo;const changed=run!==args.partida;
+  if(changed){lots=new Map(Object.entries(graph.fachadas).filter(([,f])=>f.lote).map(([ch,f])=>[f.lote.join(','),ch]));landscape=null;release();stopReplay();run=args.partida;submitting=false;result=null;replayIndex=null;anim=null;lastMove=-Infinity;restore();say('Clique na pista e use as setas.');}
+  if(!Object.keys(images).length){await Promise.all(Object.entries(args.sprites).map(([name,src])=>new Promise(resolve=>{const im=new Image();im.onload=resolve;im.onerror=resolve;im.src=src;images[name]=im;})));}
+  result=args.resultado;
+  canvas.width=graph.linhas[0].length*TILE;canvas.height=graph.linhas.length*TILE;
+  $('loading').hidden=true;$('game').hidden=false;$('results').hidden=!result;
+  for(const [symbol,legendId,iconId] of [[',','legendWorks','worksIcon'],['~','legendFlood','floodIcon']]){
+    $(iconId).src=args.sprites[terrain[symbol].sprite];
+    $(legendId).hidden=!graph.linhas.some(row=>row.includes(symbol));
+  }
+  if(result){
+    $('finalCost').textContent=result.custo_jogador;
+    $('optimalCost').textContent=result.custo_otimo;
+    $('extra').textContent=result.custo_extra;
+    $('efficiency').textContent=result.eficiencia.toLocaleString('pt-BR')+'%';
+    $('comparison').textContent=`Você fez ${result.passos_jogador} movimentos. A rota de Dijkstra faz ${result.passos_otimo}. A eficiência é o custo mínimo dividido pelo seu custo.`;
+    $('replay').max=result.rota_otima.length-1;
+    replayCosts=[0];
+    for(let i=1;i<result.rota_otima.length;i++){
+      const edges=Object.values(graph.estados[result.rota_otima[i-1]].saidas);
+      const [,weight]=edges.find(([id])=>id===result.rota_otima[i]);
+      replayCosts.push(replayCosts[i-1]+weight);
+    }
+    say('Corrida concluída. O resumo está abaixo do mapa.');
+  }
+  updatePanel();redraw();height();
+  if(graph.estados[current].final&&!result)submit();
+});
+send('streamlit:componentReady',{apiVersion:1});height();
+</script></body></html>
