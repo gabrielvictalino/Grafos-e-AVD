@@ -138,12 +138,26 @@ class Metricas:
         
     
 
+def rotulo_camada(chaves, bonus):
+    """Rótulo da camada: chaves ("-" se nenhuma); com bônus consumidos, acrescenta "|{ids}"."""
+    rotulo = chaves or "-"
+    if bonus:
+        rotulo += "|{" + ",".join(str(b) for b in sorted(bonus)) + "}"
+    return rotulo
+
+
 class Camada:
-    def __init__(self, chaves=""):
+    def __init__(self, chaves="", bonus=frozenset()):
+        # Uma camada é identificada pelo par (chaves, bônus consumidos)
         self.chaves = chaves
+        self.bonus = frozenset(bonus)
         self.lista_nos_estados = []
         self.metricas = Metricas()
         self.arestas_transicao = []
+
+    @property
+    def rotulo(self):
+        return rotulo_camada(self.chaves, self.bonus)
 
     def calcular_metricas_camada(self, arestas_geradas):
         ordem = len(self.lista_nos_estados)

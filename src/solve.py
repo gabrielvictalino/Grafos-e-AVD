@@ -22,6 +22,7 @@ from src.graphs.labirinto import (
     No_estados,
     gerar_labirinto,
     preparar_estados,
+    rotulo_camada,
     validar_labirinto,
 )
 from src.graphs.io import carregar_grafo_tmdb
@@ -339,8 +340,7 @@ def exportar_parte1(entrada_mapas: str | Path = "mapas", out_dir: str | Path = "
         info_camadas = {}
         for camada in camadas:
             camada.calcular_metricas_camada(arestas_geradas)
-            chave_camada = camada.chaves or "-"
-            info_camadas[chave_camada] = {
+            info_camadas[camada.rotulo] = {
                 "ordem": camada.metricas.ordem,
                 "tamanho": camada.metricas.tamanho,
                 "densidade": camada.metricas.densidade,
@@ -349,14 +349,14 @@ def exportar_parte1(entrada_mapas: str | Path = "mapas", out_dir: str | Path = "
         arcos_entre_camadas = []
         contagem_casas_entre: dict[tuple[int, int, str], int] = {}
         for origem, destino, movimento, casa_destino, peso in arestas_geradas:
-            if destino != "ALVO" and origem.chaves != destino.chaves:
+            if destino != "ALVO" and (origem.chaves, origem.bonus) != (destino.chaves, destino.bonus):
                 r_dest = destino.no_pos.posicao_linha
                 c_dest = destino.no_pos.posicao_coluna
                 arcos_entre_camadas.append({
                     "origem": formatar_estado(origem),
                     "destino": formatar_estado(destino),
-                    "camada_origem": origem.chaves or "-",
-                    "camada_destino": destino.chaves or "-",
+                    "camada_origem": rotulo_camada(origem.chaves, origem.bonus),
+                    "camada_destino": rotulo_camada(destino.chaves, destino.bonus),
                     "movimento": movimento,
                     "casa_destino": casa_destino,
                     "posicao_destino": [r_dest, c_dest],

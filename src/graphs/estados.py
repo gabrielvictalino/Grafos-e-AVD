@@ -238,12 +238,11 @@ def verificar_chaves(elemento_analisado, camadas):
 
             # Verifica se já existe uma camada com essas chaves
             for camada in camadas:
-                if camada.chaves == novo_estado.chaves:
+                if camada.chaves == novo_estado.chaves and camada.bonus == novo_estado.bonus:
                     return camadas, novo_estado
 
             # Cria uma nova camada
-            nova_camada = Camada()
-            nova_camada.chaves = novo_estado.chaves
+            nova_camada = Camada(novo_estado.chaves, novo_estado.bonus)
             camadas.append(nova_camada)
 
             return camadas,novo_estado
@@ -307,13 +306,12 @@ def adicionar_estado_a_camada(camadas,elemento_analisado):
             camada_encontrada = None
 
             for camada in camadas:
-                if camada.chaves == elemento_analisado.chaves:
+                if camada.chaves == elemento_analisado.chaves and camada.bonus == elemento_analisado.bonus:
                     camada_encontrada = camada
                     break
 
             if camada_encontrada is None:
-                camada_encontrada = Camada()
-                camada_encontrada.chaves = elemento_analisado.chaves
+                camada_encontrada = Camada(elemento_analisado.chaves, elemento_analisado.bonus)
                 camadas.append(camada_encontrada)
 
             camada_encontrada.lista_nos_estados.append(elemento_analisado)
