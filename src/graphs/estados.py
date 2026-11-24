@@ -7,6 +7,7 @@ from src.graphs.labirinto import (
     No_estados,
     buscar_no_estado_a_partir_posicao,
 )
+dicionario_direcoes_ao_contrario = {0:"N", 1: "L", 2:"S", 3:"O"}
 
 def bfs_grafo_nos(lista_nos_estados,estado_inicial,estado_final):
 
