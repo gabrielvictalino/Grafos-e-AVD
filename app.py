@@ -32,8 +32,7 @@ CLASSES_DFS = {
     "cruzamento": ("Cruzamento", "#985121"),
 }
 SETAS = {"^": "↑", ">": "→", "v": "↓", "<": "←"}
-SEGUIR_CAMADA = "Acompanhar o estado atual"
-TODAS_CAMADAS = "Todas as camadas"
+MODOS_CAMADAS = ("Todas as camadas", "Só as já visitadas", "Só a camada atual")
 
 # [IA] Claude – visual novo (tema claro, cartões, rastro colorido por camada)
 CSS = """
@@ -102,6 +101,15 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .lab-tag { display:inline-block; padding:1px 8px; border-radius:6px; font-weight:700; font-size:.82rem;
   color:#fff; margin-left:3px; }
 .lab-tag.cinza { background:#e9ecef; color:#495057; }
+.lab-camada { margin-bottom:6px; }
+.lab-camada-topo { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 12px;
+  background:#fff; border:1px solid #e6e8ef; border-left:8px solid var(--cor); border-radius:12px 12px 0 0;
+  font-size:.9rem; }
+.lab-camada-topo b { color:#111827; }
+.lab-camada-topo .sub { color:#6b7280; font-size:.78rem; margin-left:auto; }
+.lab-camada.ativa .lab-camada-topo { box-shadow:0 0 0 2px var(--cor); }
+.lab-camada .lab-painel { border-radius:0 0 14px 14px; }
+.lab-camada.ativa .lab-painel { box-shadow:inset 0 0 0 1px #20343f, 0 0 0 2px var(--cor); }
 .lab-arco-info { margin-top:10px; padding:8px 10px; border-radius:10px; background:#f8f9fa; font-size:.82rem; }
 </style>
 """
@@ -171,7 +179,7 @@ class Diagnostico:
 @dataclass
 class Resultado:
     quadros: list[Quadro] = field(default_factory=list)
-    camadas: dict[str, list[Vertice]] = field(default_factory=dict)
+    camadas: dict[tuple, list[Vertice]] = field(default_factory=dict)
     armadilhas: set[Vertice] | None = None
     erro_armadilhas: Diagnostico | None = None
     erros: list[Diagnostico] = field(default_factory=list)
@@ -192,7 +200,12 @@ class Grafo:
     vertices: dict[maze.No, Vertice]
     inicio: maze.No
     fim: maze.No
-    camadas: dict[str, list[Vertice]] = field(default_factory=dict)
+    camadas: dict[tuple, list[Vertice]] = field(default_factory=dict)
+
+
+def chave_camada(estado):
+    """# [IA] Claude – identifica a camada de um estado: (chaves, bônus consumidos)."""
+    return estado.chaves, estado.bonus
 
 
 def posicao(no):
@@ -352,13 +365,14 @@ def carregar(caminho, algoritmo, com_estados):
 
             vertices = {alvo: Vertice(posicao(alvo), "G", alvo=True)}
             camadas_visuais = {}
+            # [IA] Claude – camada = (chaves, bônus consumidos): pegar um bônus troca de camada.
+            # O backend (estados.py) agrupa só por chaves, então reagrupamos aqui pelos estados.
             for camada in camadas:
-                camada_visual = camadas_visuais.setdefault(camada.chaves, [])
                 for estado in camada.lista_nos_estados:
                     casa = estado.no_pos
                     vertice = Vertice(posicao(casa), casa.tipo, estado.chaves, tuple(sorted(estado.bonus)))
                     vertices[nos_por_estado[estado]] = vertice
-                    camada_visual.append(vertice)
+                    camadas_visuais.setdefault(chave_camada(vertice), []).append(vertice)
             grafo = Grafo(lista_nos, vertices, inicio, alvo, camadas_visuais)
         except Exception as erro:
             resultado.erros.append(registrar_erro("Construção do grafo de estados", erro))
@@ -384,20 +398,20 @@ def carregar(caminho, algoritmo, com_estados):
     return linhas, resultado
 
 
-def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
+def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo, painel=1):
     quadros = resultado.quadros
     quadro = quadros[indice] if quadros else None
     atual = quadro.estado if quadro else None
     arco = quadro.arco if quadro else None
 
     def visivel(estado):
-        return camada is None or estado.chaves == camada
+        return camada is None or chave_camada(estado) == camada
 
     # [IA] Claude – guarda a camada da última passagem para colorir o rastro
     visitas = {}
     for q in quadros[:indice + 1]:
         if visivel(q.estado):
-            visitas[q.estado.posicao] = q.estado.chaves
+            visitas[q.estado.posicao] = chave_camada(q.estado)
     estados_por_posicao = {}
     for chaves, estados in resultado.camadas.items():
         if camada is None or chaves == camada:
@@ -421,11 +435,11 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
         extremidades = {estado.posicao: cor for estado in (arco.origem, arco.destino) if visivel(estado)}
 
     colunas = len(linhas[0])
-    fonte = max(7, min(17, round(820 / colunas)))
+    fonte = max(5, min(17, round(820 / (colunas * painel))))
     html = [
         '<div class="lab-painel" tabindex="0" aria-label="Mapa do labirinto">',
         f'<div class="lab-grade" style="--colunas:{colunas};--largura:{max(560, colunas * 52)}px;'
-        f'--minimo:{colunas * 12}px;--fonte:{fonte}px">',
+        f'--minimo:{colunas * (8 if painel > 1 else 12)}px;--fonte:{fonte}px">',
     ]
     for r, linha in enumerate(linhas):
         for c, casa in enumerate(linha):
@@ -453,7 +467,7 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
             if atual and atual.posicao == pos and visivel(atual):
                 titulo += " · estado atual"
                 marcador = "lab-atual encerrado" if atual.alvo else "lab-atual"
-                cor = cor_camada(atual.chaves, resultado.camadas)
+                cor = cor_camada(chave_camada(atual), resultado.camadas)
                 conteudo.append(f'<i class="{marcador}" style="--cor:{cor}"></i>')
             html.append(f'<div class="lab-celula {classe}" title="{escape(titulo)}">{"".join(conteudo)}</div>')
     html.append("</div></div>")
@@ -461,30 +475,43 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
 
 
 def ordem_camadas(camadas):
-    """# [IA] Claude – ordena os conjuntos de chaves: menos chaves primeiro, depois alfabético."""
-    return sorted(camadas, key=lambda k: (len(k or ""), k or ""))
+    """# [IA] Claude – ordena as camadas: menos chaves, depois menos bônus, depois alfabético."""
+    return sorted(camadas, key=lambda k: (len(k[0] or ""), k[0] or "", len(k[1] or ()), k[1] or ()))
 
 
-def cor_camada(chaves, camadas):
-    """# [IA] Claude – cor fixa de cada camada (sem camadas: azul padrão)."""
+def cor_camada(chave, camadas):
+    """# [IA] Claude – cor fixa de cada camada (sem camadas: cor padrão)."""
     ordem = ordem_camadas(camadas) if camadas else []
-    if chaves is None or chaves not in ordem:
+    if chave not in ordem:
         return CORES_CAMADAS[0]
-    return CORES_CAMADAS[ordem.index(chaves) % len(CORES_CAMADAS)]
+    return CORES_CAMADAS[ordem.index(chave) % len(CORES_CAMADAS)]
 
 
-def nome_camada(chaves):
-    return f"Chaves {', '.join(chaves)}" if chaves else "Sem chaves"
+def nome_camada(chave):
+    chaves, bonus = chave
+    partes = [f"Chaves {', '.join(chaves)}" if chaves else "Sem chaves"]
+    if bonus:
+        partes.append(f"bônus {', '.join(map(str, bonus))}")
+    return " · ".join(partes)
 
 
-def tag_chaves(chaves, camadas):
+def tag_chaves(estado, camadas):
     """# [IA] Claude – chaves como etiquetas coloridas."""
-    if chaves is None:
+    if estado.chaves is None:
         return "—"
-    if not chaves:
+    if not estado.chaves:
         return '<span class="lab-tag cinza">nenhuma</span>'
-    cor = cor_camada(chaves, camadas)
-    return "".join(f'<span class="lab-tag" style="background:{cor}">{escape(c)}</span>' for c in chaves)
+    cor = cor_camada(chave_camada(estado), camadas)
+    return "".join(f'<span class="lab-tag" style="background:{cor}">{escape(c)}</span>' for c in estado.chaves)
+
+
+def cabecalho_camada(chave, resultado, atual):
+    """# [IA] Claude – título de cada painel de camada (cor, nome, nº de estados, marca de ativa)."""
+    cor = cor_camada(chave, resultado.camadas)
+    ativa = ' <span class="lab-tag" style="background:#111827">atual</span>' if chave == atual else ""
+    return (f'<div class="lab-camada{" ativa" if chave == atual else ""}" style="--cor:{cor}">'
+            f'<div class="lab-camada-topo"><b>{escape(nome_camada(chave))}</b>{ativa}'
+            f'<span class="sub">{len(resultado.camadas[chave])} estados</span></div></div>')
 
 
 def mostrar_estado(quadro, algoritmo, camadas, passo, total, cadeia_de_predecessores=False):
@@ -510,7 +537,7 @@ def mostrar_estado(quadro, algoritmo, camadas, passo, total, cadeia_de_predecess
         f'<div class="barra"><div style="width:{progresso}%"></div></div>',
         '<div style="margin-top:10px">',
         f'<div class="linha"><span class="rot">Posição</span><span>{posicao_txt}{casa_txt}</span></div>',
-        f'<div class="linha"><span class="rot">Chaves</span><span>{tag_chaves(estado.chaves, camadas)}</span></div>',
+        f'<div class="linha"><span class="rot">Chaves</span><span>{tag_chaves(estado, camadas)}</span></div>',
         f'<div class="linha"><span class="rot">Bônus consumidos</span><span>{escape(estado.bonus_exibido)}</span></div>',
         '</div>',
     ]
@@ -532,10 +559,8 @@ def legenda_html(resultado, realcar, realcar_ciclo, camada):
              ("#e2dcff", "esteira"), ("#ffd1e3", "bônus + / fonte *")]
     partes = [f'<span><i style="background:{c}"></i>{t}</span>' for c, t in itens]
     if resultado.camadas:
-        for chaves in ordem_camadas(resultado.camadas):
-            if camada is None or chaves == camada:
-                cor = cor_camada(chaves, resultado.camadas)
-                partes.append(f'<span><i style="background:{cor}"></i>rastro · {escape(nome_camada(chaves).lower())}</span>')
+        partes.append('<span><i style="background:linear-gradient(90deg,#f76707,#7048e8,#12a37f)"></i>'
+                      'rastro (a cor é a da camada)</span>')
     else:
         partes.append(f'<span><i style="background:{CORES_CAMADAS[0]}"></i>rastro</span>')
     if realcar and resultado.armadilhas is not None:
@@ -719,7 +744,7 @@ def main():
         selecao = (str(mapa), versao, algoritmo, com_estados)
         if sessao.get("selecao") != selecao or "resultado_mapa" not in sessao:
             sessao.update(passo=0, tocando=False, pausar_timer=False)
-            sessao.pop("camada", None)
+            sessao.pop("camada_modo", None)
             with st.spinner("Executando o algoritmo…"):
                 sessao.resultado_mapa = carregar(mapa, algoritmo, com_estados)
             sessao.selecao = selecao
@@ -751,25 +776,37 @@ def main():
         passo = sessao.get("passo", 0)
         quadro = quadros[passo] if quadros else None
 
-        camada = None
+        # [IA] Claude – um painel por camada (chaves + bônus), em vez de um seletor único
+        atual = chave_camada(quadro.estado) if quadro else None
+        ordem = ordem_camadas(resultado.camadas)
+        exibidas = ordem
         if resultado.camadas:
-            opcoes = [SEGUIR_CAMADA, TODAS_CAMADAS, *resultado.camadas]
-            exibicao = st.selectbox("Camada exibida", opcoes, key="camada",
-                                   format_func=lambda opcao: nome_camada(opcao) if opcao in resultado.camadas else opcao)
-            if exibicao == SEGUIR_CAMADA and quadro:
-                camada = quadro.estado.chaves
-            elif exibicao in resultado.camadas:
-                camada = exibicao
+            modo = st.radio("Camadas exibidas", MODOS_CAMADAS, horizontal=True, key="camada_modo",
+                            index=0 if len(ordem) <= 6 else 1)
+            visitadas = {chave_camada(q.estado) for q in quadros[:passo + 1]}
+            if modo == MODOS_CAMADAS[1]:
+                exibidas = [c for c in ordem if c in visitadas or c == atual]
+            elif modo == MODOS_CAMADAS[2]:
+                exibidas = [c for c in ordem if c == atual]
 
         mapa_col, estado_col = st.columns([3, 1], gap="large")
         with mapa_col:
-            st.markdown(desenhar(linhas, resultado, passo, camada, realcar, realcar_ciclo), unsafe_allow_html=True)
-            st.markdown(legenda_html(resultado, realcar, realcar_ciclo, camada), unsafe_allow_html=True)
-            if quadro and camada is not None and camada != quadro.estado.chaves:
-                st.info("O estado atual está em outra camada.")
+            if not resultado.camadas:
+                st.markdown(desenhar(linhas, resultado, passo, None, realcar, realcar_ciclo), unsafe_allow_html=True)
+            else:
+                largura = 1 if len(exibidas) <= 1 else 2
+                for inicio in range(0, len(exibidas), largura):
+                    for coluna, chave in zip(st.columns(largura), exibidas[inicio:inicio + largura]):
+                        with coluna:
+                            st.markdown(cabecalho_camada(chave, resultado, atual), unsafe_allow_html=True)
+                            st.markdown(desenhar(linhas, resultado, passo, chave, realcar, realcar_ciclo, largura),
+                                        unsafe_allow_html=True)
+                if not exibidas:
+                    st.info("Nenhuma camada na vista.")
+            st.markdown(legenda_html(resultado, realcar, realcar_ciclo, None), unsafe_allow_html=True)
             if realcar and resultado.armadilhas is not None:
                 armadilhas = [e.rotulo for e in sorted(resultado.armadilhas, key=lambda e: (e.posicao, e.chaves, e.bonus))
-                              if camada is None or e.chaves == camada]
+                              if not resultado.camadas or chave_camada(e) in exibidas]
                 with st.expander(f"Estados-armadilha na vista ({len(armadilhas)})"):
                     if armadilhas:
                         st.dataframe({"Estado": armadilhas}, hide_index=True, use_container_width=True)
@@ -777,7 +814,7 @@ def main():
                         st.write("Nenhum estado-armadilha na vista.")
             if realcar_ciclo and resultado.nos_ciclo_negativo:
                 estados_ciclo = [e.rotulo for e in sorted(resultado.nos_ciclo_negativo, key=lambda e: (e.posicao, e.chaves or "", e.bonus or ()))
-                                 if camada is None or e.chaves == camada]
+                                 if not resultado.camadas or chave_camada(e) in exibidas]
                 with st.expander(f"Nós do ciclo negativo na vista ({len(estados_ciclo)})"):
                     if estados_ciclo:
                         st.dataframe({"Estado": estados_ciclo}, hide_index=True, use_container_width=True)
