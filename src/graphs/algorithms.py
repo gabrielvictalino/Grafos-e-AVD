@@ -98,38 +98,38 @@ def bellman_ford(listas_nos, origem):
     mudou = False
     atual = None
     ciclo = []
-
+    copia_anteriores = anteriores.copy()
+    copia_distancia = distancias.copy()
     for aresta in arestas:
         org = aresta.origem
         dest = aresta.destino
         peso = aresta.custo
 
-        if distancias[org] != float('inf'):
-            if distancias[org] + peso < distancias[dest]:
-                distancias[dest] = distancias[org] + peso
-                anteriores[dest] = org
+        if copia_distancia[org] != float('inf'):
+            if copia_distancia[org] + peso < copia_distancia[dest]:
+                copia_distancia[dest] = copia_distancia[org] + peso
+                copia_anteriores[dest] = org
                 mudou = True
                 atual = dest
 
     if mudou:
 
         # Entra no ciclo
-        for _ in range(len(anteriores)):
-            atual = anteriores[atual]
+        for _ in range(len(copia_anteriores)):
+            atual = copia_anteriores[atual]
 
         # Reconstrói o ciclo
         inicio_ciclo = atual
         ciclo = [inicio_ciclo]
 
-        atual = anteriores[inicio_ciclo]
+        atual = copia_anteriores[inicio_ciclo]
 
         while atual != inicio_ciclo:
             ciclo.append(atual)
-            atual = anteriores[atual]
+            atual = copia_anteriores[atual]
 
         ciclo.append(inicio_ciclo)
         ciclo.reverse()
-
 
     return distancias, anteriores, mudou, ciclo
 

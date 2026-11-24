@@ -54,13 +54,18 @@ CSS = """
 .lab-celula.esteira { background: #dfd8fa; color: #4f3b80; }
 .lab-celula.peso-negativo { background: #f0c7df; color: #652451; }
 .lab-celula.fora-da-camada { opacity: .37; }
-.lab-rastro, .lab-armadilha, .lab-arco, .lab-atual {
+.lab-rastro, .lab-armadilha, .lab-ciclo-negativo, .lab-arco, .lab-atual {
   position: absolute; pointer-events: none; border-radius: inherit;
 }
 .lab-rastro { inset: 0; background: #148a80; opacity: .25; }
 .lab-armadilha {
   inset: 0; box-shadow: inset 0 0 0 1px #a42141;
   background: repeating-linear-gradient(135deg, #bf335d70 0 2px, transparent 2px 6px);
+}
+/* Listras vermelhas: armadilhas; contorno amarelo: ciclo negativo. */
+.lab-ciclo-negativo {
+  inset: 2px; border: 3px solid #ffcf46; border-radius: 3px;
+  box-shadow: 0 0 0 1px #6b3600, inset 0 0 0 1px #6b3600;
 }
 .lab-arco { inset: 1px; box-shadow: inset 0 0 0 2px var(--arco); }
 .lab-atual {
@@ -145,6 +150,9 @@ class Resultado:
     contagem_dfs: dict[str, int] = field(default_factory=dict)
     tem_ciclo_dfs: bool | None = None
     ciclo_negativo: bool = False
+    nos_ciclo_negativo: set[Vertice] = field(default_factory=set)
+    quadros_ciclo_negativo: list[Quadro] = field(default_factory=list)
+    repetiu_predecessor: bool = False
 
 
 @dataclass
@@ -183,6 +191,20 @@ def caminho_dos_anteriores(inicio, fim, distancias, anteriores):
         vistos.add(anterior)
         caminho.append(anterior)
     return caminho[::-1]
+
+
+def cadeia_dos_predecessores(fim, anteriores):
+    """Lê o dicionário a partir do alvo e inclui a primeira repetição."""
+    cadeia = []
+    vistos = set()
+    atual = fim
+    while atual is not None:
+        cadeia.append(atual)
+        if atual in vistos:
+            return cadeia, True
+        vistos.add(atual)
+        atual = anteriores[atual]
+    return cadeia, False
 
 
 def movimento_e_peso(origem, destino):
@@ -251,7 +273,11 @@ def executar(algoritmo, grafo, resultado):
         distancias, anteriores, tem_ciclo, ciclo = graph_algorithms.bellman_ford(nos, grafo.inicio)
         resultado.ciclo_negativo = tem_ciclo
         if tem_ciclo:
-            resultado.quadros = quadros_do_caminho(ciclo, grafo)
+            resultado.quadros_ciclo_negativo = quadros_do_caminho(ciclo, grafo)
+            resultado.nos_ciclo_negativo = {quadro.estado for quadro in resultado.quadros_ciclo_negativo}
+            if isfinite(distancias[grafo.fim]):
+                cadeia, resultado.repetiu_predecessor = cadeia_dos_predecessores(grafo.fim, anteriores)
+                resultado.quadros = quadros_do_caminho(cadeia[::-1], grafo, distancias)
             return
     else:
         raise ValueError(f"Algoritmo desconhecido: {algoritmo}")
@@ -320,7 +346,7 @@ def carregar(caminho, algoritmo, com_estados):
     return linhas, resultado
 
 
-def desenhar(linhas, resultado, indice, camada, realcar):
+def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
     quadros = resultado.quadros
     quadro = quadros[indice] if quadros else None
     atual = quadro.estado if quadro else None
@@ -340,6 +366,12 @@ def desenhar(linhas, resultado, indice, camada, realcar):
         for estado in resultado.armadilhas:
             if visivel(estado):
                 armadilhas_por_posicao[estado.posicao] = armadilhas_por_posicao.get(estado.posicao, 0) + 1
+
+    ciclo_por_posicao = {}
+    if realcar_ciclo and resultado.nos_ciclo_negativo:
+        for estado in resultado.nos_ciclo_negativo:
+            if visivel(estado):
+                ciclo_por_posicao[estado.posicao] = ciclo_por_posicao.get(estado.posicao, 0) + 1
 
     extremidades = {}
     if arco:
@@ -370,6 +402,9 @@ def desenhar(linhas, resultado, indice, camada, realcar):
             if pos in armadilhas_por_posicao:
                 titulo += f" · estados-armadilha {armadilhas_por_posicao[pos]}"
                 conteudo.append('<i class="lab-armadilha"></i>')
+            if pos in ciclo_por_posicao:
+                titulo += f" · estados do ciclo negativo {ciclo_por_posicao[pos]}"
+                conteudo.append('<i class="lab-ciclo-negativo"></i>')
             if pos in extremidades:
                 conteudo.append(f'<i class="lab-arco" style="--arco:{extremidades[pos]}"></i>')
             if atual and atual.posicao == pos and visivel(atual):
@@ -385,7 +420,7 @@ def nome_camada(chaves):
     return f"Chaves {', '.join(chaves)}" if chaves else "Sem chaves"
 
 
-def mostrar_estado(quadro, algoritmo):
+def mostrar_estado(quadro, algoritmo, cadeia_de_predecessores=False):
     st.subheader("Estado atual")
     estado = quadro.estado
     linha, coluna = estado.posicao
@@ -395,7 +430,12 @@ def mostrar_estado(quadro, algoritmo):
         st.markdown(f"**Linha {linha}, coluna {coluna}** · casa `{estado.casa}`")
     chaves = "—" if estado.chaves is None else nome_camada(estado.chaves)
     st.markdown(f"**Chaves** · {chaves}  \n**Bônus consumidos** · {estado.bonus_exibido}")
-    rotulo_custo = "Custo acumulado na árvore DFS" if algoritmo == "DFS" else "Custo acumulado"
+    if cadeia_de_predecessores:
+        rotulo_custo = "Distância registrada pelo Bellman-Ford"
+    elif algoritmo == "DFS":
+        rotulo_custo = "Custo acumulado na árvore DFS"
+    else:
+        rotulo_custo = "Custo acumulado"
     st.metric(rotulo_custo, quadro.custo)
     if quadro.arco:
         arco = quadro.arco
@@ -488,10 +528,20 @@ def mostrar_resultado(resultado, algoritmo):
         return
     if resultado.ciclo_negativo:
         st.warning("O Bellman-Ford detectou um ciclo negativo alcançável a partir de S.")
-        if resultado.quadros:
-            st.metric("Custo do ciclo", resultado.quadros[-1].custo)
-            with st.expander("Sequência do ciclo"):
-                st.text("\n".join(q.estado.rotulo for q in resultado.quadros))
+        if resultado.quadros_ciclo_negativo:
+            st.metric("Custo do ciclo negativo", resultado.quadros_ciclo_negativo[-1].custo)
+            with st.expander("Sequência do ciclo negativo"):
+                st.text("\n".join(quadro.estado.rotulo for quadro in resultado.quadros_ciclo_negativo))
+        st.subheader("Cadeia de predecessores a partir de ALVO")
+        if not resultado.quadros:
+            st.info("O Bellman-Ford registrou ALVO como inalcançável.")
+            return
+        st.caption("A animação começa em ALVO e segue as referências devolvidas em anteriores.")
+        if resultado.repetiu_predecessor:
+            ultimo = resultado.quadros[-1].estado.rotulo
+            st.info(f"A cadeia repete {ultimo}. A animação termina nessa repetição.")
+        with st.expander("Sequência de predecessores"):
+            st.text("\n".join(quadro.estado.rotulo for quadro in resultado.quadros))
         return
     if algoritmo == "Bellman-Ford":
         st.info("O Bellman-Ford não detectou ciclos negativos alcançáveis a partir de S.")
@@ -523,6 +573,7 @@ def main():
         algoritmo = st.selectbox("Algoritmo", ALGORITMOS)
         velocidade = st.slider("Velocidade (quadros/s)", 0.25, 4.0, 1.0, 0.25)
         realcar = st.toggle("Realçar estados-armadilha", value=True) if tipo == "Grafo de estados" else False
+        realcar_ciclo = st.toggle("Realçar nós do ciclo negativo", value=True) if algoritmo == "Bellman-Ford" else False
 
     sessao = st.session_state
     try:
@@ -568,12 +619,14 @@ def main():
 
         mapa_col, estado_col = st.columns([3, 1], gap="large")
         with mapa_col:
-            st.markdown(desenhar(linhas, resultado, passo, camada, realcar), unsafe_allow_html=True)
+            st.markdown(desenhar(linhas, resultado, passo, camada, realcar, realcar_ciclo), unsafe_allow_html=True)
             legenda = "S partida · G saída"
             if quadro:
                 legenda += " · círculo indica o estado atual"
             if realcar and resultado.armadilhas is not None:
                 legenda += " · listras indicam estados-armadilha"
+            if realcar_ciclo and resultado.nos_ciclo_negativo:
+                legenda += " · contorno amarelo indica nós do ciclo negativo"
             st.caption(legenda)
             if quadro and camada is not None and camada != quadro.estado.chaves:
                 st.info("O estado atual está em outra camada.")
@@ -585,9 +638,17 @@ def main():
                         st.dataframe({"Estado": armadilhas}, hide_index=True, use_container_width=True)
                     else:
                         st.write("Nenhum estado-armadilha na vista.")
+            if realcar_ciclo and resultado.nos_ciclo_negativo:
+                estados_ciclo = [e.rotulo for e in sorted(resultado.nos_ciclo_negativo, key=lambda e: (e.posicao, e.chaves or "", e.bonus or ()))
+                                 if camada is None or e.chaves == camada]
+                with st.expander(f"Nós do ciclo negativo na vista ({len(estados_ciclo)})"):
+                    if estados_ciclo:
+                        st.dataframe({"Estado": estados_ciclo}, hide_index=True, use_container_width=True)
+                    else:
+                        st.write("Nenhum nó do ciclo negativo na vista.")
         with estado_col:
             if quadro:
-                mostrar_estado(quadro, algoritmo)
+                mostrar_estado(quadro, algoritmo, cadeia_de_predecessores=resultado.ciclo_negativo)
 
     if hasattr(st, "fragment"):
         st.fragment(run_every=periodo if sessao.tocando else None)(visualizacao)()
