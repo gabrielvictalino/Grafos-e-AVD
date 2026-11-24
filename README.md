@@ -40,7 +40,9 @@ Grafos-e-AVD/
 ├─ app.py                          # Interface interativa Streamlit da Parte 1
 ├─ docs/
 │  ├─ relatorio_parte1.md          # Documentação técnica e manual da Parte 1 (base para o PDF)
-│  └─ CHECKLIST_ENTREGA_PARTE1.md  # Checklist de entrega e pendências da Parte 1
+│  ├─ relatorio_parte2.md          # Documentação técnica e análise AVD da Parte 2 (base para o PDF)
+│  ├─ CHECKLIST_ENTREGA_PARTE1.md  # Checklist de entrega e pendências da Parte 1
+│  └─ CHECKLIST_ENTREGA_PARTE2.md  # Checklist de entrega e pendências da Parte 2 e AVD
 ├─ mapas/                          # Mapas fornecidos da Parte 1 (m01 a m08)
 ├─ data/
 │  └─ dataset_parte2/
@@ -133,7 +135,8 @@ python -m src.cli --dataset data/dataset_parte2/tmdb_limpo.csv.gz --alg DIJKSTRA
 ## Documentação e Uso Responsável de IA
 
 - **Relatório Técnico + Manual da Parte 1:** `docs/relatorio_parte1.md` (contém tabelas de métricas, camadas, soluções, DFS, armadilhas, conferência manual do mapa mínimo de testes e marcações para os trechos autorais exigidos no PDF).
-- **Checklist de Entrega (Parte 1):** `docs/CHECKLIST_ENTREGA_PARTE1.md`.
+- **Relatório Técnico + AVD da Parte 2:** `docs/relatorio_parte2.md` (contém modelagem do grafo TMDB, métricas estruturais, limpeza e os 4 pilares de AVD, outliers, tabelas para casos obrigatórios/benchmark e marcações para as notas analíticas autorais).
+- **Checklists de Entrega:** `docs/CHECKLIST_ENTREGA_PARTE1.md` e `docs/CHECKLIST_ENTREGA_PARTE2.md`.
 - **Declaração de Uso de IA:**
   - Link declaração uso IA: https://docs.google.com/document/d/1ueEwSR8WfbdE3lctA6aUqdVEH-oBHdUI/edit?usp=sharing&ouid=117048216939304748895&rtpof=true&sd=true
   - Para a entrega final, exportar a declaração preenchida e assinada por todos os integrantes para `docs/DECLARACAO_IA.pdf` e anexá-la no Classroom.
