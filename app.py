@@ -17,6 +17,12 @@ from src.graphs import labirinto as maze
 
 RAIZ = Path(__file__).resolve().parent
 PASTA_MAPAS = RAIZ / "mapas"
+# [IA] Claude – também procura nas pastas da estrutura do enunciado, se existirem
+PASTAS_MAPAS = [RAIZ / "mapas", RAIZ / "data" / "mapas", RAIZ / "data" / "mapas_grupo"]
+# [IA] Claude – cores do rastro, uma por camada (conjunto de chaves)
+CORES_CAMADAS = ["#f76707", "#7048e8", "#12a37f", "#d6336c", "#1971c2", "#5c940d",
+                 "#1098ad", "#f08c00", "#7048e8", "#c92a2a", "#2b8a3e", "#495057",
+                 "#0b7285", "#a61e4d", "#5f3dc4", "#087f5b"]
 
 ALGORITMOS = ("BFS", "Dijkstra", "Bellman-Ford", "DFS")
 CLASSES_DFS = {
@@ -29,50 +35,74 @@ SETAS = {"^": "↑", ">": "→", "v": "↓", "<": "←"}
 SEGUIR_CAMADA = "Acompanhar o estado atual"
 TODAS_CAMADAS = "Todas as camadas"
 
+# [IA] Claude – visual novo (tema claro, cartões, rastro colorido por camada)
 CSS = """
 <style>
-.lab-painel {
-  overflow-x: auto; padding: 12px; background: #15232c;
-  border: 1px solid #2c424d; border-radius: 12px;
-}
-.lab-grade {
-  display: grid; grid-template-columns: repeat(var(--colunas), minmax(0, 1fr));
-  width: min(100%, var(--largura)); min-width: var(--minimo); gap: 1px;
-}
-.lab-celula {
-  aspect-ratio: 1; display: grid; place-items: center; position: relative;
-  background: #e9f1ef; color: #203741;
-  font: 750 var(--fonte) ui-monospace, monospace; border-radius: 2px;
-}
-.lab-celula.parede { background: #2e414b; }
-.lab-celula.partida { background: #334b77; color: #fff; }
-.lab-celula.saida { background: #196d57; color: #fff; }
-.lab-celula.areia { background: #eedbb0; }
-.lab-celula.agua { background: #a6ccdd; }
-.lab-celula.chave { background: #fbe193; color: #644818; }
-.lab-celula.porta { background: #90684b; color: #fff; }
-.lab-celula.esteira { background: #dfd8fa; color: #4f3b80; }
-.lab-celula.peso-negativo { background: #f0c7df; color: #652451; }
-.lab-celula.fora-da-camada { opacity: .37; }
+.block-container { padding-top: 2.2rem; max-width: 1400px; }
+h1, h2, h3 { letter-spacing: -.01em; }
+.lab-topo { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:.4rem; }
+.lab-topo h1 { margin:0; padding:0; font-size:2rem; }
+.lab-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px;
+  font-size:.82rem; font-weight:600; background:#eef2ff; color:#3b4a8f; border:1px solid #dbe2ff; }
+.lab-chip.alg { background:#fff4e6; color:#a14a00; border-color:#ffe2bf; }
+.lab-chip.tipo { background:#e6fcf5; color:#0b6e55; border-color:#c3f0e0; }
+.lab-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:.6rem 0 1rem; }
+.lab-card { background:#fff; border:1px solid #e6e8ef; border-radius:14px; padding:12px 16px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04); }
+.lab-card .rot { font-size:.78rem; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+.lab-card .val { font-size:1.65rem; font-weight:750; color:#111827; line-height:1.2; margin-top:2px; }
+.lab-card .sub { font-size:.78rem; color:#6b7280; }
+.lab-card.alerta { border-color:#ffc9c9; background:#fff5f5; }
+.lab-card.alerta .val { color:#c92a2a; font-size:1.05rem; }
+.lab-painel { padding:14px; background:#0f1d26; border-radius:16px;
+  box-shadow:inset 0 0 0 1px #20343f, 0 8px 24px rgba(15,29,38,.18); overflow-x:auto; }
+.lab-grade { display:grid; grid-template-columns:repeat(var(--colunas), minmax(0,1fr));
+  width:100%; min-width:var(--minimo); max-width:var(--largura); margin:0 auto; gap:2px; }
+.lab-celula { aspect-ratio:1; display:grid; place-items:center; position:relative;
+  background:#eef3f1; color:#203741; font:700 var(--fonte) ui-monospace, SFMono-Regular, monospace;
+  border-radius:4px; transition: background .2s; }
+.lab-celula > span { position:relative; z-index:3; }
+.lab-celula.parede { background:#1d313c; }
+.lab-celula.partida { background:#3b5bdb; color:#fff; }
+.lab-celula.saida { background:#2f9e44; color:#fff; }
+.lab-celula.areia { background:#e9d5a8; }
+.lab-celula.agua { background:#9fd0e8; }
+.lab-celula.chave { background:#ffe58f; color:#7a5200; }
+.lab-celula.porta { background:#8d6748; color:#fff; }
+.lab-celula.esteira { background:#e2dcff; color:#4b3a8c; }
+.lab-celula.peso-negativo { background:#ffd1e3; color:#9c1f55; }
+.lab-celula.fora-da-camada { opacity:.3; filter:saturate(.4); }
 .lab-rastro, .lab-armadilha, .lab-ciclo-negativo, .lab-arco, .lab-atual {
-  position: absolute; pointer-events: none; border-radius: inherit;
-}
-.lab-rastro { inset: 0; background: #148a80; opacity: .25; }
-.lab-armadilha {
-  inset: 0; box-shadow: inset 0 0 0 1px #a42141;
-  background: repeating-linear-gradient(135deg, #bf335d70 0 2px, transparent 2px 6px);
-}
-/* Listras vermelhas: armadilhas; contorno amarelo: ciclo negativo. */
-.lab-ciclo-negativo {
-  inset: 2px; border: 3px solid #ffcf46; border-radius: 3px;
-  box-shadow: 0 0 0 1px #6b3600, inset 0 0 0 1px #6b3600;
-}
-.lab-arco { inset: 1px; box-shadow: inset 0 0 0 2px var(--arco); }
-.lab-atual {
-  width: 52%; aspect-ratio: 1; border-radius: 50%; background: #113f49;
-  border: 2px solid #fff; box-sizing: border-box; box-shadow: 0 0 0 1px #113f49;
-}
-.lab-atual.encerrado { background: #2a9b64; }
+  position:absolute; pointer-events:none; border-radius:inherit; }
+.lab-rastro { inset:0; background:var(--cor); opacity:.55; z-index:1; }
+.lab-armadilha { inset:0; z-index:2; box-shadow:inset 0 0 0 2px #e03131;
+  background:repeating-linear-gradient(135deg,#e0313160 0 3px,transparent 3px 7px); }
+.lab-ciclo-negativo { inset:2px; z-index:2; border:3px solid #ffd43b; border-radius:4px;
+  box-shadow:0 0 0 1px #7a4b00; }
+.lab-arco { inset:1px; z-index:2; box-shadow:inset 0 0 0 3px var(--arco); }
+.lab-atual { width:62%; aspect-ratio:1; border-radius:50%; z-index:4; background:#ffffff;
+  border:3px solid var(--cor, #0f1d26); box-sizing:border-box;
+  box-shadow:0 0 0 3px rgba(255,255,255,.45), 0 2px 8px rgba(0,0,0,.45);
+  animation: lab-pulso 1.4s ease-in-out infinite; }
+.lab-atual.encerrado { background:#2f9e44; border-color:#fff; animation:none; }
+@keyframes lab-pulso { 0%,100% { transform:scale(1); } 50% { transform:scale(.82); } }
+.lab-legenda { display:flex; flex-wrap:wrap; gap:6px 14px; margin:.7rem 0 .2rem; font-size:.8rem; color:#4b5563; }
+.lab-legenda span { display:inline-flex; align-items:center; gap:6px; }
+.lab-legenda i { width:14px; height:14px; border-radius:4px; display:inline-block; box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); }
+.lab-estado { background:#fff; border:1px solid #e6e8ef; border-radius:16px; padding:16px 18px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04); }
+.lab-estado h4 { margin:0 0 10px; font-size:1rem; color:#111827; }
+.lab-estado .linha { display:flex; justify-content:space-between; gap:10px; padding:7px 0;
+  border-bottom:1px solid #f1f3f5; font-size:.9rem; }
+.lab-estado .linha:last-child { border-bottom:0; }
+.lab-estado .rot { color:#6b7280; }
+.lab-estado .custo { font-size:2.1rem; font-weight:800; color:#111827; margin:6px 0 2px; }
+.lab-estado .barra { height:6px; background:#f1f3f5; border-radius:99px; overflow:hidden; margin-top:8px; }
+.lab-estado .barra > div { height:100%; background:linear-gradient(90deg,#3b5bdb,#12a37f); border-radius:99px; }
+.lab-tag { display:inline-block; padding:1px 8px; border-radius:6px; font-weight:700; font-size:.82rem;
+  color:#fff; margin-left:3px; }
+.lab-tag.cinza { background:#e9ecef; color:#495057; }
+.lab-arco-info { margin-top:10px; padding:8px 10px; border-radius:10px; background:#f8f9fa; font-size:.82rem; }
 </style>
 """
 
@@ -146,6 +176,7 @@ class Resultado:
     erro_armadilhas: Diagnostico | None = None
     erros: list[Diagnostico] = field(default_factory=list)
     aviso: str | None = None
+    recusa: str | None = None  # [IA] Claude – mensagem quando o Dijkstra recusa pesos negativos
     custo_minimo: bool = False
     contagem_dfs: dict[str, int] = field(default_factory=dict)
     tem_ciclo_dfs: bool | None = None
@@ -264,6 +295,13 @@ def executar(algoritmo, grafo, resultado):
 
     if algoritmo == "Dijkstra":
         distancias, anteriores,tem_pesos_negativos = graph_algorithms.dijkstra(nos, grafo.inicio)
+        # [IA] Claude – o dijkstra do grupo devolve (None, None, True) quando recusa o grafo
+        if distancias is None:
+            resultado.recusa = (
+                "RECUSA: o Dijkstra não aceita arcos com peso negativo, e este grafo tem "
+                "bônus (+) ou fonte (*). Use o Bellman-Ford para este mapa."
+            )
+            return
         if tem_pesos_negativos:
             resultado.aviso = (
                 "O Dijkstra retornou um resultado para um grafo com pesos negativos."
@@ -355,7 +393,11 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
     def visivel(estado):
         return camada is None or estado.chaves == camada
 
-    visitas = {q.estado.posicao for q in quadros[:indice + 1] if visivel(q.estado)}
+    # [IA] Claude – guarda a camada da última passagem para colorir o rastro
+    visitas = {}
+    for q in quadros[:indice + 1]:
+        if visivel(q.estado):
+            visitas[q.estado.posicao] = q.estado.chaves
     estados_por_posicao = {}
     for chaves, estados in resultado.camadas.items():
         if camada is None or chaves == camada:
@@ -379,11 +421,11 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
         extremidades = {estado.posicao: cor for estado in (arco.origem, arco.destino) if visivel(estado)}
 
     colunas = len(linhas[0])
-    fonte = max(7, min(16, round(780 / colunas)))
+    fonte = max(7, min(17, round(820 / colunas)))
     html = [
         '<div class="lab-painel" tabindex="0" aria-label="Mapa do labirinto">',
-        f'<div class="lab-grade" style="--colunas:{colunas};--largura:{colunas * 42}px;'
-        f'--minimo:{colunas * 10}px;--fonte:{fonte}px">',
+        f'<div class="lab-grade" style="--colunas:{colunas};--largura:{max(560, colunas * 52)}px;'
+        f'--minimo:{colunas * 12}px;--fonte:{fonte}px">',
     ]
     for r, linha in enumerate(linhas):
         for c, casa in enumerate(linha):
@@ -396,9 +438,10 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
                 if not quantidade:
                     classe += " fora-da-camada"
 
-            conteudo = [simbolo]
+            conteudo = [f"<span>{simbolo}</span>" if simbolo else ""]
             if pos in visitas:
-                conteudo.append('<i class="lab-rastro"></i>')
+                cor = cor_camada(visitas[pos], resultado.camadas)
+                conteudo.append(f'<i class="lab-rastro" style="--cor:{cor}"></i>')
             if pos in armadilhas_por_posicao:
                 titulo += f" · estados-armadilha {armadilhas_por_posicao[pos]}"
                 conteudo.append('<i class="lab-armadilha"></i>')
@@ -410,37 +453,108 @@ def desenhar(linhas, resultado, indice, camada, realcar, realcar_ciclo):
             if atual and atual.posicao == pos and visivel(atual):
                 titulo += " · estado atual"
                 marcador = "lab-atual encerrado" if atual.alvo else "lab-atual"
-                conteudo.append(f'<i class="{marcador}"></i>')
+                cor = cor_camada(atual.chaves, resultado.camadas)
+                conteudo.append(f'<i class="{marcador}" style="--cor:{cor}"></i>')
             html.append(f'<div class="lab-celula {classe}" title="{escape(titulo)}">{"".join(conteudo)}</div>')
     html.append("</div></div>")
     return "".join(html)
+
+
+def ordem_camadas(camadas):
+    """# [IA] Claude – ordena os conjuntos de chaves: menos chaves primeiro, depois alfabético."""
+    return sorted(camadas, key=lambda k: (len(k or ""), k or ""))
+
+
+def cor_camada(chaves, camadas):
+    """# [IA] Claude – cor fixa de cada camada (sem camadas: azul padrão)."""
+    ordem = ordem_camadas(camadas) if camadas else []
+    if chaves is None or chaves not in ordem:
+        return CORES_CAMADAS[0]
+    return CORES_CAMADAS[ordem.index(chaves) % len(CORES_CAMADAS)]
 
 
 def nome_camada(chaves):
     return f"Chaves {', '.join(chaves)}" if chaves else "Sem chaves"
 
 
-def mostrar_estado(quadro, algoritmo, cadeia_de_predecessores=False):
-    st.subheader("Estado atual")
+def tag_chaves(chaves, camadas):
+    """# [IA] Claude – chaves como etiquetas coloridas."""
+    if chaves is None:
+        return "—"
+    if not chaves:
+        return '<span class="lab-tag cinza">nenhuma</span>'
+    cor = cor_camada(chaves, camadas)
+    return "".join(f'<span class="lab-tag" style="background:{cor}">{escape(c)}</span>' for c in chaves)
+
+
+def mostrar_estado(quadro, algoritmo, camadas, passo, total, cadeia_de_predecessores=False):
+    """# [IA] Claude – painel do estado atual em cartão (posição, chaves, bônus, custo)."""
     estado = quadro.estado
     linha, coluna = estado.posicao
-    if estado.alvo:
-        st.markdown(f"**ALVO** · linha {linha}, coluna {coluna}")
-    else:
-        st.markdown(f"**Linha {linha}, coluna {coluna}** · casa `{estado.casa}`")
-    chaves = "—" if estado.chaves is None else nome_camada(estado.chaves)
-    st.markdown(f"**Chaves** · {chaves}  \n**Bônus consumidos** · {estado.bonus_exibido}")
     if cadeia_de_predecessores:
-        rotulo_custo = "Distância registrada pelo Bellman-Ford"
+        rotulo_custo = "Distância registrada (Bellman-Ford)"
     elif algoritmo == "DFS":
         rotulo_custo = "Custo acumulado na árvore DFS"
     else:
         rotulo_custo = "Custo acumulado"
-    st.metric(rotulo_custo, quadro.custo)
+    custo = quadro.custo
+    custo_txt = f"{custo:g}" if isinstance(custo, (int, float)) and isfinite(custo) else str(custo)
+    posicao_txt = "ALVO" if estado.alvo else f"({linha}, {coluna})"
+    casa_txt = "" if estado.alvo else f' <span class="lab-tag cinza">{escape(estado.casa)}</span>'
+    progresso = 100 if total <= 0 else round(100 * passo / total)
+    html = [
+        '<div class="lab-estado">',
+        f'<h4>Estado atual · passo {passo} de {max(total, 0)}</h4>',
+        f'<div class="rot" style="font-size:.78rem;color:#6b7280">{rotulo_custo}</div>',
+        f'<div class="custo">{custo_txt}</div>',
+        f'<div class="barra"><div style="width:{progresso}%"></div></div>',
+        '<div style="margin-top:10px">',
+        f'<div class="linha"><span class="rot">Posição</span><span>{posicao_txt}{casa_txt}</span></div>',
+        f'<div class="linha"><span class="rot">Chaves</span><span>{tag_chaves(estado.chaves, camadas)}</span></div>',
+        f'<div class="linha"><span class="rot">Bônus consumidos</span><span>{escape(estado.bonus_exibido)}</span></div>',
+        '</div>',
+    ]
     if quadro.arco:
         arco = quadro.arco
-        st.write(f"**{CLASSES_DFS[arco.classe][0]} · {arco.movimento}**")
-        st.text(f"De {arco.origem.rotulo}\nPara {arco.destino.rotulo}")
+        nome, cor = CLASSES_DFS[arco.classe]
+        html.append(
+            f'<div class="lab-arco-info"><b style="color:{cor}">Arco de {nome.lower()}</b> · {escape(arco.movimento)}'
+            f'<br>de {escape(arco.origem.rotulo)}<br>para {escape(arco.destino.rotulo)}</div>'
+        )
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+
+def legenda_html(resultado, realcar, realcar_ciclo, camada):
+    """# [IA] Claude – legenda com as cores do mapa e das camadas."""
+    itens = [("#3b5bdb", "S partida"), ("#2f9e44", "G saída"), ("#e9d5a8", "lama (3)"),
+             ("#9fd0e8", "água (5)"), ("#ffe58f", "chave"), ("#8d6748", "porta"),
+             ("#e2dcff", "esteira"), ("#ffd1e3", "bônus + / fonte *")]
+    partes = [f'<span><i style="background:{c}"></i>{t}</span>' for c, t in itens]
+    if resultado.camadas:
+        for chaves in ordem_camadas(resultado.camadas):
+            if camada is None or chaves == camada:
+                cor = cor_camada(chaves, resultado.camadas)
+                partes.append(f'<span><i style="background:{cor}"></i>rastro · {escape(nome_camada(chaves).lower())}</span>')
+    else:
+        partes.append(f'<span><i style="background:{CORES_CAMADAS[0]}"></i>rastro</span>')
+    if realcar and resultado.armadilhas is not None:
+        partes.append('<span><i style="background:repeating-linear-gradient(135deg,#e03131 0 3px,#fff 3px 7px)"></i>estado-armadilha</span>')
+    if realcar_ciclo and resultado.nos_ciclo_negativo:
+        partes.append('<span><i style="background:#fff;box-shadow:inset 0 0 0 3px #ffd43b"></i>ciclo negativo</span>')
+    return '<div class="lab-legenda">' + "".join(partes) + "</div>"
+
+
+def cards_html(cards):
+    """# [IA] Claude – linha de cartões de métricas. cards: lista de (rótulo, valor, subtítulo, alerta)."""
+    html = ['<div class="lab-cards">']
+    for rotulo, valor, sub, alerta in cards:
+        classe = "lab-card alerta" if alerta else "lab-card"
+        sub_html = f'<div class="sub">{escape(sub)}</div>' if sub else ""
+        html.append(f'<div class="{classe}"><div class="rot">{escape(rotulo)}</div>'
+                    f'<div class="val">{escape(str(valor))}</div>{sub_html}</div>')
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
 
 
 def controlar_animacao(ultimo, periodo):
@@ -495,6 +609,10 @@ def mostrar_diagnostico(diagnostico, fatal=True):
 
 
 def mostrar_resultado(resultado, algoritmo):
+    if resultado.recusa:  # [IA] Claude
+        cards_html([("Status", "RECUSA", None, True)])
+        st.error(resultado.recusa)
+        return
     if resultado.aviso:
         st.warning(resultado.aviso)
     if resultado.erro_armadilhas:
@@ -504,12 +622,12 @@ def mostrar_resultado(resultado, algoritmo):
             mostrar_diagnostico(diagnostico)
         return
     if resultado.tem_ciclo_dfs is not None:
-        st.subheader("Arcos examinados pela DFS")
+        # [IA] Claude – contagem da DFS em cartões
         ciclo = "Sim" if resultado.tem_ciclo_dfs else "Não"
-        st.write(f"**Ciclo encontrado** · {ciclo}")
-        colunas = st.columns(4)
-        for coluna, (classe, total) in zip(colunas, resultado.contagem_dfs.items()):
-            coluna.metric(CLASSES_DFS[classe][0], total)
+        cards_html([("Ciclo encontrado", ciclo, None, False)] + [
+            (f"Arcos de {CLASSES_DFS[classe][0].lower()}", total, None, False)
+            for classe, total in resultado.contagem_dfs.items()
+        ])
         st.caption("A DFS examina os vizinhos na ordem N, L, S, O.")
         with st.expander("Classificação dos arcos em ordem de exame"):
             linhas = []
@@ -529,7 +647,9 @@ def mostrar_resultado(resultado, algoritmo):
     if resultado.ciclo_negativo:
         st.warning("O Bellman-Ford detectou um ciclo negativo alcançável a partir de S.")
         if resultado.quadros_ciclo_negativo:
-            st.metric("Custo do ciclo negativo", resultado.quadros_ciclo_negativo[-1].custo)
+            cards_html([("Status", "CICLO NEGATIVO", None, True),  # [IA] Claude
+                        ("Custo do ciclo", resultado.quadros_ciclo_negativo[-1].custo, None, False),
+                        ("Estados no ciclo", len(resultado.nos_ciclo_negativo), None, False)])
             with st.expander("Sequência do ciclo negativo"):
                 st.text("\n".join(quadro.estado.rotulo for quadro in resultado.quadros_ciclo_negativo))
         st.subheader("Cadeia de predecessores a partir de ALVO")
@@ -549,26 +669,42 @@ def mostrar_resultado(resultado, algoritmo):
         st.info("O retorno do algoritmo não contém um caminho até ALVO.")
         return
 
-    st.subheader("Caminho até ALVO")
-    passos, custo = st.columns(2)
-    passos.metric("Menor número de passos" if algoritmo == "BFS" else "Passos", len(resultado.quadros) - 1)
-    custo.metric("Menor custo" if resultado.custo_minimo else "Custo do caminho", resultado.quadros[-1].custo)
+    # [IA] Claude – cartões no lugar dos st.metric
+    custo_final = resultado.quadros[-1].custo
+    cards = [
+        ("Menor número de passos" if algoritmo == "BFS" else "Passos", len(resultado.quadros) - 1,
+         "inclui G → ALVO (custo 0)" if resultado.camadas else None, False),
+        ("Menor custo" if resultado.custo_minimo else "Custo do caminho",
+         f"{custo_final:g}" if isinstance(custo_final, (int, float)) else custo_final, None, False),
+    ]
     if resultado.camadas:
-        st.caption("A contagem inclui a transição G → ALVO, com custo zero.")
+        cards.append(("Estados no grafo", sum(len(v) for v in resultado.camadas.values()), None, False))
+        cards.append(("Camadas", len(resultado.camadas), None, False))
+    if resultado.armadilhas is not None:
+        cards.append(("Estados-armadilha", len(resultado.armadilhas), None, False))
+    cards_html(cards)
 
 
 def main():
     st.set_page_config(page_title="Labirinto interativo", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
-    st.title("Labirinto interativo")
-    mapas = sorted(caminho for caminho in PASTA_MAPAS.rglob("*") if caminho.is_file())
+    # [IA] Claude – lista mapas de todas as pastas conhecidas (sem repetir nome)
+    mapas, vistos = [], set()
+    for pasta in PASTAS_MAPAS:
+        if pasta.is_dir():
+            for caminho in sorted(pasta.rglob("*.txt")):
+                chave = caminho.relative_to(pasta).as_posix() if pasta.name != "mapas_grupo" else f"grupo/{caminho.name}"
+                if chave not in vistos:
+                    vistos.add(chave)
+                    mapas.append(caminho)
     if not mapas:
-        st.warning("Nenhum mapa encontrado na pasta mapas/.")
+        st.warning("Nenhum mapa encontrado em mapas/, data/mapas/ ou data/mapas_grupo/.")
         return
 
     with st.sidebar:
         st.header("Configuração")
-        mapa = st.selectbox("Mapa", mapas, format_func=lambda caminho: str(caminho.relative_to(PASTA_MAPAS)))
+        mapa = st.selectbox("Mapa", mapas, format_func=lambda caminho: (
+            f"{caminho.stem}  (grupo)" if caminho.parent.name == "mapas_grupo" else caminho.stem))
         tipo = st.radio("Tipo de grafo", ("Grafo de estados", "Grafo padrão"))
         algoritmo = st.selectbox("Algoritmo", ALGORITMOS)
         velocidade = st.slider("Velocidade (quadros/s)", 0.25, 4.0, 1.0, 0.25)
@@ -597,6 +733,14 @@ def main():
         st.error(f"O mapa {mapa.name} foi reprovado por validar_labirinto.")
         return
 
+    # [IA] Claude – cabeçalho com o que está selecionado
+    st.markdown(
+        f'<div class="lab-topo"><h1>Labirinto interativo</h1>'
+        f'<span class="lab-chip">{escape(mapa.stem)}</span>'
+        f'<span class="lab-chip alg">{escape(algoritmo)}</span>'
+        f'<span class="lab-chip tipo">{escape(tipo)}</span></div>',
+        unsafe_allow_html=True,
+    )
     mostrar_resultado(resultado, algoritmo)
     periodo = 1.0 / velocidade
 
@@ -620,14 +764,7 @@ def main():
         mapa_col, estado_col = st.columns([3, 1], gap="large")
         with mapa_col:
             st.markdown(desenhar(linhas, resultado, passo, camada, realcar, realcar_ciclo), unsafe_allow_html=True)
-            legenda = "S partida · G saída"
-            if quadro:
-                legenda += " · círculo indica o estado atual"
-            if realcar and resultado.armadilhas is not None:
-                legenda += " · listras indicam estados-armadilha"
-            if realcar_ciclo and resultado.nos_ciclo_negativo:
-                legenda += " · contorno amarelo indica nós do ciclo negativo"
-            st.caption(legenda)
+            st.markdown(legenda_html(resultado, realcar, realcar_ciclo, camada), unsafe_allow_html=True)
             if quadro and camada is not None and camada != quadro.estado.chaves:
                 st.info("O estado atual está em outra camada.")
             if realcar and resultado.armadilhas is not None:
@@ -648,7 +785,8 @@ def main():
                         st.write("Nenhum nó do ciclo negativo na vista.")
         with estado_col:
             if quadro:
-                mostrar_estado(quadro, algoritmo, cadeia_de_predecessores=resultado.ciclo_negativo)
+                mostrar_estado(quadro, algoritmo, resultado.camadas, passo, len(quadros) - 1,
+                               cadeia_de_predecessores=resultado.ciclo_negativo)
 
     if hasattr(st, "fragment"):
         st.fragment(run_every=periodo if sessao.tocando else None)(visualizacao)()

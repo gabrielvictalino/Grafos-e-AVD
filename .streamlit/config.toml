@@ -1,0 +1,8 @@
+# [IA] Claude – tema do app interativo
+[theme]
+base = "light"
+primaryColor = "#3b5bdb"
+backgroundColor = "#f7f8fb"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#111827"
+font = "sans serif"
