@@ -146,6 +146,7 @@ def rotulo_camada(chaves, bonus):
     return rotulo
 
 
+# [IA] Claude – camada passa a ser (chaves, bônus consumidos): campo bonus, rotulo e rotulo_camada
 class Camada:
     def __init__(self, chaves="", bonus=frozenset()):
         # Uma camada é identificada pelo par (chaves, bônus consumidos)

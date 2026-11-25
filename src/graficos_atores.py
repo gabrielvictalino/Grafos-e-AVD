@@ -1,3 +1,4 @@
+# [IA] Claude – gráficos de atores (variação de notas, constância, receita, idioma e produtoras); as métricas e a análise são da equipe
 """Gráficos da Parte 2 (AVD): evolução das notas dos atores, receita, idioma e produtoras.
 
 Uso:

@@ -340,6 +340,7 @@ def exportar_parte1(entrada_mapas: str | Path = "mapas", out_dir: str | Path = "
         info_camadas = {}
         for camada in camadas:
             camada.calcular_metricas_camada(arestas_geradas)
+            # [IA] Claude – camadas rotuladas por (chaves, bônus) via rotulo_camada
             info_camadas[camada.rotulo] = {
                 "ordem": camada.metricas.ordem,
                 "tamanho": camada.metricas.tamanho,

@@ -166,14 +166,59 @@ def gerar_graficos_parte2(
     return caminho_barras, caminho_linhas
 
 
+# [IA] Claude – histogramas de grau de entrada e de saída do grafo TMDB (só sintaxe matplotlib; a leitura dos gráficos é da equipe)
+def calcular_graus(lista_nos) -> tuple[list[int], list[int]]:
+    """Retorna (graus_de_entrada, graus_de_saida), um valor por vértice, na ordem de lista_nos."""
+    entrada = {no.id: 0 for no in lista_nos}
+    for no in lista_nos:
+        for aresta in no.lista_arestas:
+            entrada[aresta.destino.id] += 1
+    return [entrada[no.id] for no in lista_nos], [len(no.lista_arestas) for no in lista_nos]
+
+
+def gerar_histogramas_grau(dataset: str | Path, diretorio_saida: str | Path = "out/parte2") -> tuple[Path, Path]:
+    """Salva os histogramas de grau de entrada e de grau de saída (eixo y em escala log)."""
+    import matplotlib.pyplot as plt
+    from src.graphs.io import carregar_grafo_tmdb
+
+    lista_nos, _ = carregar_grafo_tmdb(dataset)
+    graus_entrada, graus_saida = calcular_graus(lista_nos)
+    saida = Path(diretorio_saida)
+    saida.mkdir(parents=True, exist_ok=True)
+
+    caminhos = []
+    for nome, graus, cor in (("entrada", graus_entrada, "#4c6ef5"), ("saida", graus_saida, "#e8590c")):
+        rotulo = "entrada" if nome == "entrada" else "saída"
+        figura, eixo = plt.subplots(figsize=(10, 6))
+        eixo.hist(graus, bins=range(0, max(graus) + 2), color=cor)
+        eixo.set_yscale("log")
+        eixo.set_xlabel(f"Grau de {rotulo}")
+        eixo.set_ylabel("Número de vértices (escala log)")
+        eixo.set_title(f"Distribuição do grau de {rotulo} ({len(graus)} vértices, máx. {max(graus)})")
+        eixo.grid(axis="y", alpha=0.25)
+        figura.tight_layout()
+        caminho = saida / f"histograma_grau_{nome}.png"
+        figura.savefig(caminho, dpi=200)
+        plt.close(figura)
+        caminhos.append(caminho)
+    return caminhos[0], caminhos[1]
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Gera gráficos do benchmark da Parte 2.")
-    parser.add_argument("relatorio", help="Caminho para parte2_report.json")
+    parser = argparse.ArgumentParser(description="Gera gráficos da Parte 2 (benchmark e graus).")
+    parser.add_argument("relatorio", nargs="?", help="Caminho para parte2_report.json (gráficos do benchmark)")
+    parser.add_argument("--graus", metavar="DATASET", help="Gera os histogramas de grau a partir do dataset limpo")
     parser.add_argument("--out", default="out/parte2", help="Diretório para salvar os gráficos")
     args = parser.parse_args()
+    if not args.relatorio and not args.graus:
+        parser.error("informe o relatório do benchmark e/ou --graus DATASET")
 
-    for caminho in gerar_graficos_parte2(args.relatorio, args.out):
-        print(f"[OK] Gráfico salvo em {caminho}")
+    if args.relatorio:
+        for caminho in gerar_graficos_parte2(args.relatorio, args.out):
+            print(f"[OK] Gráfico salvo em {caminho}")
+    if args.graus:
+        for caminho in gerar_histogramas_grau(args.graus, args.out):
+            print(f"[OK] Gráfico salvo em {caminho}")
 
 
 if __name__ == "__main__":

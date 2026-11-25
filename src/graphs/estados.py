@@ -237,6 +237,7 @@ def verificar_chaves(elemento_analisado, camadas):
             )
 
             # Verifica se já existe uma camada com essas chaves
+            # [IA] Claude – a camada é identificada por (chaves, bônus), não só por chaves
             for camada in camadas:
                 if camada.chaves == novo_estado.chaves and camada.bonus == novo_estado.bonus:
                     return camadas, novo_estado
@@ -306,6 +307,7 @@ def adicionar_estado_a_camada(camadas,elemento_analisado):
             camada_encontrada = None
 
             for camada in camadas:
+                # [IA] Claude – idem: compara também os bônus consumidos
                 if camada.chaves == elemento_analisado.chaves and camada.bonus == elemento_analisado.bonus:
                     camada_encontrada = camada
                     break
