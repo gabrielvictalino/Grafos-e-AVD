@@ -51,15 +51,8 @@ Os mapas de entrada (`*.txt`) são grades retangulares de caracteres. Linhas ini
 - **Nó virtual `ALVO`:** todo estado em `G` recebe um arco dirigido de custo `0` para `ALVO`. Os caminhos até a saída são calculados até `ALVO`, mas o nó virtual e seus arcos incidentes **não** entram nas métricas globais nem nas métricas por camada.
 
 ### 1.4 Por que o Grafo Precisa Ser Dirigido?
-
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
 >
-> Explicar aqui por que um grafo **não dirigido** (espelhamento de arcos) estaria errado nesta modelagem, considerando:
-> 1. **Esteiras (`> < ^ v`):** transição em mão única (pode-se entrar por qualquer direção válida, mas só é possível sair na direção da seta);
-> 2. **Coleta irreversível de chaves (`a`–`d`) e consumo de bônus (`+`):** ao passar de `(linha, coluna)|-|{}` para `(linha, coluna)|a|{}` (ou consumir um bônus `+`), muda-se de camada e não existe transição de volta para a camada sem a chave/sem o bônus consumido;
-> 3. **Estados terminais (`G`):** não há saída de `G` para o restante do labirinto.
-
----
+>  O grafo precisa ser dirigido pois, pois possui caractéristicas que tornam cada transição única. Em duas casas adjacentes, que representam nós do grafo, os movimentos de ida e de volta são diferentes, pois possuem direções diferentes ( Direção é um dos rótulos necessários para identificar arestas no projeto). Além disso, as regras impõem limitações para o movimento entre casas, como as esteiras, que fazem com que seja apenas permitido o movimento em uma direção, quebrando a reciprocidade.
 
 ## 2. Métricas Globais, Camadas e Graus (`m01` a `m08`)
 
@@ -98,9 +91,8 @@ Definições adotadas (grafo dirigido, sem o nó virtual `ALVO`):
 | `m07` | `(3,1)\|-|{}` (3) | `(3,1)\|-|{}` (3) | 1 | 16 | 0 |
 | `m08` | `(3,15)\|abcd|{}` (4) | `(3,15)\|abcd|{}` (4) | 5 | 165 | 0 |
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Explicar por que a **multiplicidade máxima no `m08`** é **5** e por que **165 casas** atingem essa multiplicidade (relacionar à ordem forçada de coleta das 4 chaves `a -> b -> c -> d` e às casas acessíveis desde a camada inicial `-`).
-> - Comentar a diferença entre o **teto teórico** e os **estados realmente alcançáveis** nos mapas com chaves ou bônus (ex.: `m03`, `m05`, `m07`, `m08`).
+> - A **multiplicidade máxima no `m08`** é **5** e **165 casas** atingem essa multiplicidade. O número de multiplicade de 5 se deve ao fato de existirem 4 chaves no mapa. Cada combinação distinta de chaves e bonûs (inclusive a ausência deles) gera um
+>   estado distinto como não há nenhum bonûs no mapa, o número máximo de estados por casa é 5. Comentar a diferença entre o **teto teórico** e os **estados realmente alcançáveis** nos mapas com chaves ou bônus.
 
 ### 2.3 Métricas por Camada e Arcos Entre Camadas (`out/parte1/camadas.json`)
 
@@ -129,10 +121,7 @@ Definições adotadas (grafo dirigido, sem o nó virtual `ALVO`):
 | `m08` | `abc` | 829 | 1818 | 0.002649 | — | — |
 | `m08` | `abcd` | 1169 | 2574 | 0.001885 | — | — |
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Explicar por que **somente** as casas de chave (`a`–`d`) e os bônus `+` ainda não consumidos geram arcos entre camadas (e por que portas `A`–`D` e fontes `*` não mudam o estado de inventário/camada).
-
----
+> - Só é possível haver arestas entre camadas quando a combinação de chaves/bonûs muda (pois é o que define uma camada). Por esse motivo os arcos entre camadas são apenas de casas com bonûs ou chaves.
 
 ## 3. Comparação de Modelagens (`m02`, `m03`, `m04`) e Prova do `m05`
 
@@ -150,9 +139,9 @@ Definições adotadas (grafo dirigido, sem o nó virtual `ALVO`):
 | `m04` | `G_pos` (portas como parede) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
 | `m04` | `G_est` (modelagem correta) | 20 | Sim | Coleta `a` e evita esteiras-armadilha |
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
 > - Após gerar `out/parte1/comparacao_modelagem.csv`, preencher os passos e observações faltantes na tabela acima.
-> - Explicar com palavras do grupo por que tratar portas como chão gera **caminho inválido** e por que tratá-las como parede **falha** (não encontra caminho até `G`).
+> - Portas como chão acavbam por gerar caminhos que que são inválidos pois as portas acabam por ser transpostas sem nenhum tipo de limitação de aquisição de chaves. Portas como parede geram falhas pois tornam o caminho intransponível, mesmo com as chaves necessárias para passar pela porta. A implementação via estados permite com que "novas casas" com condições diferentes sejam geradas a medida que o estado muda. Esse tipo de modelagem acaba por possibilitar, por exemplo, que caminhos intransponívieis no estado atual possam ser transpostos com uma mudança que estados.
+
 
 ### 3.2 Pesos Negativos no `m05` e Prova de Ausência de Ciclo Negativo em `G_est`
 
@@ -161,11 +150,9 @@ Dados observados em `G_est` do `m05` (`m05_bonus.txt`, com 3 casas `+` de bônus
 - **Dijkstra:** `RECUSA` (presença de arcos de peso `-4` ao consumir cada `+` pela 1ª vez).
 - **Bellman-Ford em `G_est`:** `OK`, **20 passos**, **custo total `5`**, terminando em `(1,13)|-|{0,1,2}` (todos os 3 bônus consumidos, sem ciclo negativo).
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> 1. Registrar o resultado da execução de **Bellman-Ford em `G_pos`** tratando `+` como `-4` fixo (evidenciando o ciclo negativo formado ao entrar e sair da casa `+`).
-> 2. Escrever um **argumento curto (prova)** de por que `G_est` do `m05` **não pode ter ciclo negativo**. *(Dica do enunciado: observar o comportamento monotônico do conjunto de bônus consumidos ao longo de qualquer caminho e o fato de toda aresta dentro de uma mesma camada ter peso positivo $\ge 1$.)*
+> 1. A execução do bellmann ford considerando sem o grafo de estados originou o ciclo ciclo = [(5, 4), (5, 5), (5, 4)]
+> 2. Se desconsiderarmos o grafo de estados tirando os bonûs, todas outras arestas possuem pesos positivos no grafo do m05. Se você desconsiderar a regra do grafo de estados onde o bônus é consumido apenas uma vez, é possível gerar ciclos negativos visto que é possível realizar um caminho onde é possível passar por esses bônus repetidas vezes, diminuindo o custo a cada passagem por eles.
 
----
 
 ## 4. Resultados dos 4 Algoritmos e Estados-Armadilha
 
@@ -238,25 +225,19 @@ Estados alcançáveis a partir de `S` dos quais `ALVO` é inalcançável (identi
 
 #### Discussão `m01`: Divergência entre BFS e Dijkstra
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
 >
-> Explicar por que BFS encontra um caminho de **10 passos / custo 30** (atravessando água `~` de custo 5) enquanto Dijkstra encontra **14 passos / custo 20** (contornando por baixo pela lama `,` de custo 3 e chão `.` de custo 1).
+>  BFS encontra um caminho de **10 passos / custo 30** (atravessando água `~` de custo 5) enquanto Dijkstra encontra **14 passos / custo 20** (contornando por baixo pela lama `,` de custo 3 e chão `.` de custo 1). Isso ocorre primariamente pelo fato de que o BFS não utiliza como principal métrica para escolher o estado o peso da aresta, ele adiciona estados em uma fila e busca a menor quantidade de pulos, ou passos, para chegar no destino. Enquanto isso, a principal métrica para definir o destino do djikstra é o custo da aresta.
 
 #### Discussão `m06`: Correção do "Exploit" e Opção `--fonte-consumivel`
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
 >
-> 1. Explicar o *exploit* da fonte `*` infinita no `m06` (ganho líquido de `-1` a cada ida e volta `(3,6) <-> (3,5)`).
-> 2. Apresentar a correção de regra adotada pelo grupo (tornar `*` consumível via `--fonte-consumivel`, registrando seu consumo no estado de forma análoga a `+`).
-> 3. Reportar o resultado obtido com Bellman-Ford após implementar e executar `--fonte-consumivel` (custo finito e caminho até `ALVO`).
+> 1. O mapa m06 possui fontes adjacentes, o que faz com que seja possível pular de uma para outra repetidamente reduzindo o custo até que o número máximo de iterações acabe.
+> 2. Para resolver isso, a equipe fez com que a redução no custo só pudesse ser obtida no primeiro relaxamento e nas próximas iterações o custo vira 1.
+> 3. Isso resolve a multiplicidade de reduções que ocorre através das múltiplas passagens por essas fontes.
 
 #### Discussão `m07`: Prova de Impossibilidade pela Busca
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
->
-> Demonstrar, a partir da exploração e da busca no grafo transposto (`armadilhas_m07.csv`), por que `m07_impossivel.txt` não tem solução: relatar os **16 estados alcançáveis** a partir de `S` (todos na camada `-`), a inalcançabilidade da chave `a` e da saída `G`, e o fato de 100% dos estados alcançáveis serem estados-armadilha.
-
----
+> Todos os 16 estados alcansáveis são estados armadilha e estão relatados no arquivo armadilhas_m07.csv. Todos os estados alcansáveis são envoltos de paredes e a única saída não-parede é através da porta A. Porém não é possível chegar na chave a, que abriria esta porta.
 
 ## 5. Visualizações Estáticas e Labirinto Interativo
 
@@ -287,29 +268,7 @@ A interface interativa da Parte 1 foi implementada em **Streamlit** (`app.py`, e
 | Mapa 1 ($\ge 3$ chaves + esteiras + bônus) | `g01_chaves_esteiras_bonus.txt` | 536 | 1068 | 37 (custo `57`) | `37` (Bellman-Ford, `47` passos; Dijkstra: `RECUSA`) | `0` (`0.00%`) |
 | Mapa 2 (Armadilha: $\ge 20\%$ estados-armadilha) | `g02_armadilha.txt` | 105 | 205 | 30 (custo `46`) | `30` (Dijkstra / Bellman-Ford, `30` passos) | `43` (`40.95%`) |
 
-### 6.1 Gabarito Detalhado dos Mapas do Grupo
 
-1. **Mapa 1 (`data/mapas_grupo/g01_chaves_esteiras_bonus.txt`, grade `11 × 17`):**
-   - **Elementos:** `3` chaves (`a`, `b`, `c`), `3` portas (`A`, `B`, `C`), `5` esteiras (`>` em `(1,3)`, `(1,4)`, `v` em `(2,14)` e `<` em `(8,5)`, `(9,10)`), `2` bônus consumíveis `+` (`id 0` em `(1,12)` e `id 1` em `(9,12)`), além de lama (`,`) e água (`~`).
-   - **Grafos e métricas (`out/parte1/metricas_global.json`, `camadas.json`):** `G_pos` possui `69` vértices e `139` arcos (densidade `0.029625`); `G_est` possui `536` estados, `1068` arcos (densidade `0.003724`), `11` camadas (`-`, `a`, `a|{0}`, `ab`, `ab|{0}`, `ab|{1}`, `ab|{0,1}`, `abc`, `abc|{0}`, `abc|{1}`, `abc|{0,1}`), `19` arcos entre camadas, teto teórico `2208` (ocupação `24.28%`), multiplicidade máxima `11` em `15` casas e `0` becos.
-   - **Algoritmos (`out/parte1/solucoes.csv`, `dfs_classificacao.csv`):**
-     - `BFS`: `37` passos, custo `57`, terminando em `(6,1)|abc|{}`.
-     - `Dijkstra`: `RECUSA` (presença de pesos `-4` nos bônus `+`).
-     - `Bellman-Ford`: `47` passos, custo ótimo `37`, terminando em `(6,1)|abc|{0,1}` — coleta os `2` bônus (`0` e `1`) e passa pelas `5` esteiras (`>`, `>`, `v`, `<`, `<`).
-     - `DFS`: `535` árvore, `503` retorno, `4` avanço, `26` cruzamento (`tem_ciclo = True`).
-   - **Saídas individuais:** `out/parte1/arestas_g01_chaves_esteiras_bonus.csv`, `out/parte1/graus_g01_chaves_esteiras_bonus.csv`.
-
-2. **Mapa 2 (`data/mapas_grupo/g02_armadilha.txt`, grade `9 × 17`):**
-   - **Elementos:** `1` chave (`a` em `(7,4)`), `1` porta (`A` em `(3,14)`), `5` esteiras (`^` em `(1,4)`, `>>>` em `(3,5)`–`(3,7)` e `>` em `(5,6)`), além de água (`~`).
-   - **Grafos e métricas (`out/parte1/metricas_global.json`, `camadas.json`):** `G_pos` possui `66` vértices e `130` arcos (densidade `0.030303`); `G_est` possui `105` estados, `205` arcos (densidade `0.018773`), `2` camadas (`-` com `39` estados e `a` com `66` estados), `1` arco entre camadas (`(7,4)` `a`), teto teórico `132` (ocupação `79.55%`), multiplicidade máxima `2` em `39` casas e `2` becos (`(1,4)|-|{}` e `(1,4)|a|{}`).
-   - **Estados-armadilha (`out/parte1/armadilhas_g02_armadilha.csv`):** `43` de `105` estados alcançáveis (`40.95%`), sendo `21` na camada `-` e `22` na camada `a`.
-   - **Algoritmos (`out/parte1/solucoes.csv`, `dfs_classificacao.csv`):**
-     - `BFS`: `30` passos, custo `46` (atravessa água `~` sem desvio), terminando em `(3,15)|a|{}`.
-     - `Dijkstra` e `Bellman-Ford`: `30` passos, custo ótimo `30`, terminando em `(3,15)|a|{}`.
-     - `DFS`: `104` árvore, `96` retorno, `3` avanço, `2` cruzamento (`tem_ciclo = True`).
-   - **Saídas individuais:** `out/parte1/arestas_g02_armadilha.csv`, `out/parte1/graus_g02_armadilha.csv`, `out/parte1/armadilhas_g02_armadilha.csv`.
-
----
 
 ## 7. Conferência Manual do Mapa Mínimo de Testes (`tests/test_estados.py`)
 
@@ -364,11 +323,8 @@ Todos esses valores (`5` casas livres, `7` estados alcançáveis divididos em `2
 
 ## 8. Limitações e Conclusões (Parte 1)
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
->
-> Registrar aqui as limitações encontradas na modelagem/implementação da Parte 1 (ex.: crescimento de estados com aumento de chaves/bônus, tratamento de ciclos negativos, pontos em aberto ou melhorias futuras) e as conclusões gerais da Parte 1.
+> A implementação do grafo de estados pode gerar um overhead no sistema quando o grafo possui múltiplos estados, pois todo estado é uma nova instância de objeto. O tratamento de ciclos negativos acaba por ser outra limitação, pois acaba descaracterizando algoritmos como o bellman ford que de forma tradicional não possui mudanças de pesos durante sua execução. De um modo geral, a utilização de grafos de estado possibilita uma implementações mais completas e robustas para o problema de labirintos.
 
----
 
 ## 9. Matriz de Contribuição da Equipe
 
