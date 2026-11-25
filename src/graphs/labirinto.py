@@ -252,7 +252,9 @@ def gerar_labirinto(caminho_do_labirinto):
     chaves_unicas = set()
     num_bonus = 0
     arquivo = open(caminho_do_labirinto,"r")
-    for indice_linha,linha in enumerate(arquivo):
+    # [IA] Claude – depuração: pula comentários (;) para a linha 0 ser a primeira linha do mapa
+    linhas_do_mapa = [l for l in arquivo if l.strip() and not l.startswith(";")]
+    for indice_linha,linha in enumerate(linhas_do_mapa):
         for indice_caractere,caractere in enumerate(linha):
             if caractere !=  "#" and caractere != "\n":
                 if caractere in ["a","b","c","d"]:
