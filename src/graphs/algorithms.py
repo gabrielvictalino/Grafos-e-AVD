@@ -134,6 +134,82 @@ def bellman_ford(listas_nos, origem):
     return distancias, anteriores, mudou, ciclo
 
 
+def bellman_ford_com_ciclo_negativo_nos(listas_nos, origem):
+    anteriores = {}
+    distancias = {}
+    arestas = []
+
+    for no in listas_nos:
+        distancias[no] = float('inf')
+        anteriores[no] = None
+
+        for i in no.lista_arestas:
+            if i != 0:
+                arestas.append(i)
+
+    distancias[origem] = 0
+
+    # Relaxamento das arestas
+    for i in range(len(listas_nos) - 1):
+        mudou = False
+
+        for aresta in arestas:
+            org = aresta.origem
+            dest = aresta.destino
+            peso = aresta.custo
+
+            if dest.tipo == "+":
+                peso = -4
+                
+            if distancias[org] != float('inf'):
+                if distancias[org] + peso < distancias[dest]:
+                    distancias[dest] = distancias[org] + peso
+                    anteriores[dest] = org
+                    mudou = True
+
+        if not mudou:
+            break
+
+    # Passagem adicional para detectar ciclo negativo
+    mudou = False
+    atual = None
+    ciclo = []
+    copia_anteriores = anteriores.copy()
+    copia_distancia = distancias.copy()
+    for aresta in arestas:
+        org = aresta.origem
+        dest = aresta.destino
+        peso = aresta.custo
+
+        if copia_distancia[org] != float('inf'):
+            if copia_distancia[org] + peso < copia_distancia[dest]:
+                copia_distancia[dest] = copia_distancia[org] + peso
+                copia_anteriores[dest] = org
+                mudou = True
+                atual = dest
+
+    if mudou:
+
+        # Entra no ciclo
+        for _ in range(len(copia_anteriores)):
+            atual = copia_anteriores[atual]
+
+        # Reconstrói o ciclo
+        inicio_ciclo = atual
+        ciclo = [inicio_ciclo]
+
+        atual = copia_anteriores[inicio_ciclo]
+
+        while atual != inicio_ciclo:
+            ciclo.append(atual)
+            atual = copia_anteriores[atual]
+
+        ciclo.append(inicio_ciclo)
+        ciclo.reverse()
+
+    return distancias, anteriores, mudou, ciclo
+
+
 def bellman_ford_sem_ciclo_negativo(listas_nos, origem):
     anteriores = {}
     distancias = {}
@@ -172,6 +248,8 @@ def bellman_ford_sem_ciclo_negativo(listas_nos, origem):
             break
 
     return distancias, anteriores
+
+
 
     
 
