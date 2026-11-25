@@ -22,9 +22,9 @@ def criar_parser() -> argparse.ArgumentParser:
     entrada.add_argument(
         "--exportar-parte1",
         nargs="?",
-        const="mapas",
+        const="data/mapas",
         type=str,
-        help="Exporta todos os arquivos obrigatórios da Parte 1 a partir da pasta de mapas (padrão: mapas)",
+        help="Exporta todos os arquivos obrigatórios da Parte 1 a partir da pasta de mapas (padrão: data/mapas)",
     )
 
     parser.add_argument(

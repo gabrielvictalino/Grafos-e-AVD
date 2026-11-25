@@ -47,7 +47,7 @@ def test_mapa_valido_aceito(tmp_path):
 
 
 def test_todos_mapas_fornecidos_sao_validos():
-    pasta_mapas = RAIZ / "mapas"
+    pasta_mapas = RAIZ / "data" / "mapas"
     arquivos = sorted(pasta_mapas.glob("m0[1-8]_*.txt"))
     assert len(arquivos) == 8
 

@@ -1,0 +1,145 @@
+{
+  "escalabilidade": [
+    {
+      "escala": "10%",
+      "vertices": 41624,
+      "arestas": 500000,
+      "algoritmos": {
+        "BFS": {
+          "tempo_medio_ms": 4.733,
+          "execucoes_ms": [
+            5.145,
+            4.788,
+            4.684,
+            4.446,
+            4.601
+          ]
+        },
+        "DFS": {
+          "tempo_medio_ms": 7.754,
+          "execucoes_ms": [
+            5.676,
+            7.871,
+            8.896,
+            8.077,
+            8.248
+          ]
+        },
+        "DIJKSTRA": {
+          "tempo_medio_ms": 37.033,
+          "execucoes_ms": [
+            40.991,
+            42.057,
+            34.155,
+            34.501,
+            33.459
+          ]
+        },
+        "BELLMAN_FORD": {
+          "tempo_medio_ms": 112.927,
+          "execucoes_ms": [
+            115.39,
+            112.991,
+            112.678,
+            111.959,
+            111.619
+          ]
+        }
+      }
+    },
+    {
+      "escala": "50%",
+      "vertices": 208121,
+      "arestas": 500000,
+      "algoritmos": {
+        "BFS": {
+          "tempo_medio_ms": 31.24,
+          "execucoes_ms": [
+            31.297,
+            37.099,
+            29.505,
+            29.229,
+            29.071
+          ]
+        },
+        "DFS": {
+          "tempo_medio_ms": 51.953,
+          "execucoes_ms": [
+            66.636,
+            55.535,
+            50.727,
+            44.08,
+            42.784
+          ]
+        },
+        "DIJKSTRA": {
+          "tempo_medio_ms": 126.836,
+          "execucoes_ms": [
+            134.939,
+            124.923,
+            123.908,
+            123.516,
+            126.896
+          ]
+        },
+        "BELLMAN_FORD": {
+          "tempo_medio_ms": 157.989,
+          "execucoes_ms": [
+            169.086,
+            151.091,
+            149.967,
+            152.499,
+            167.303
+          ]
+        }
+      }
+    },
+    {
+      "escala": "100%",
+      "vertices": 416243,
+      "arestas": 500000,
+      "algoritmos": {
+        "BFS": {
+          "tempo_medio_ms": 74.802,
+          "execucoes_ms": [
+            73.598,
+            72.478,
+            76.912,
+            76.908,
+            74.113
+          ]
+        },
+        "DFS": {
+          "tempo_medio_ms": 126.003,
+          "execucoes_ms": [
+            143.809,
+            136.064,
+            124.949,
+            112.822,
+            112.37
+          ]
+        },
+        "DIJKSTRA": {
+          "tempo_medio_ms": 329.638,
+          "execucoes_ms": [
+            376.673,
+            327.382,
+            328.809,
+            324.54,
+            290.789
+          ]
+        },
+        "BELLMAN_FORD": {
+          "tempo_medio_ms": 229.747,
+          "execucoes_ms": [
+            251.658,
+            244.157,
+            209.186,
+            219.844,
+            223.888
+          ]
+        }
+      }
+    }
+  ]
+}

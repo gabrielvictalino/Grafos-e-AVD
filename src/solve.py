@@ -270,7 +270,7 @@ def _exportar_armadilhas_csv(armadilhas: set, labirinto, mapa_id: str, out_dir: 
     return caminho_csv
 
 
-def exportar_parte1(entrada_mapas: str | Path = "mapas", out_dir: str | Path = "out/parte1") -> list[Path]:
+def exportar_parte1(entrada_mapas: str | Path = "data/mapas", out_dir: str | Path = "out/parte1") -> list[Path]:
     """Executa exploração, métricas e algoritmos da Parte 1 e exporta todos os arquivos obrigatórios."""
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)

@@ -249,3 +249,48 @@ def test_bellman_ford_ciclo_negativo_inalcancavel_nao_dispara():
     assert distancias[nos["A"]] == 2
     assert math.isinf(distancias[nos["X"]])
     assert math.isinf(distancias[nos["Y"]])
+
+
+
+# [IA] Claude Code – 2 testes sugeridos para o Bellman-Ford; os cálculos à mão estão nos comentários
+# e o grupo deve conferi-los antes de aceitar os testes.
+
+def test_bellman_ford_sugestao_ciclo_negativo_detectado_e_devolvido():
+    # Grafo: S->A (1), A->B (2), B->C (-4), C->A (1).
+    # Ciclo A->B->C->A: 2 + (-4) + 1 = -1  (negativo, alcançável a partir de S).
+    # S fica fora do ciclo; ele só chega a A pela aresta S->A.
+    vertices = [("S", "S"), "A", "B", "C"]
+    arestas = [("S", "A", 1), ("A", "B", 2), ("B", "C", -4), ("C", "A", 1)]
+    nos, lista_nos, _ = _construir_grafo_dirigido(vertices, arestas)
+
+    _, _, tem_ciclo_negativo, ciclo_negativo = bellman_ford(lista_nos, nos["S"])
+
+    assert tem_ciclo_negativo is True
+    nos_ciclo, custo = _validar_ciclo_negativo(ciclo_negativo)
+    assert nos_ciclo == {nos["A"], nos["B"], nos["C"]}
+    assert nos["S"] not in nos_ciclo
+    assert custo == -1
+
+
+def test_bellman_ford_sugestao_peso_negativo_sem_ciclo():
+    # Grafo (sem ciclo): S->A (3), S->B (2), A->B (-2), B->C (-1).
+    # dist(S) = 0
+    # dist(A) = 3
+    # dist(B) = min(S->B = 2, S->A->B = 3 + (-2) = 1) = 1
+    # dist(C) = dist(B) + (-1) = 0
+    # Melhor caminho até C: S->A->B->C, custo 3 - 2 - 1 = 0.
+    vertices = [("S", "S"), "A", "B", "C"]
+    arestas = [("S", "A", 3), ("S", "B", 2), ("A", "B", -2), ("B", "C", -1)]
+    nos, lista_nos, _ = _construir_grafo_dirigido(vertices, arestas)
+
+    distancias, anteriores, tem_ciclo_negativo, ciclo_negativo = bellman_ford(lista_nos, nos["S"])
+
+    assert tem_ciclo_negativo is False
+    assert not ciclo_negativo
+    assert distancias[nos["S"]] == 0
+    assert distancias[nos["A"]] == 3
+    assert distancias[nos["B"]] == 1
+    assert distancias[nos["C"]] == 0
+    caminho = _reconstruir_caminho(anteriores, nos["S"], nos["C"])
+    assert caminho == [nos["S"], nos["A"], nos["B"], nos["C"]]
+    assert _custo_caminho(caminho) == 0

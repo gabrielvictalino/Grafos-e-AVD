@@ -16,9 +16,9 @@ from src.graphs import labirinto as maze
 
 
 RAIZ = Path(__file__).resolve().parent
-PASTA_MAPAS = RAIZ / "mapas"
+PASTA_MAPAS = RAIZ / "data" / "mapas"
 # [IA] Claude – também procura nas pastas da estrutura do enunciado, se existirem
-PASTAS_MAPAS = [RAIZ / "mapas", RAIZ / "data" / "mapas", RAIZ / "data" / "mapas_grupo"]
+PASTAS_MAPAS = [RAIZ / "data" / "mapas", RAIZ / "data" / "mapas_grupo"]
 # [IA] Claude – cores do rastro, uma por camada (conjunto de chaves)
 CORES_CAMADAS = ["#f76707", "#7048e8", "#12a37f", "#d6336c", "#1971c2", "#5c940d",
                  "#1098ad", "#f08c00", "#7048e8", "#c92a2a", "#2b8a3e", "#495057",
@@ -728,7 +728,7 @@ def main():
                     vistos.add(chave)
                     mapas.append(caminho)
     if not mapas:
-        st.warning("Nenhum mapa encontrado em mapas/, data/mapas/ ou data/mapas_grupo/.")
+        st.warning("Nenhum mapa encontrado em data/mapas/ ou data/mapas_grupo/.")
         return
 
     with st.sidebar:
