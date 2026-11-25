@@ -141,7 +141,8 @@ Definições adotadas (grafo dirigido, sem o nó virtual `ALVO`):
 
 > - Após gerar `out/parte1/comparacao_modelagem.csv`, preencher os passos e observações faltantes na tabela acima.
 > - Portas como chão acavbam por gerar caminhos que que são inválidos pois as portas acabam por ser transpostas sem nenhum tipo de limitação de aquisição de chaves. Portas como parede geram falhas pois tornam o caminho intransponível, mesmo com as chaves necessárias para passar pela porta. A implementação via estados permite com que "novas casas" com condições diferentes sejam geradas a medida que o estado muda. Esse tipo de modelagem acaba por possibilitar, por exemplo, que caminhos intransponívieis no estado atual possam ser transpostos com uma mudança que estados.
-> - 
+
+
 ### 3.2 Pesos Negativos no `m05` e Prova de Ausência de Ciclo Negativo em `G_est`
 
 Dados observados em `G_est` do `m05` (`m05_bonus.txt`, com 3 casas `+` de bônus):
@@ -152,7 +153,6 @@ Dados observados em `G_est` do `m05` (`m05_bonus.txt`, com 3 casas `+` de bônus
 > 1. A execução do bellmann ford considerando sem o grafo de estados originou o ciclo ciclo = [(5, 4), (5, 5), (5, 4)]
 > 2. Se desconsiderarmos o grafo de estados tirando os bonûs, todas outras arestas possuem pesos positivos no grafo do m05. Se você desconsiderar a regra do grafo de estados onde o bônus é consumido apenas uma vez, é possível gerar ciclos negativos visto que é possível realizar um caminho onde é possível passar por esses bônus repetidas vezes, diminuindo o custo a cada passagem por eles.
 
----
 
 ## 4. Resultados dos 4 Algoritmos e Estados-Armadilha
 
@@ -225,25 +225,19 @@ Estados alcançáveis a partir de `S` dos quais `ALVO` é inalcançável (identi
 
 #### Discussão `m01`: Divergência entre BFS e Dijkstra
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
 >
-> Explicar por que BFS encontra um caminho de **10 passos / custo 30** (atravessando água `~` de custo 5) enquanto Dijkstra encontra **14 passos / custo 20** (contornando por baixo pela lama `,` de custo 3 e chão `.` de custo 1).
+>  BFS encontra um caminho de **10 passos / custo 30** (atravessando água `~` de custo 5) enquanto Dijkstra encontra **14 passos / custo 20** (contornando por baixo pela lama `,` de custo 3 e chão `.` de custo 1). Isso ocorre primariamente pelo fato de que o BFS não utiliza como principal métrica para escolher o estado o peso da aresta, ele adiciona estados em uma fila e busca a menor quantidade de pulos, ou passos, para chegar no destino. Enquanto isso, a principal métrica para definir o destino do djikstra é o custo da aresta.
 
 #### Discussão `m06`: Correção do "Exploit" e Opção `--fonte-consumivel`
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
 >
-> 1. Explicar o *exploit* da fonte `*` infinita no `m06` (ganho líquido de `-1` a cada ida e volta `(3,6) <-> (3,5)`).
-> 2. Apresentar a correção de regra adotada pelo grupo (tornar `*` consumível via `--fonte-consumivel`, registrando seu consumo no estado de forma análoga a `+`).
-> 3. Reportar o resultado obtido com Bellman-Ford após implementar e executar `--fonte-consumivel` (custo finito e caminho até `ALVO`).
+> 1. O mapa m06 possui fontes adjacentes, o que faz com que seja possível pular de uma para outra repetidamente reduzindo o custo até que o número máximo de iterações acabe.
+> 2. Para resolver isso, a equipe fez com que a redução no custo só pudesse ser obtida no primeiro relaxamento e nas próximas iterações o custo vira 1.
+> 3. Isso resolve a multiplicidade de reduções que ocorre através das múltiplas passagens por essas fontes.
 
 #### Discussão `m07`: Prova de Impossibilidade pela Busca
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
->
-> Demonstrar, a partir da exploração e da busca no grafo transposto (`armadilhas_m07.csv`), por que `m07_impossivel.txt` não tem solução: relatar os **16 estados alcançáveis** a partir de `S` (todos na camada `-`), a inalcançabilidade da chave `a` e da saída `G`, e o fato de 100% dos estados alcançáveis serem estados-armadilha.
-
----
+> Todos os 16 estados alcansáveis são estados armadilha e estão relatados no arquivo armadilhas_m07.csv. Todos os estados alcansáveis são envoltos de paredes e a única saída não-parede é através da porta A. Porém não é possível chegar na chave a, que abriria esta porta.
 
 ## 5. Visualizações Estáticas e Labirinto Interativo
 
@@ -331,11 +325,8 @@ Todos esses valores (`5` casas livres, `7` estados alcançáveis divididos em `2
 
 ## 8. Limitações e Conclusões (Parte 1)
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
->
-> Registrar aqui as limitações encontradas na modelagem/implementação da Parte 1 (ex.: crescimento de estados com aumento de chaves/bônus, tratamento de ciclos negativos, pontos em aberto ou melhorias futuras) e as conclusões gerais da Parte 1.
+> A implementação do grafo de estados pode gerar um overhead no sistema quando o grafo possui múltiplos estados, pois todo estado é uma nova instância de objeto. O tratamento de ciclos negativos acaba por ser outra limitação, pois acaba descaracterizando algoritmos como o bellman ford que de forma tradicional não possui mudanças de pesos durante sua execução. De um modo geral, a utilização de grafos de estado possibilita uma implementações mais completas e robustas para o problema de labirintos.
 
----
 
 ## 9. Matriz de Contribuição da Equipe
 
