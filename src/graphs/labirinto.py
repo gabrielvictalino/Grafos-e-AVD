@@ -193,7 +193,9 @@ def validar_labirinto(caminho_do_labirinto):
 
     with open(caminho_do_labirinto, "r") as arquivo:
         texto = arquivo.read()
-
+    # [IA] Claude – depuração: ignora linhas de comentário (;) e linhas vazias
+    linhas_do_mapa = [l for l in texto.splitlines() if l.strip() and not l.startswith(";")]
+    texto = "\n".join(linhas_do_mapa)
     string_total = set(texto)
 
     existe_diferenca = string_total - caracteres_permitidos
@@ -227,7 +229,7 @@ def validar_labirinto(caminho_do_labirinto):
     if not resultado_tamanho_igual:
         print("Número de linhas e colunas diferentes")
 
-    if numeroS != 1 or numeroG != 1:
+    if numeroS != 1 or numeroG < 1:
         print("Número de entradas ou saídas inválidos")
 
     if existe_diferenca:
