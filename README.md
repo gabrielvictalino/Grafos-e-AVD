@@ -130,6 +130,12 @@ Para executar um algoritmo específico entre origem e destino no dataset da Part
 python -m src.cli --dataset data/dataset_parte2/tmdb_limpo.csv.gz --alg DIJKSTRA --source <ID_ORIGEM> --target <ID_DESTINO> --out out/parte2
 ```
 
+Para gerar os gráficos de atores, idioma e produtoras (`out/parte2/`). O `--bruto` é o `TMDB_all_movies.csv` do Kaggle, necessário para revenue, idioma e produtoras; sem ele só os 3 primeiros gráficos são gerados:
+
+```bash
+python -m src.graficos_atores --bruto caminho/TMDB_all_movies.csv --out out/parte2
+```
+
 ---
 
 ## Documentação e Uso Responsável de IA
