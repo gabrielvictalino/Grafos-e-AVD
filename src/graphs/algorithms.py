@@ -134,6 +134,47 @@ def bellman_ford(listas_nos, origem):
     return distancias, anteriores, mudou, ciclo
 
 
+def bellman_ford_sem_ciclo_negativo(listas_nos, origem):
+    anteriores = {}
+    distancias = {}
+    arestas = []
+    bonus_consumiveis = []
+    for no in listas_nos:
+        distancias[no] = float('inf')
+        anteriores[no] = None
+
+        for i in no.lista_arestas:
+            if i != 0:
+                arestas.append(i)
+
+    distancias[origem] = 0
+
+    # Relaxamento das arestas
+    for i in range(len(listas_nos) - 1):
+        mudou = False
+
+        for aresta in arestas:
+            org = aresta.origem
+            dest = aresta.destino
+            peso = aresta.custo
+            if dest.no_pos.tipo == "*" and  (dest.no_pos.posicao_linha,dest.no_pos.posicao_coluna) in bonus_consumiveis:
+                peso = 1         
+
+            if distancias[org] != float('inf'):
+                if distancias[org] + peso < distancias[dest]:
+                    if dest.no_pos.tipo == "*" and (dest.no_pos.posicao_linha,dest.no_pos.posicao_coluna) not in bonus_consumiveis:
+                        bonus_consumiveis.append((dest.no_pos.posicao_linha,dest.no_pos.posicao_coluna))
+                    distancias[dest] = distancias[org] + peso
+                    anteriores[dest] = org
+                    mudou = True
+
+        if not mudou:
+            break
+
+    return distancias, anteriores
+
+    
+
 def dfs(lista_nos, origem, detalhado=False):
     anteriores = {} # pra escrever o caminho no final
     distancias = {} # custo do caminho encontrado pelo DFS
