@@ -282,12 +282,32 @@ A interface interativa da Parte 1 foi implementada em **Streamlit** (`app.py`, e
 
 ## 6. Mapas Próprios do Grupo (`data/mapas_grupo/`)
 
-*(Criar 2 mapas em `data/mapas_grupo/` e preencher após a exportação.)*
-
 | Requisito | Arquivo do grupo | Estados ($\|V(G_{\text{est}})\|$) | Arcos ($\|E(G_{\text{est}})\|$) | Passos (BFS) | Custo ótimo (Dijkstra / BF) | Estados-armadilha (% alcançáveis) |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| Mapa 1 ($\ge 3$ chaves + esteiras + bônus) | `[PREENCHER]` | — | — | — | — | — |
-| Mapa 2 (Armadilha: $\ge 20\%$ estados-armadilha) | `[PREENCHER]` | — | — | — | — | — |
+| Mapa 1 ($\ge 3$ chaves + esteiras + bônus) | `g01_chaves_esteiras_bonus.txt` | 536 | 1068 | 37 (custo `57`) | `37` (Bellman-Ford, `47` passos; Dijkstra: `RECUSA`) | `0` (`0.00%`) |
+| Mapa 2 (Armadilha: $\ge 20\%$ estados-armadilha) | `g02_armadilha.txt` | 105 | 205 | 30 (custo `46`) | `30` (Dijkstra / Bellman-Ford, `30` passos) | `43` (`40.95%`) |
+
+### 6.1 Gabarito Detalhado dos Mapas do Grupo
+
+1. **Mapa 1 (`data/mapas_grupo/g01_chaves_esteiras_bonus.txt`, grade `11 × 17`):**
+   - **Elementos:** `3` chaves (`a`, `b`, `c`), `3` portas (`A`, `B`, `C`), `5` esteiras (`>` em `(1,3)`, `(1,4)`, `v` em `(2,14)` e `<` em `(8,5)`, `(9,10)`), `2` bônus consumíveis `+` (`id 0` em `(1,12)` e `id 1` em `(9,12)`), além de lama (`,`) e água (`~`).
+   - **Grafos e métricas (`out/parte1/metricas_global.json`, `camadas.json`):** `G_pos` possui `69` vértices e `139` arcos (densidade `0.029625`); `G_est` possui `536` estados, `1068` arcos (densidade `0.003724`), `11` camadas (`-`, `a`, `a|{0}`, `ab`, `ab|{0}`, `ab|{1}`, `ab|{0,1}`, `abc`, `abc|{0}`, `abc|{1}`, `abc|{0,1}`), `19` arcos entre camadas, teto teórico `2208` (ocupação `24.28%`), multiplicidade máxima `11` em `15` casas e `0` becos.
+   - **Algoritmos (`out/parte1/solucoes.csv`, `dfs_classificacao.csv`):**
+     - `BFS`: `37` passos, custo `57`, terminando em `(6,1)|abc|{}`.
+     - `Dijkstra`: `RECUSA` (presença de pesos `-4` nos bônus `+`).
+     - `Bellman-Ford`: `47` passos, custo ótimo `37`, terminando em `(6,1)|abc|{0,1}` — coleta os `2` bônus (`0` e `1`) e passa pelas `5` esteiras (`>`, `>`, `v`, `<`, `<`).
+     - `DFS`: `535` árvore, `503` retorno, `4` avanço, `26` cruzamento (`tem_ciclo = True`).
+   - **Saídas individuais:** `out/parte1/arestas_g01_chaves_esteiras_bonus.csv`, `out/parte1/graus_g01_chaves_esteiras_bonus.csv`.
+
+2. **Mapa 2 (`data/mapas_grupo/g02_armadilha.txt`, grade `9 × 17`):**
+   - **Elementos:** `1` chave (`a` em `(7,4)`), `1` porta (`A` em `(3,14)`), `5` esteiras (`^` em `(1,4)`, `>>>` em `(3,5)`–`(3,7)` e `>` em `(5,6)`), além de água (`~`).
+   - **Grafos e métricas (`out/parte1/metricas_global.json`, `camadas.json`):** `G_pos` possui `66` vértices e `130` arcos (densidade `0.030303`); `G_est` possui `105` estados, `205` arcos (densidade `0.018773`), `2` camadas (`-` com `39` estados e `a` com `66` estados), `1` arco entre camadas (`(7,4)` `a`), teto teórico `132` (ocupação `79.55%`), multiplicidade máxima `2` em `39` casas e `2` becos (`(1,4)|-|{}` e `(1,4)|a|{}`).
+   - **Estados-armadilha (`out/parte1/armadilhas_g02_armadilha.csv`):** `43` de `105` estados alcançáveis (`40.95%`), sendo `21` na camada `-` e `22` na camada `a`.
+   - **Algoritmos (`out/parte1/solucoes.csv`, `dfs_classificacao.csv`):**
+     - `BFS`: `30` passos, custo `46` (atravessa água `~` sem desvio), terminando em `(3,15)|a|{}`.
+     - `Dijkstra` e `Bellman-Ford`: `30` passos, custo ótimo `30`, terminando em `(3,15)|a|{}`.
+     - `DFS`: `104` árvore, `96` retorno, `3` avanço, `2` cruzamento (`tem_ciclo = True`).
+   - **Saídas individuais:** `out/parte1/arestas_g02_armadilha.csv`, `out/parte1/graus_g02_armadilha.csv`, `out/parte1/armadilhas_g02_armadilha.csv`.
 
 ---
 

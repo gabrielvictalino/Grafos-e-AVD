@@ -6,8 +6,10 @@
 
 | Ferramenta | Onde | Finalidade |
 | :--- | :--- | :--- |
-| Antigravity (Gemini) | `tests/test_bfs.py`, `test_dfs.py`, `test_dijkstra.py`, `test_bellman_ford.py`, `test_estados.py`, `test_io.py` | Testes unitários dos algoritmos, do grafo de estados e da leitura de mapas/dataset |
-| Antigravity (Gemini) / Gemini | `src/cli.py` | Interface de linha de comando e a opção `--exportar-parte1` |
+| Antigravity (Gemini) | `tests/test_bfs.py`, `test_dfs.py`, `test_dijkstra.py`, `test_bellman_ford.py`, `test_estados.py`, `test_io.py` | Testes unitários dos algoritmos, do grafo de estados (incluindo validação dos 2 mapas extras do grupo) e da leitura de mapas/dataset |
+| Antigravity (Gemini) / Gemini | `src/cli.py`, `src/solve.py` | Interface de linha de comando, `--exportar-parte1`, orquestração individual da Parte 1 (`--mapa`, `--fonte-consumivel`, `--armadilhas`, `--interactive`) e exportação de `armadilhas_<mapa>.csv` para `data/mapas_grupo/` |
+| Antigravity (Gemini) | `data/mapas_grupo/g01_chaves_esteiras_bonus.txt`, `g02_armadilha.txt` | Sugestão dos 2 mapas extras do grupo (conferidos e validados pelo código e pelos testes unitários em `tests/test_estados.py`) |
+| Antigravity (Gemini) | `app.py` | Filtro de linhas comentadas (`;`) e linhas vazias na leitura da grade em `carregar` |
 | Gemini | `notebooks/exploracao_grafo_avd.ipynb` (3 células) | Métricas estruturais do grafo em DataFrames; cruzamento de arestas com elenco e atributos; merge e matriz de correlação |
 | ChatGPT | `notebooks/projeto_pos_limpeza.ipynb` (2 células) | Apoio com pandas: exclusão de colunas e remoção de registros incompletos; conversão e validação de datas |
 | Claude | `app.py` (interface Streamlit) | Visual do app (tema, cartões, legenda, rastro colorido) e painéis separados por camada (chaves + bônus) |

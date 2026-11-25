@@ -45,6 +45,7 @@ Grafos-e-AVD/
 │  └─ CHECKLIST_ENTREGA_PARTE2.md  # Checklist de entrega e pendências da Parte 2 e AVD
 ├─ mapas/                          # Mapas fornecidos da Parte 1 (m01 a m08)
 ├─ data/
+│  ├─ mapas_grupo/                 # 2 mapas próprios do grupo (g01 e g02)
 │  └─ dataset_parte2/
 │     └─ tmdb_limpo.csv.gz         # Dataset tratado da Parte 2
 ├─ out/
@@ -71,7 +72,7 @@ Grafos-e-AVD/
 └─ taxi_labirinto/                 # Demonstração interativa temática extra
 ```
 
-> **Observação sobre pastas do enunciado:** os mapas fornecidos estão em `mapas/`. Antes da entrega final, caso queira seguir exatamente a árvore literal do enunciado, mova/copie para `data/mapas/`, crie os 2 mapas próprios em `data/mapas_grupo/` e inclua a `docs/DECLARACAO_IA.pdf` assinada por todos.
+> **Observação sobre pastas do enunciado:** os mapas fornecidos estão em `mapas/` e os 2 mapas próprios do grupo estão em `data/mapas_grupo/`. Antes da entrega final, caso queira seguir exatamente a árvore literal do enunciado, copie também `mapas/` para `data/mapas/` e inclua a `docs/DECLARACAO_IA.pdf` assinada por todos.
 
 ---
 
@@ -109,7 +110,12 @@ pytest tests/
 
 #### Parâmetros da CLI (`src/cli.py`)
 
-O parser em `src/cli.py` também declara as flags `--mapa`, `--alg {BFS,DFS,DIJKSTRA,BELLMAN_FORD}`, `--fonte-consumivel`, `--armadilhas` e `--interactive`. Atualmente, o fluxo completo da Parte 1 está conectado em `--exportar-parte1` e `app.py`; a execução individual por `--mapa` ainda está pendente de ligação em `src/cli.py` (ver `docs/CHECKLIST_ENTREGA_PARTE1.md`).
+A CLI suporta execução em lote (`--exportar-parte1`) e execução individual por mapa (`--mapa`), além de `--alg {BFS,DFS,DIJKSTRA,BELLMAN_FORD}`, `--fonte-consumivel`, `--armadilhas` e `--interactive` (que gera `labirinto_interativo.html` no diretório informado em `--out`). Exemplos:
+
+```bash
+python -m src.cli --mapa mapas/m06_fonte.txt --alg BELLMAN_FORD --fonte-consumivel --out out/parte1
+python -m src.cli --mapa data/mapas_grupo/g02_armadilha.txt --armadilhas --out out/parte1
+```
 
 ---
 

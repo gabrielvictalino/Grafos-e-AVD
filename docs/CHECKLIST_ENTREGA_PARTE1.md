@@ -37,17 +37,18 @@
 
 ### Código, Outputs e Testes Faltantes da Parte 1
 - [ ] **Gerar `out/parte1/comparacao_modelagem.csv`:** rodar BFS em `m02`, `m03` e `m04` nas 3 modelagens (portas como chão, portas como parede, grafo de estados).
-- [ ] **Implementar `--mapa` e `--fonte-consumivel` na CLI (`src/cli.py` / `src/solve.py`):** necessários tanto para demonstrar a correção do `m06` quanto para a **demonstração ao vivo com mapa surpresa** na apresentação.
-- [ ] **Criar os 2 mapas próprios em `data/mapas_grupo/`:**
-  1. Mapa com $\ge 3$ chaves + esteiras + bônus (caminho ótimo coleta ao menos um bônus e passa por ao menos uma esteira).
-  2. Mapa armadilha com $\ge 20\%$ dos estados alcançáveis sendo estados-armadilha.
-  - Reexecutar a exportação (`--exportar-parte1`) após criar os mapas e preencher o gabarito na Seção 6 de `docs/relatorio_parte1.md`.
+- [x] **Implementar `--mapa` e `--fonte-consumivel` na CLI (`src/cli.py` / `src/solve.py`):** conectados e prontos tanto para demonstrar a correção do `m06` quanto para a **demonstração ao vivo com mapa surpresa** na apresentação.
+- [x] **Criar os 2 mapas próprios em `data/mapas_grupo/`:**
+  1. `g01_chaves_esteiras_bonus.txt` ($\ge 3$ chaves + esteiras + bônus: caminho ótimo via Bellman-Ford coleta os 2 bônus e passa por 5 esteiras).
+  2. `g02_armadilha.txt` (`43/105` = `40.95%` dos estados alcançáveis são estados-armadilha).
+  - Exportação (`--exportar-parte1`) reexecutada em `out/parte1/` e gabarito preenchido na Seção 6 de `docs/relatorio_parte1.md`.
 - [x] **Gerar as 5 figuras PNG obrigatórias da Seção 8 em `out/parte1/`** (todas com título, legenda e rótulos):
   1. `out/parte1/percurso_m03.png` (cor mudando a cada chave)
   2. `out/parte1/percurso_m08.png` (cor mudando a cada chave)
   3. `out/parte1/grafo_estados_m02.png` (grafo de estados do `m02` em camadas)
   4. `out/parte1/arvore_bfs_m02.png` (árvore BFS de estados do `m02` com níveis visíveis)
   5. `out/parte1/heatmap_m08.png` (multiplicidade por casa)
-- [ ] **Corrigir falha atual em `tests/test_io.py`:** `test_mapa_com_comentario_ponto_e_virgula_aceito` está falhando porque `validar_labirinto` não ignora linhas comentadas com `;` (e verificar se mapas em `mapas/` precisam estar também em `data/mapas/`).
-- [ ] **Garantir commits de todos em pelo menos 2 pacotes** no repositório GitHub.
+- [x] **Corrigir falha atual em `tests/test_io.py`:** `validar_labirinto` e `gerar_labirinto` ignoram linhas comentadas com `;` e toda a suíte `pytest tests/` está passando.
+- [ ] **Verificar se os mapas em `mapas/` precisam estar também em `data/mapas/`** (conforme a árvore literal de pastas do enunciado).
+- [x] **Garantir commits de todos em pelo menos 2 pacotes** no repositório GitHub (verificado no histórico Git: todos os 4 integrantes possuem commits em $\ge 3$ pacotes).
 - [ ] **Verificar marcações `# [IA] <ferramenta> – <finalidade>`** em todos os trechos de código feitos com apoio de IA dentro das diretrizes permitidas.

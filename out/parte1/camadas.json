@@ -553,5 +553,386 @@
         "peso": 1
       }
     ]
+  },
+  "g01_chaves_esteiras_bonus": {
+    "arquivo": "g01_chaves_esteiras_bonus.txt",
+    "camadas": {
+      "-": {
+        "ordem": 15,
+        "tamanho": 26,
+        "densidade": 0.12380952380952381
+      },
+      "a": {
+        "ordem": 28,
+        "tamanho": 54,
+        "densidade": 0.07142857142857142
+      },
+      "a|{0}": {
+        "ordem": 31,
+        "tamanho": 61,
+        "densidade": 0.06559139784946237
+      },
+      "ab": {
+        "ordem": 45,
+        "tamanho": 88,
+        "densidade": 0.044444444444444446
+      },
+      "ab|{0}": {
+        "ordem": 48,
+        "tamanho": 95,
+        "densidade": 0.04210992907801418
+      },
+      "ab|{1}": {
+        "ordem": 50,
+        "tamanho": 97,
+        "densidade": 0.03959183673469388
+      },
+      "abc": {
+        "ordem": 64,
+        "tamanho": 125,
+        "densidade": 0.031001984126984128
+      },
+      "ab|{0,1}": {
+        "ordem": 53,
+        "tamanho": 104,
+        "densidade": 0.03773584905660377
+      },
+      "abc|{1}": {
+        "ordem": 66,
+        "tamanho": 130,
+        "densidade": 0.030303030303030304
+      },
+      "abc|{0}": {
+        "ordem": 67,
+        "tamanho": 132,
+        "densidade": 0.029850746268656716
+      },
+      "abc|{0,1}": {
+        "ordem": 69,
+        "tamanho": 137,
+        "densidade": 0.029198635976129584
+      }
+    },
+    "total_arcos_entre_camadas": 19,
+    "casas_geradoras_entre_camadas": [
+      {
+        "linha": 1,
+        "coluna": 7,
+        "simbolo": "a",
+        "quantidade_arcos": 2
+      },
+      {
+        "linha": 1,
+        "coluna": 12,
+        "simbolo": "+",
+        "quantidade_arcos": 5
+      },
+      {
+        "linha": 3,
+        "coluna": 15,
+        "simbolo": "b",
+        "quantidade_arcos": 2
+      },
+      {
+        "linha": 8,
+        "coluna": 8,
+        "simbolo": "c",
+        "quantidade_arcos": 6
+      },
+      {
+        "linha": 9,
+        "coluna": 12,
+        "simbolo": "+",
+        "quantidade_arcos": 4
+      }
+    ],
+    "arcos_entre_camadas": [
+      {
+        "origem": "(1,6)|-|{}",
+        "destino": "(1,7)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "L",
+        "casa_destino": "a",
+        "posicao_destino": [
+          1,
+          7
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(2,7)|-|{}",
+        "destino": "(1,7)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "N",
+        "casa_destino": "a",
+        "posicao_destino": [
+          1,
+          7
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(1,11)|a|{}",
+        "destino": "(1,12)|a|{0}",
+        "camada_origem": "a",
+        "camada_destino": "a|{0}",
+        "movimento": "L",
+        "casa_destino": "+",
+        "posicao_destino": [
+          1,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(3,14)|a|{}",
+        "destino": "(3,15)|ab|{}",
+        "camada_origem": "a",
+        "camada_destino": "ab",
+        "movimento": "L",
+        "casa_destino": "b",
+        "posicao_destino": [
+          3,
+          15
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(3,14)|a|{0}",
+        "destino": "(3,15)|ab|{0}",
+        "camada_origem": "a|{0}",
+        "camada_destino": "ab|{0}",
+        "movimento": "L",
+        "casa_destino": "b",
+        "posicao_destino": [
+          3,
+          15
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(9,13)|ab|{}",
+        "destino": "(9,12)|ab|{1}",
+        "camada_origem": "ab",
+        "camada_destino": "ab|{1}",
+        "movimento": "O",
+        "casa_destino": "+",
+        "posicao_destino": [
+          9,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(1,11)|ab|{}",
+        "destino": "(1,12)|ab|{0}",
+        "camada_origem": "ab",
+        "camada_destino": "ab|{0}",
+        "movimento": "L",
+        "casa_destino": "+",
+        "posicao_destino": [
+          1,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(7,8)|ab|{}",
+        "destino": "(8,8)|abc|{}",
+        "camada_origem": "ab",
+        "camada_destino": "abc",
+        "movimento": "S",
+        "casa_destino": "c",
+        "posicao_destino": [
+          8,
+          8
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(9,13)|ab|{0}",
+        "destino": "(9,12)|ab|{0,1}",
+        "camada_origem": "ab|{0}",
+        "camada_destino": "ab|{0,1}",
+        "movimento": "O",
+        "casa_destino": "+",
+        "posicao_destino": [
+          9,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(9,8)|ab|{1}",
+        "destino": "(8,8)|abc|{1}",
+        "camada_origem": "ab|{1}",
+        "camada_destino": "abc|{1}",
+        "movimento": "N",
+        "casa_destino": "c",
+        "posicao_destino": [
+          8,
+          8
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(7,8)|ab|{0}",
+        "destino": "(8,8)|abc|{0}",
+        "camada_origem": "ab|{0}",
+        "camada_destino": "abc|{0}",
+        "movimento": "S",
+        "casa_destino": "c",
+        "posicao_destino": [
+          8,
+          8
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(9,8)|ab|{0,1}",
+        "destino": "(8,8)|abc|{0,1}",
+        "camada_origem": "ab|{0,1}",
+        "camada_destino": "abc|{0,1}",
+        "movimento": "N",
+        "casa_destino": "c",
+        "posicao_destino": [
+          8,
+          8
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(7,8)|ab|{1}",
+        "destino": "(8,8)|abc|{1}",
+        "camada_origem": "ab|{1}",
+        "camada_destino": "abc|{1}",
+        "movimento": "S",
+        "casa_destino": "c",
+        "posicao_destino": [
+          8,
+          8
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(9,13)|abc|{}",
+        "destino": "(9,12)|abc|{1}",
+        "camada_origem": "abc",
+        "camada_destino": "abc|{1}",
+        "movimento": "O",
+        "casa_destino": "+",
+        "posicao_destino": [
+          9,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(7,8)|ab|{0,1}",
+        "destino": "(8,8)|abc|{0,1}",
+        "camada_origem": "ab|{0,1}",
+        "camada_destino": "abc|{0,1}",
+        "movimento": "S",
+        "casa_destino": "c",
+        "posicao_destino": [
+          8,
+          8
+        ],
+        "peso": 1
+      },
+      {
+        "origem": "(1,11)|ab|{1}",
+        "destino": "(1,12)|ab|{0,1}",
+        "camada_origem": "ab|{1}",
+        "camada_destino": "ab|{0,1}",
+        "movimento": "L",
+        "casa_destino": "+",
+        "posicao_destino": [
+          1,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(9,13)|abc|{0}",
+        "destino": "(9,12)|abc|{0,1}",
+        "camada_origem": "abc|{0}",
+        "camada_destino": "abc|{0,1}",
+        "movimento": "O",
+        "casa_destino": "+",
+        "posicao_destino": [
+          9,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(1,11)|abc|{}",
+        "destino": "(1,12)|abc|{0}",
+        "camada_origem": "abc",
+        "camada_destino": "abc|{0}",
+        "movimento": "L",
+        "casa_destino": "+",
+        "posicao_destino": [
+          1,
+          12
+        ],
+        "peso": -4
+      },
+      {
+        "origem": "(1,11)|abc|{1}",
+        "destino": "(1,12)|abc|{0,1}",
+        "camada_origem": "abc|{1}",
+        "camada_destino": "abc|{0,1}",
+        "movimento": "L",
+        "casa_destino": "+",
+        "posicao_destino": [
+          1,
+          12
+        ],
+        "peso": -4
+      }
+    ]
+  },
+  "g02_armadilha": {
+    "arquivo": "g02_armadilha.txt",
+    "camadas": {
+      "-": {
+        "ordem": 39,
+        "tamanho": 75,
+        "densidade": 0.05060728744939271
+      },
+      "a": {
+        "ordem": 66,
+        "tamanho": 129,
+        "densidade": 0.03006993006993007
+      }
+    },
+    "total_arcos_entre_camadas": 1,
+    "casas_geradoras_entre_camadas": [
+      {
+        "linha": 7,
+        "coluna": 4,
+        "simbolo": "a",
+        "quantidade_arcos": 1
+      }
+    ],
+    "arcos_entre_camadas": [
+      {
+        "origem": "(7,3)|-|{}",
+        "destino": "(7,4)|a|{}",
+        "camada_origem": "-",
+        "camada_destino": "a",
+        "movimento": "L",
+        "casa_destino": "a",
+        "posicao_destino": [
+          7,
+          4
+        ],
+        "peso": 1
+      }
+    ]
   }
 }

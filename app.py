@@ -346,7 +346,12 @@ def carregar(caminho, algoritmo, com_estados):
     if not maze.validar_labirinto(caminho):
         return None, None
 
-    linhas = Path(caminho).read_text(encoding="utf-8").splitlines()
+    # [IA] Antigravity (Gemini) – ignora comentários (;) e linhas vazias para alinhar a grade com labirinto.py
+    linhas = [
+        linha
+        for linha in Path(caminho).read_text(encoding="utf-8").splitlines()
+        if linha.strip() and not linha.startswith(";")
+    ]
     resultado = Resultado()
     try:
         mapa = maze.gerar_labirinto(caminho)

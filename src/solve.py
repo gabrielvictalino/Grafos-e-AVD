@@ -444,10 +444,12 @@ def exportar_parte1(entrada_mapas: str | Path = "mapas", out_dir: str | Path = "
                 )
             )
 
-        # 7) armadilhas_m04.csv e armadilhas_m07.csv
-        if mapa_id in ("m04", "m07"):
+        # 7) armadilhas_m04.csv, armadilhas_m07.csv e mapas do grupo com armadilhas
+        # [IA] Antigravity (Gemini) – exporta armadilhas_<mapa>.csv também para mapas do grupo com estados-armadilha
+        if mapa_id in ("m04", "m07") or mapa_path.parent.name == "mapas_grupo":
             armadilhas = bfs_estados_armadilha(arestas_geradas, camadas)
-            arquivos_gerados.append(_exportar_armadilhas_csv(armadilhas, labirinto, mapa_id, out_path))
+            if mapa_id in ("m04", "m07") or armadilhas:
+                arquivos_gerados.append(_exportar_armadilhas_csv(armadilhas, labirinto, mapa_id, out_path))
 
         # 8) DFS no grafo de estados sem nó virtual ALVO
         lista_nos_sem_alvo, no_ini_sem_alvo, _, _ = converter_grafo_estados(
