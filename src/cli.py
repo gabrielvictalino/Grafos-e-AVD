@@ -1,9 +1,14 @@
 # [IA] Gemini Interface de linha de comando (CLI) conectada ao src/solve.py
-# [IA] Antigravity (Gemini) – adiciona opção --exportar-parte1 para gerar os arquivos obrigatórios da Parte 1
+# [IA] Antigravity (Gemini) – adiciona --exportar-parte1 e conecta execução individual via --mapa na Parte 1
 import argparse
 from pathlib import Path
 from src.graphs.io import carregar_grafo_tmdb
-from src.solve import executar_algoritmo_parte2, executar_benchmark_parte2, exportar_parte1
+from src.solve import (
+    executar_algoritmo_parte2,
+    executar_benchmark_parte2,
+    executar_mapa_parte1,
+    exportar_parte1,
+)
 
 
 def criar_parser() -> argparse.ArgumentParser:
@@ -48,6 +53,10 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if args.dataset:
+        if args.fonte_consumivel or args.armadilhas or args.interactive:
+            parser.error(
+                "--fonte-consumivel, --armadilhas e --interactive são válidos apenas com --mapa."
+            )
         if args.benchmark:
             executar_benchmark_parte2(args.dataset, out_dir)
         elif args.alg:
@@ -73,7 +82,77 @@ def main() -> None:
             print(f"  - {arq}")
 
     elif args.mapa:
-        print(f"[INFO] Executando Parte 1 para o mapa: {args.mapa}")
+        # [IA] Antigravity (Gemini) – orquestração dos comandos individuais da Parte 1 via --mapa
+        if args.benchmark or args.source or args.target:
+            parser.error("--benchmark, --source e --target são válidos apenas com --dataset.")
+
+        alg = args.alg
+        if args.fonte_consumivel:
+            if alg is not None and alg != "BELLMAN_FORD":
+                parser.error("--fonte-consumivel só pode ser usado com --alg BELLMAN_FORD.")
+            if alg is None:
+                alg = "BELLMAN_FORD"
+
+        resumo = executar_mapa_parte1(
+            args.mapa,
+            out_dir,
+            alg=alg,
+            fonte_consumivel=args.fonte_consumivel,
+            armadilhas=args.armadilhas,
+            interactive=args.interactive,
+        )
+        print(
+            f"[OK] Mapa {resumo['mapa']} ({resumo['arquivo']}): "
+            f"G_pos=({resumo['ordem_pos']}V, {resumo['tamanho_pos']}E), "
+            f"G_est=({resumo['ordem_est']}V, {resumo['tamanho_est']}E, {resumo['num_camadas']} camadas)"
+        )
+
+        res_alg = resumo.get("resultado_alg")
+        if alg and isinstance(res_alg, dict):
+            status = res_alg.get("status")
+            if alg == "DFS":
+                print(
+                    f"  - DFS: status={status}, tem_ciclo={res_alg.get('tem_ciclo')}, "
+                    f"contagem={res_alg.get('contagem')}"
+                )
+            elif status == "OK":
+                extra = " (fonte * consumível)" if res_alg.get("fonte_consumivel") else ""
+                print(
+                    f"  - {alg}{extra}: status=OK, passos={res_alg.get('passos')}, "
+                    f"custo={res_alg.get('custo_total')}, tempo={res_alg.get('tempo_ms')} ms"
+                )
+            elif status == "CICLO_NEGATIVO":
+                print(
+                    f"  - {alg}: status=CICLO_NEGATIVO, custo_ciclo={res_alg.get('custo_ciclo')}, "
+                    f"ciclo={' -> '.join(res_alg.get('ciclo_estados', []))}"
+                )
+            else:
+                motivo = f" ({res_alg.get('motivo')})" if res_alg.get("motivo") else ""
+                print(f"  - {alg}: status={status}{motivo}")
+        elif isinstance(res_alg, dict):
+            for nome_alg, dados in res_alg.items():
+                if nome_alg == "DFS":
+                    print(
+                        f"  - DFS: tem_ciclo={dados.get('tem_ciclo')}, contagem={dados.get('contagem')}"
+                    )
+                else:
+                    print(
+                        f"  - {nome_alg}: status={dados.get('status')}, "
+                        f"passos={dados.get('passos')}, custo={dados.get('custo_total')}"
+                    )
+
+        if resumo.get("armadilhas") is not None:
+            arm = resumo["armadilhas"]
+            print(
+                f"  - Armadilhas: {arm['quantidade']} de {arm['total_estados']} estados "
+                f"({arm['percentual']}%)"
+            )
+
+        print(f"[OK] {len(resumo['arquivos_gerados'])} arquivos gerados em {out_dir}:")
+        for arq in resumo["arquivos_gerados"]:
+            print(f"  - {arq}")
+        if args.interactive:
+            print("[DICA] Você também pode abrir o app Streamlit com: streamlit run app.py")
 
 
 if __name__ == "__main__":
