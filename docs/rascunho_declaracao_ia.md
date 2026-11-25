@@ -14,8 +14,9 @@
 | Claude | `src/graphs/labirinto.py`, `src/graphs/estados.py`, `src/solve.py` | Camada passa a ser identificada por (chaves, bônus consumidos): campo `bonus` em `Camada`, `rotulo_camada`, comparações nas camadas e rótulos em `camadas.json`. A lógica de exploração e de custos não foi alterada |
 | Claude | `src/graficos_atores.py` | Gráficos de atores (variação de notas, constância, receita), idioma e produtoras. Escolha dos critérios (metades da carreira, mínimos de filmes) proposta pelo Claude; **a equipe precisa confirmar ou ajustar** |
 | Claude | `src/viz.py` (`gerar_histogramas_grau`, `calcular_graus`) | Histogramas de grau de entrada e de saída (sintaxe matplotlib) |
+| Antigravity (Gemini) | `src/viz.py` (`exportar_heatmap`, `exportar_percurso_mapa`, `exportar_grafo_estados_m02`, `exportar_arvore_bfs_m02`, `gerar_figuras_parte1`, `main`) | Apoio com sintaxe matplotlib para gerar as 5 figuras PNG obrigatórias da Parte 1 (percursos de `m03`/`m08`, grafo em camadas e árvore BFS de `m02`, heatmap de `m08`) e flags `--parte1`/`--mapas` na CLI |
 
-Os arquivos `out/parte1/camadas.json` e `out/parte2/*.png` são saídas geradas por esse código.
+Os arquivos `out/parte1/camadas.json`, `out/parte1/*.png` e `out/parte2/*.png` são saídas geradas por esse código.
 
 ## 2. Pontos para a equipe completar antes de assinar
 

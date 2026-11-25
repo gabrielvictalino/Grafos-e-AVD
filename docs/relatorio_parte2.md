@@ -1,13 +1,11 @@
 # Relatório Técnico e Análise Visual (AVD) — Parte 2: Dataset Maior (TMDB)
 
-- **Disciplinas:** Teoria dos Grafos + Análise e Visualização de Dados (AVD) — 2026.2 (CESAR School)
-- **Docente (Teoria dos Grafos):** Profª Laura Alves Pacifico
-- **Entrega:** 26/11/2026
-- **Equipe (identificada no histórico Git):**
+- **Disciplinas:** Teoria dos Grafos + Análise e Visualização de Dados (AVD)
+- **Equipe:**
   - Aline Takakura
   - David Magalhães
   - Gabriel Victalino Mancebo
-  - Júlia (`juliavfe` — completar nome completo antes de exportar para PDF)
+  - Júlia Ferreira
 
 > **Aviso de conformidade (Diretrizes de IA):** Conforme as regras da disciplina, todas as interpretações, discussões críticas, justificativas de análise de dados/gráficos, narrativa (*storytelling*), notas analíticas das visualizações e resposta à pergunta de pesquisa devem ser **autorais do grupo**. Neste documento, todos os números, métricas estruturais, tabelas de limpeza, distribuições, correlações e limites de *outliers* foram extraídos diretamente de `src/graphs/io.py`, `src/solve.py`, `data/dataset_parte2/tmdb_limpo.csv.gz` e dos notebooks em `notebooks/`, enquanto os trechos que exigem redação autoral estão marcados com **`[AUTORAL — PREENCHER PELO GRUPO]`**.
 

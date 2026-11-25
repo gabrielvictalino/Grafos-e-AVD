@@ -1,9 +1,7 @@
 # Relatório Técnico e Manual — Parte 1: Labirinto com Chaves e Portas (Grafo de Estados)
 
-- **Disciplinas:** Teoria dos Grafos + Análise e Visualização de Dados (AVD) — 2026.2 (CESAR School)
-- **Docente (Teoria dos Grafos):** Profª Laura Alves Pacifico
-- **Entrega:** 26/11/2026
-- **Equipe (identificada no histórico Git):**
+- **Disciplinas:** Teoria dos Grafos + Análise e Visualização de Dados (AVD)
+- **Equipe:**
   - Aline Takakura
   - David Magalhães
   - Gabriel Victalino Mancebo
@@ -266,11 +264,11 @@ Estados alcançáveis a partir de `S` dos quais `ALVO` é inalcançável (identi
 
 Todas as figuras devem conter **título, legenda e rótulos**:
 
-1. **Percurso sobre o mapa `m03` (cor mudando a cada chave):** `[Pendente: gerar out/parte1/percurso_m03.png]`
-2. **Percurso sobre o mapa `m08` (cor mudando a cada chave):** `[Pendente: gerar out/parte1/percurso_m08.png]`
-3. **Grafo de estados do `m02` desenhado em camadas (destacando arcos entre camadas):** `[Pendente: gerar figura em out/parte1/]`
-4. **Árvore BFS de estados do `m02` (com níveis visíveis):** `[Pendente: gerar figura em out/parte1/]`
-5. **Heatmap de multiplicidade das casas do `m08`:** `[Pendente: gerar out/parte1/heatmap_m08.png via exportar_heatmap]`
+1. **Percurso sobre o mapa `m03` (cor mudando a cada chave):** `out/parte1/percurso_m03.png`
+2. **Percurso sobre o mapa `m08` (cor mudando a cada chave):** `out/parte1/percurso_m08.png`
+3. **Grafo de estados do `m02` desenhado em camadas (destacando arcos entre camadas):** `out/parte1/grafo_estados_m02.png`
+4. **Árvore BFS de estados do `m02` (com níveis visíveis):** `out/parte1/arvore_bfs_m02.png`
+5. **Heatmap de multiplicidade das casas do `m08`:** `out/parte1/heatmap_m08.png`
 
 ### 5.2 Labirinto Interativo (`app.py`)
 

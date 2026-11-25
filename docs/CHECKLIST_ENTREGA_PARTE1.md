@@ -42,11 +42,11 @@
   1. Mapa com $\ge 3$ chaves + esteiras + bônus (caminho ótimo coleta ao menos um bônus e passa por ao menos uma esteira).
   2. Mapa armadilha com $\ge 20\%$ dos estados alcançáveis sendo estados-armadilha.
   - Reexecutar a exportação (`--exportar-parte1`) após criar os mapas e preencher o gabarito na Seção 6 de `docs/relatorio_parte1.md`.
-- [ ] **Gerar as 5 figuras PNG obrigatórias da Seção 8 em `out/parte1/`** (todas com título, legenda e rótulos):
+- [x] **Gerar as 5 figuras PNG obrigatórias da Seção 8 em `out/parte1/`** (todas com título, legenda e rótulos):
   1. `out/parte1/percurso_m03.png` (cor mudando a cada chave)
   2. `out/parte1/percurso_m08.png` (cor mudando a cada chave)
-  3. Grafo de estados do `m02` em camadas
-  4. Árvore BFS de estados do `m02`
+  3. `out/parte1/grafo_estados_m02.png` (grafo de estados do `m02` em camadas)
+  4. `out/parte1/arvore_bfs_m02.png` (árvore BFS de estados do `m02` com níveis visíveis)
   5. `out/parte1/heatmap_m08.png` (multiplicidade por casa)
 - [ ] **Corrigir falha atual em `tests/test_io.py`:** `test_mapa_com_comentario_ponto_e_virgula_aceito` está falhando porque `validar_labirinto` não ignora linhas comentadas com `;` (e verificar se mapas em `mapas/` precisam estar também em `data/mapas/`).
 - [ ] **Garantir commits de todos em pelo menos 2 pacotes** no repositório GitHub.
