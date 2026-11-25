@@ -263,14 +263,12 @@ A interface interativa da Parte 1 foi implementada em **Streamlit** (`app.py`, e
 
 ## 6. Mapas Próprios do Grupo (`data/mapas_grupo/`)
 
-*(Criar 2 mapas em `data/mapas_grupo/` e preencher após a exportação.)*
-
 | Requisito | Arquivo do grupo | Estados ($\|V(G_{\text{est}})\|$) | Arcos ($\|E(G_{\text{est}})\|$) | Passos (BFS) | Custo ótimo (Dijkstra / BF) | Estados-armadilha (% alcançáveis) |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| Mapa 1 ($\ge 3$ chaves + esteiras + bônus) | `[PREENCHER]` | — | — | — | — | — |
-| Mapa 2 (Armadilha: $\ge 20\%$ estados-armadilha) | `[PREENCHER]` | — | — | — | — | — |
+| Mapa 1 ($\ge 3$ chaves + esteiras + bônus) | `g01_chaves_esteiras_bonus.txt` | 536 | 1068 | 37 (custo `57`) | `37` (Bellman-Ford, `47` passos; Dijkstra: `RECUSA`) | `0` (`0.00%`) |
+| Mapa 2 (Armadilha: $\ge 20\%$ estados-armadilha) | `g02_armadilha.txt` | 105 | 205 | 30 (custo `46`) | `30` (Dijkstra / Bellman-Ford, `30` passos) | `43` (`40.95%`) |
 
----
+
 
 ## 7. Conferência Manual do Mapa Mínimo de Testes (`tests/test_estados.py`)
 
