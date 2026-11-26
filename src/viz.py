@@ -1084,8 +1084,8 @@ def carregar_relatorio_parte2(caminho: str | Path) -> list[dict]:
 def gerar_graficos_parte2(
     relatorio: str | Path,
     diretorio_saida: str | Path = "out/parte2",
-) -> tuple[Path, Path]:
-    """Salva comparação por escala em barras e escalabilidade em linhas."""
+) -> tuple[Path, Path, Path]:
+    """Salva barras por escala, escalabilidade em linhas e medido × teórico."""
     escalas = carregar_relatorio_parte2(relatorio)
     import matplotlib.pyplot as plt
 
@@ -1136,7 +1136,48 @@ def gerar_graficos_parte2(
     figura.savefig(caminho_linhas, dpi=200)
     plt.close(figura)
 
-    return caminho_barras, caminho_linhas
+    caminho_teorico = _grafico_empirico_vs_teorico(escalas, nomes_algoritmos, medias, saida)
+    return caminho_barras, caminho_linhas, caminho_teorico
+
+
+_COMPLEXIDADE_TEORICA = {
+    "BFS": ("V + E", lambda v, e: v + e),
+    "DFS": ("V + E", lambda v, e: v + e),
+    "DIJKSTRA": ("V² (busca linear)", lambda v, e: v * v),
+    "BELLMAN_FORD": ("V · E", lambda v, e: v * e),
+}
+
+
+def _grafico_empirico_vs_teorico(escalas, nomes_algoritmos, medias, saida: Path) -> Path:
+    """Um painel por algoritmo: tempo medido (cheio) × curva teórica escalada na maior escala (tracejado)."""
+    import matplotlib.pyplot as plt
+
+    if any("arestas" not in item for item in escalas):
+        raise ValueError("O relatório precisa ter 'arestas' em cada escala para o gráfico medido × teórico.")
+
+    vertices = [item["vertices"] for item in escalas]
+    arestas = [item["arestas"] for item in escalas]
+    figura, eixos = plt.subplots(1, len(nomes_algoritmos), figsize=(4.5 * len(nomes_algoritmos), 5), squeeze=False)
+
+    for eixo, nome in zip(eixos[0], nomes_algoritmos):
+        rotulo, funcao = _COMPLEXIDADE_TEORICA[nome]
+        teorico = [funcao(v, e) for v, e in zip(vertices, arestas)]
+        # escala a curva teórica para coincidir com o tempo medido na maior escala
+        fator = medias[nome][-1] / teorico[-1] if teorico[-1] else 0.0
+        teorico = [t * fator for t in teorico]
+        eixo.plot(vertices, medias[nome], marker="o", linestyle="-", label="Medido")
+        eixo.plot(vertices, teorico, marker="s", linestyle="--", label=f"Teórico O({rotulo})")
+        eixo.set_title(nome)
+        eixo.set_xlabel("Número de vértices")
+        eixo.grid(True, alpha=0.25)
+        eixo.legend()
+    eixos[0][0].set_ylabel("Tempo médio (ms)")
+    figura.suptitle("Tempo medido × complexidade teórica (escalada na maior escala)")
+    figura.tight_layout()
+    caminho = saida / "empirico_vs_teorico.png"
+    figura.savefig(caminho, dpi=200)
+    plt.close(figura)
+    return caminho
 
 
 # [IA] Claude – histogramas de grau de entrada e de saída do grafo TMDB (só sintaxe matplotlib; a leitura dos gráficos é da equipe)

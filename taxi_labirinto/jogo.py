@@ -31,6 +31,7 @@ def sprites():
     return carregar_sprites(RAIZ / "sprites")
 
 
+# [IA] ChatGPT – apoio à organização da interface do minijogo e à integração do componente com o Streamlit.
 tabuleiro = components.declare_component("taxi_labirinto", path=str(RAIZ / "componente"))
 
 

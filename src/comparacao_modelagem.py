@@ -66,7 +66,7 @@ def _bfs_posicoes(caminho_arquivo: Path, portas_como_parede: bool) -> tuple[int 
     origem, destino = labirinto.estado_incial, labirinto.estado_final
     niveis, anteriores = bfs(nos, origem)
     if not math.isfinite(niveis[destino]):
-        return None, False, "G inalcançável: nenhum caminho de S até G"
+        return None, False, "sem caminho"
     caminho = _caminho_de_nos(anteriores, origem, destino)
     valido, obs = _validar_caminho([(n.posicao_linha, n.posicao_coluna, n.tipo) for n in caminho])
     return int(niveis[destino]), valido, obs
@@ -100,7 +100,7 @@ def comparar_modelagens(pasta_mapas: Path = PASTA_PADRAO, mapas=MAPAS_PADRAO) ->
             _bfs_estados,
         )):
             passos, valido, obs = funcao(arquivo)
-            linhas.append(_linha(id_mapa, abordagem, "" if passos is None else passos, valido, obs))
+            linhas.append(_linha(id_mapa, abordagem, "—" if passos is None else passos, valido, obs))
     return linhas
 
 

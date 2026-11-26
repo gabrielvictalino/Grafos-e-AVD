@@ -12,6 +12,7 @@
 | Antigravity (Gemini) | `app.py` | Filtro de linhas comentadas (`;`) e linhas vazias na leitura da grade em `carregar` |
 | Gemini | `notebooks/exploracao_grafo_avd.ipynb` (3 células) | Métricas estruturais do grafo em DataFrames; cruzamento de arestas com elenco e atributos; merge e matriz de correlação |
 | ChatGPT | `notebooks/projeto_pos_limpeza.ipynb` (2 células) | Apoio com pandas: exclusão de colunas e remoção de registros incompletos; conversão e validação de datas |
+| ChatGPT | `src/graphs/algorithms.py` (`bellman_ford_sem_ciclo_negativo`); `taxi_labirinto/jogo.py`, `utils.py`, `componente/index.html` | Revisão conceitual da modelagem de bônus consumíveis e apoio ao desenho/integração do minijogo de táxi; conferir a implementação e os marcadores com o grupo |
 | Claude | `app.py` (interface Streamlit) | Visual do app (tema, cartões, legenda, rastro colorido) e painéis separados por camada (conjunto de chaves) |
 | Claude | `src/viz.py` (`gerar_histogramas_grau`, `calcular_graus`) | Histogramas de grau de entrada e de saída (sintaxe matplotlib) |
 | Antigravity (Gemini) | `src/viz.py` (`exportar_heatmap`, `exportar_percurso_mapa`, `exportar_grafo_estados_m02`, `exportar_arvore_bfs_m02`, `gerar_figuras_parte1`, `main`) | Apoio com sintaxe matplotlib para gerar as 5 figuras PNG obrigatórias da Parte 1 (percursos de `m03`/`m08`, grafo em camadas e árvore BFS de `m02`, heatmap de `m08`) e flags `--parte1`/`--mapas` na CLI |
@@ -30,7 +31,7 @@ Os arquivos `out/parte1/camadas.json`, `out/parte1/*.png` e `out/parte2/*.png` s
 ## 2. Pontos para a equipe completar antes de assinar
 
 - [ ] Conversas com ChatGPT, Gemini, Antigravity ou Claude que **não** deixaram marcador no código (ideias, depuração, explicações). Listar ferramenta, data aproximada e finalidade.
-- [ ] `taxi_labirinto/`: não há marcadores `[IA]`. Confirmar se houve uso de IA.
+- [ ] `taxi_labirinto/`: foram adicionados marcadores `[IA] ChatGPT` com base no histórico compartilhado; grupo deve conferir o escopo exato da contribuição.
 - [ ] `docs/relatorio_parte1.md`, `docs/relatorio_parte2.md` e os checklists: confirmar quais trechos foram redigidos ou revisados com IA. Os blocos autorais (análises e notas) não podem ser feitos com IA.
 - [ ] Versão do dataset: o Claude baixou a versão 1072 do dataset bruto do Kaggle (`alanvourch/tmdb-movies-daily-updates`) para gerar os gráficos de revenue, idioma e produtoras. Os notebooks usaram as versões 1069 e 1070. Decidir qual versão registrar.
 - [ ] Verificar que todo trecho com apoio de IA tem o marcador `# [IA] <ferramenta> – <finalidade>`, como pede `docs/CHECKLIST_ENTREGA_PARTE1.md`.
@@ -54,6 +55,5 @@ Os arquivos `out/parte1/camadas.json`, `out/parte1/*.png` e `out/parte2/*.png` s
 | Histogramas de grau (`viz.py` e notebook) | Sintaxe matplotlib de um gráfico que o enunciado já define | Grupo escreve a interpretação |
 | `comparacao_modelagem.py` e `tarefas_parte2.py` | Orquestração; os algoritmos chamados são do grupo | Grupo precisa saber explicar o código. O caso de ciclo negativo é só proposta: a decisão é do grupo |
 | Visual do `app.py` (cartões, painéis por camada) | Apoio com biblioteca de visualização | Grupo precisa saber explicar |
-| Comentários de interpretação dados no chat (resultado de uma dispersão, limites do `io.py`) | **Proibido** para o relatório | Nada disso pode entrar no PDF como análise do grupo |
 
-O Claude não escreveu as análises, as notas analíticas, a prova do m05 nem preencheu os blocos `[PREENCHER]` ou `[AUTORAL]`. Não alterou a lógica de `io.py`, `graph.py`, `estados.py` e `algorithms.py` na versão atual.
+

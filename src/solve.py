@@ -26,7 +26,8 @@ from src.graphs.labirinto import (
     preparar_estados,
     validar_labirinto,
 )
-from src.graphs.io import carregar_grafo_tmdb
+from src.graphs.io import carregar_grafo_tmdb, construir_caso_ciclo_negativo, contar_filmes_validos
+from src.comparacao_modelagem import comparar_modelagens
 
 def reconstruir_caminho(anteriores: dict, origem, destino) -> list[str]:
     if destino not in anteriores or anteriores[destino] is None and destino != origem:
@@ -85,31 +86,62 @@ def executar_algoritmo_parte2(lista_nos, mapa_nos, alg: str, source_id: str, tar
     return resultado
 
 
-def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoes: int = 5):
+def _contar_alcancados(lista_nos, origem) -> int:
+    niveis, _ = bfs(lista_nos, origem)
+    return sum(1 for d in niveis.values() if d != float("inf"))
+
+
+def executar_benchmark_parte2(
+    dataset_path: str | Path,
+    out_dir: Path,
+    repeticoes: int = 5,
+    origens: list[str] | None = None,
+    modo_arestas: str = "consecutivo",
+    max_arestas: int | None = None,
+):
     """
-    Roda os algoritmos em 3 escalas (10%, 50% e 100%) com média de 5 execuções
+    Roda os algoritmos em 3 escalas (10%, 50% e 100%) com média de `repeticoes` execuções
     e salva out/parte2/parte2_report.json.
+
+    origens: IDs de filmes; se informado, origens[0] é a fonte em todas as escalas
+             (precisa existir já na escala de 10%). Senão, usa o primeiro nó com aresta.
+    modo_arestas / max_arestas: repassados aos dois carregamentos (ver carregar_grafo_tmdb).
+             "todos_pares" sem max_arestas não cabe em memória nas escalas grandes.
     """
     if repeticoes < 1:
         raise ValueError("O número de repetições precisa ser pelo menos 1.")
 
+    total = contar_filmes_validos(dataset_path)
     tamanhos = [
-        ("10%", 41_624),
-        ("50%", 208_121),
+        ("10%", round(0.10 * total)),
+        ("50%", round(0.50 * total)),
         ("100%", None),
     ]
-    relatorio = {"escalabilidade": []}
+    relatorio = {
+        "total_filmes": total,
+        "modo_arestas": modo_arestas,
+        "max_arestas": max_arestas,
+        "escalabilidade": [],
+    }
 
     for rotulo, limite in tamanhos:
         print(f"\n--- Avaliando escala {rotulo} ---")
-        nos_pos, mapa_pos = carregar_grafo_tmdb(dataset_path, limite_filmes=limite, transformacao_peso="nao_negativo")
-        nos_orig, mapa_orig = carregar_grafo_tmdb(dataset_path, limite_filmes=limite, transformacao_peso="original")
+        kwargs = {"limite_filmes": limite, "modo_arestas": modo_arestas, "max_arestas": max_arestas}
+        nos_pos, mapa_pos = carregar_grafo_tmdb(dataset_path, transformacao_peso="nao_negativo", **kwargs)
+        nos_orig, mapa_orig = carregar_grafo_tmdb(dataset_path, transformacao_peso="original", **kwargs)
 
-        # Escolhe como fonte o primeiro nó que possua arestas de saída
-        origem_pos = next((n for n in nos_pos if n.lista_arestas), nos_pos[0])
-        origem_orig = mapa_orig[origem_pos.id]
+        if origens:
+            if origens[0] not in mapa_orig:
+                raise ValueError(f"Origem {origens[0]!r} não existe na escala {rotulo}.")
+            origem_orig = mapa_orig[origens[0]]
+        else:
+            # Escolhe como fonte o primeiro nó que possua arestas de saída
+            origem_orig = next((n for n in nos_orig if n.lista_arestas), nos_orig[0])
+        origem_pos = mapa_pos[origem_orig.id]
 
         total_arestas = sum(len(n.lista_arestas) for n in nos_orig)
+        alcancados = _contar_alcancados(nos_orig, origem_orig)
+        print(f"  origem {origem_orig.id} alcança {alcancados} de {len(nos_orig)} nós")
         tempos = {}
 
         for nome_alg, fn, grafo, fonte in [
@@ -133,6 +165,8 @@ def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoe
             "escala": rotulo,
             "vertices": len(nos_orig),
             "arestas": total_arestas,
+            "origem": f"{origem_orig.id} - {origem_orig.titulo}",
+            "nos_alcancados": alcancados,
             "algoritmos": tempos,
         })
 
@@ -143,6 +177,91 @@ def executar_benchmark_parte2(dataset_path: str | Path, out_dir: Path, repeticoe
 
     print(f"\n[OK] Relatório consolidado salvo em {report_path}")
 
+
+def executar_casos_obrigatorios_parte2(
+    dataset_path: str | Path,
+    out_dir: Path,
+    fontes: list[str],
+    pares: list[tuple[str, str]],
+    modo_arestas: str = "consecutivo",
+    max_arestas: int | None = None,
+    n_ordem: int = 10,
+) -> list[dict]:
+    """BFS/DFS (3+ fontes), Dijkstra no grafo deslocado (5+ pares) e Bellman-Ford; salva em "casos_obrigatorios"."""
+    kw = {"modo_arestas": modo_arestas, "max_arestas": max_arestas}
+    print("Carregando grafos (pode levar ~1 min)...", flush=True)
+    nos_orig, mapa_orig = carregar_grafo_tmdb(dataset_path, transformacao_peso="original", **kw)
+    nos_pos, mapa_pos = carregar_grafo_tmdb(dataset_path, transformacao_peso="nao_negativo", **kw)
+    inf = float("inf")
+
+    def rot(no):
+        return f"{no.id} ({no.titulo})"
+
+    def no_de(mapa, id_no):
+        if id_no not in mapa:
+            raise ValueError(f"Vértice {id_no!r} não encontrado no grafo.")
+        return mapa[id_no]
+
+    casos = []
+    for f in fontes:
+        print(f"BFS/DFS a partir de {f}...", flush=True)
+        origem = no_de(mapa_orig, f)
+        niveis, _ = bfs(nos_orig, origem)
+        alcancados = sorted(((n, d) for n, d in niveis.items() if d != inf), key=lambda par: par[1])
+        camadas: dict[int, int] = {}
+        for _, d in alcancados:
+            camadas[int(d)] = camadas.get(int(d), 0) + 1
+        casos.append({
+            "caso": "BFS", "fonte": rot(origem), "nos_alcancados": len(alcancados), "camadas": camadas,
+            f"primeiros_{n_ordem}": [{"no": rot(n), "camada": int(d)} for n, d in alcancados[:n_ordem]],
+        })
+        res = dfs(nos_orig, origem, detalhado=True)
+        casos.append({
+            "caso": "DFS", "fonte": rot(origem), "tem_ciclo": res["tem_ciclo"],
+            "contagem_arcos": res["contagem"], "nos_alcancados": len(res["ordem"]),
+        })
+
+    for s, t in pares:
+        print(f"Dijkstra {s} -> {t} (lento: V² por nó alcançado)...", flush=True)
+        origem, destino = no_de(mapa_pos, s), no_de(mapa_pos, t)
+        dist, ant, recusado = dijkstra(nos_pos, origem)
+        if recusado:
+            raise ValueError("Dijkstra recusou o grafo deslocado: ainda há peso negativo.")
+        ok = dist[destino] != inf
+        caminho = reconstruir_caminho(ant, origem, destino) if ok else []
+        casos.append({
+            "caso": "DIJKSTRA", "origem": rot(origem), "destino": rot(destino),
+            "grafo": "deslocado (+10 por aresta)", "alcancavel": ok,
+            "custo": dist[destino] if ok else None,
+            "arestas_no_caminho": len(caminho) - 1 if ok else None, "caminho": caminho,
+        })
+
+    print("Bellman-Ford (grafo original e caso do ciclo negativo)...", flush=True)
+    s, t = pares[0]
+    origem, destino = no_de(mapa_orig, s), no_de(mapa_orig, t)
+    dist, ant, tem_ciclo, _ = bellman_ford(nos_orig, origem)
+    ok = dist[destino] != inf
+    casos.append({
+        "caso": "BELLMAN_FORD", "grafo": "original (sem ciclo negativo)",
+        "origem": rot(origem), "destino": rot(destino), "tem_ciclo_negativo": tem_ciclo,
+        "custo": dist[destino] if ok else None,
+        "caminho": reconstruir_caminho(ant, origem, destino) if ok else [],
+    })
+    nos_neg, _ = construir_caso_ciclo_negativo(dataset_path)
+    _, _, tem_ciclo, ciclo = bellman_ford(nos_neg, nos_neg[0])
+    casos.append({
+        "caso": "BELLMAN_FORD", "grafo": "caso do ciclo negativo (recorte do mesmo ano, ajuste < 0)",
+        "origem": rot(nos_neg[0]), "vertices": len(nos_neg), "tem_ciclo_negativo": tem_ciclo,
+        "ciclo": [rot(n) for n in ciclo] if tem_ciclo else [],
+    })
+
+    report_path = out_dir / "parte2_report.json"
+    relatorio = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {}
+    relatorio["casos_obrigatorios"] = casos
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(relatorio, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"[OK] {len(casos)} casos obrigatórios salvos em {report_path}")
+    return casos
 
 
 # Exportação e métricas dos mapas da Parte 1.
@@ -488,6 +607,20 @@ def exportar_parte1(entrada_mapas: str | Path = "data/mapas", out_dir: str | Pat
         escritor.writerow(["mapa", "arvore", "retorno", "avanco", "cruzamento"])
         escritor.writerows(linhas_dfs)
     arquivos_gerados.append(dfs_path)
+
+    # 9) comparacao_modelagem.csv (m02, m03, m04): G_pos com porta como chão/parede x G_est
+    alvos = {p.stem: p for p in mapas_paths if obter_id_mapa(p) in ("m02", "m03", "m04")}
+    if alvos:
+        pasta = next(iter(alvos.values())).parent
+        linhas_cmp = comparar_modelagens(pasta, mapas=tuple(alvos))
+        cmp_path = out_path / "comparacao_modelagem.csv"
+        with open(cmp_path, "w", newline="", encoding="utf-8") as f:
+            escritor = csv.DictWriter(
+                f, fieldnames=["mapa", "abordagem", "passos", "caminho_valido", "observacao"]
+            )
+            escritor.writeheader()
+            escritor.writerows(linhas_cmp)
+        arquivos_gerados.append(cmp_path)
 
     return arquivos_gerados
 

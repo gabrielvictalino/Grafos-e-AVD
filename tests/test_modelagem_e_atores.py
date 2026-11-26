@@ -30,5 +30,5 @@ def test_comparacao_modelagem_m02_m03_m04():
         parede = por_chave[(mapa, "G_pos com portas como parede")]
         est = por_chave[(mapa, "G_est (modelagem correta)")]
         assert chao["caminho_valido"] is False        # (a) atravessa porta sem chave
-        assert parede["passos"] == ""                 # (b) G inalcançável
+        assert parede["passos"] == "—"                # (b) G inalcançável (sem passos)
         assert est["caminho_valido"] is True and est["passos"] == passos_est

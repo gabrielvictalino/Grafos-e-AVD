@@ -1,95 +1,102 @@
 {
+  "total_filmes": 416243,
+  "modo_arestas": "consecutivo",
+  "max_arestas": null,
   "escalabilidade": [
     {
       "escala": "10%",
       "vertices": 41624,
-      "arestas": 500000,
+      "arestas": 384336,
+      "origem": "33229 - Dickson Greeting",
+      "nos_alcancados": 7,
       "algoritmos": {
         "BFS": {
-          "tempo_medio_ms": 4.733,
+          "tempo_medio_ms": 4.979,
           "execucoes_ms": [
-            5.145,
-            4.788,
-            4.684,
-            4.446,
-            4.601
+            4.405,
+            5.037,
+            5.889,
+            4.427,
+            5.136
           ]
         },
         "DFS": {
-          "tempo_medio_ms": 7.754,
+          "tempo_medio_ms": 6.753,
           "execucoes_ms": [
-            5.676,
-            7.871,
-            8.896,
-            8.077,
-            8.248
+            5.765,
+            6.236,
+            9.516,
+            6.039,
+            6.207
           ]
         },
         "DIJKSTRA": {
-          "tempo_medio_ms": 37.033,
+          "tempo_medio_ms": 51.869,
           "execucoes_ms": [
-            40.991,
-            42.057,
-            34.155,
-            34.501,
-            33.459
+            54.863,
+            51.555,
+            49.775,
+            50.95,
+            52.201
           ]
         },
         "BELLMAN_FORD": {
-          "tempo_medio_ms": 112.927,
+          "tempo_medio_ms": 209.352,
           "execucoes_ms": [
-            115.39,
-            112.991,
-            112.678,
-            111.959,
-            111.619
+            244.094,
+            183.827,
+            208.235,
+            205.569,
+            205.037
           ]
         }
       }
     },
     {
       "escala": "50%",
-      "vertices": 208121,
-      "arestas": 500000,
+      "vertices": 208122,
+      "arestas": 1899964,
+      "origem": "33229 - Dickson Greeting",
+      "nos_alcancados": 7,
       "algoritmos": {
         "BFS": {
-          "tempo_medio_ms": 31.24,
+          "tempo_medio_ms": 35.886,
           "execucoes_ms": [
-            31.297,
-            37.099,
-            29.505,
-            29.229,
-            29.071
+            47.668,
+            34.133,
+            37.67,
+            31.563,
+            28.394
           ]
         },
         "DFS": {
-          "tempo_medio_ms": 51.953,
+          "tempo_medio_ms": 42.795,
           "execucoes_ms": [
-            66.636,
-            55.535,
-            50.727,
-            44.08,
-            42.784
+            46.567,
+            45.003,
+            42.45,
+            40.567,
+            39.389
           ]
         },
         "DIJKSTRA": {
-          "tempo_medio_ms": 126.836,
+          "tempo_medio_ms": 338.862,
           "execucoes_ms": [
-            134.939,
-            124.923,
-            123.908,
-            123.516,
-            126.896
+            432.946,
+            356.091,
+            316.113,
+            306.712,
+            282.449
           ]
         },
         "BELLMAN_FORD": {
-          "tempo_medio_ms": 157.989,
+          "tempo_medio_ms": 1167.134,
           "execucoes_ms": [
-            169.086,
-            151.091,
-            149.967,
-            152.499,
-            167.303
+            1308.246,
+            1134.239,
+            1134.992,
+            1147.569,
+            1110.624
           ]
         }
       }
@@ -97,432 +104,397 @@
     {
       "escala": "100%",
       "vertices": 416243,
-      "arestas": 500000,
+      "arestas": 3381516,
+      "origem": "33229 - Dickson Greeting",
+      "nos_alcancados": 7,
       "algoritmos": {
         "BFS": {
-          "tempo_medio_ms": 74.802,
+          "tempo_medio_ms": 262.755,
           "execucoes_ms": [
-            73.598,
-            72.478,
-            76.912,
-            76.908,
-            74.113
+            180.941,
+            341.413,
+            156.594,
+            168.537,
+            466.288
           ]
         },
         "DFS": {
-          "tempo_medio_ms": 126.003,
+          "tempo_medio_ms": 261.792,
           "execucoes_ms": [
-            143.809,
-            136.064,
-            124.949,
-            112.822,
-            112.37
+            407.02,
+            198.141,
+            308.335,
+            238.015,
+            157.451
           ]
         },
         "DIJKSTRA": {
-          "tempo_medio_ms": 329.638,
+          "tempo_medio_ms": 1965.245,
           "execucoes_ms": [
-            376.673,
-            327.382,
-            328.809,
-            324.54,
-            290.789
+            2439.744,
+            1861.872,
+            1935.239,
+            1817.237,
+            1772.135
           ]
         },
         "BELLMAN_FORD": {
-          "tempo_medio_ms": 229.747,
+          "tempo_medio_ms": 5003.953,
           "execucoes_ms": [
-            251.658,
-            244.157,
-            209.186,
-            219.844,
-            223.888
+            6524.134,
+            5543.839,
+            4451.175,
+            4244.824,
+            4255.792
           ]
         }
       }
     }
   ],
-  "tarefas": {
-    "parametros": {
-      "dataset": "data/dataset_parte2/tmdb_limpo.csv.gz",
-      "recorte_filmes": 10000,
-      "vertices": 10000,
-      "arestas": 496443,
-      "criterio_fontes": "maiores graus de saída, desempate pelo id",
-      "criterio_alvo_dijkstra": "alcançável mais distante em níveis de BFS, desempate pelo menor id",
-      "transformacao_pesos_dijkstra": "peso + 10,0 (a nota vai de 1 a 10, então a diferença mínima é -9)"
+  "casos_obrigatorios": [
+    {
+      "caso": "BFS",
+      "fonte": "646370 (Looping)",
+      "nos_alcancados": 75,
+      "camadas": {
+        "0": 1,
+        "1": 1,
+        "2": 6,
+        "3": 8,
+        "4": 17,
+        "5": 14,
+        "6": 11,
+        "7": 8,
+        "8": 3,
+        "9": 2,
+        "10": 1,
+        "11": 1,
+        "12": 1,
+        "13": 1
+      },
+      "primeiros_10": [
+        {
+          "no": "646370 (Looping)",
+          "camada": 0
+        },
+        {
+          "no": "1501987 (O Último Episódio)",
+          "camada": 1
+        },
+        {
+          "no": "1616158 (If I Were Alive)",
+          "camada": 2
+        },
+        {
+          "no": "1432241 (Cinco Tipos de Medo)",
+          "camada": 2
+        },
+        {
+          "no": "1263313 (Son of a Bitch)",
+          "camada": 2
+        },
+        {
+          "no": "1731344 (Asphalt Guerrilla)",
+          "camada": 2
+        },
+        {
+          "no": "1399253 (Our Secret)",
+          "camada": 2
+        },
+        {
+          "no": "1151260 (The French Teacher)",
+          "camada": 2
+        },
+        {
+          "no": "1352384 (Rio de Sangue)",
+          "camada": 3
+        },
+        {
+          "no": "1524236 (Deixa Acontecer)",
+          "camada": 3
+        }
+      ]
     },
-    "bfs": [
-      {
-        "fonte": "3059 - Intolerance: Love's Struggle Throughout the Ages",
-        "alcancados": 4458,
-        "camadas": {
-          "0": 1,
-          "1": 946,
-          "2": 2530,
-          "3": 558,
-          "4": 203,
-          "5": 138,
-          "6": 28,
-          "7": 8,
-          "8": 22,
-          "9": 12,
-          "10": 7,
-          "11": 3,
-          "12": 2
+    {
+      "caso": "DFS",
+      "fonte": "646370 (Looping)",
+      "tem_ciclo": false,
+      "contagem_arcos": {
+        "arvore": 74,
+        "retorno": 0,
+        "avanco": 5,
+        "cruzamento": 20
+      },
+      "nos_alcancados": 75
+    },
+    {
+      "caso": "BFS",
+      "fonte": "1358005 (Office Romance)",
+      "nos_alcancados": 377,
+      "camadas": {
+        "0": 1,
+        "1": 8,
+        "2": 38,
+        "3": 69,
+        "4": 83,
+        "5": 65,
+        "6": 36,
+        "7": 36,
+        "8": 25,
+        "9": 8,
+        "10": 6,
+        "11": 2
+      },
+      "primeiros_10": [
+        {
+          "no": "1358005 (Office Romance)",
+          "camada": 0
         },
-        "tempo_ms": 21.459
-      },
-      {
-        "fonte": "545364 - Hollywood",
-        "alcancados": 2288,
-        "camadas": {
-          "0": 1,
-          "1": 598,
-          "2": 1270,
-          "3": 294,
-          "4": 66,
-          "5": 27,
-          "6": 13,
-          "7": 6,
-          "8": 2,
-          "9": 2,
-          "10": 6,
-          "11": 2,
-          "12": 1
+        {
+          "no": "1530279 (Via Negativa)",
+          "camada": 1
         },
-        "tempo_ms": 8.906
-      },
-      {
-        "fonte": "22943 - Tillie's Punctured Romance",
-        "alcancados": 4957,
-        "camadas": {
-          "0": 1,
-          "1": 597,
-          "2": 2705,
-          "3": 805,
-          "4": 417,
-          "5": 223,
-          "6": 75,
-          "7": 30,
-          "8": 13,
-          "9": 40,
-          "10": 35,
-          "11": 13,
-          "12": 3
+        {
+          "no": "1275779 (Disclosure Day)",
+          "camada": 1
         },
-        "tempo_ms": 24.774
-      }
-    ],
-    "dfs": [
-      {
-        "fonte": "3059 - Intolerance: Love's Struggle Throughout the Ages",
-        "visitados": 4458,
-        "primeiros_visitados": [
-          "3059 - Intolerance: Love's Struggle Throughout the Ages",
-          "22725 - The Bad Boy",
-          "452050 - An Old Fashioned Young Man",
-          "174924 - Hearts of the World",
-          "381162 - The Great Love",
-          "381165 - The Greatest Thing in Life",
-          "165281 - A Romance of Happy Valley",
-          "332159 - The Girl Who Stayed at Home",
-          "36106 - True Heart Susie",
-          "298314 - The Mother and the Law"
-        ],
-        "tem_ciclo": false,
-        "contagem_arcos": {
-          "arvore": 4457,
-          "retorno": 0,
-          "avanco": 7547,
-          "cruzamento": 210009
+        {
+          "no": "1716513 (Extreme Makeover: Homer Edition)",
+          "camada": 1
         },
-        "tempo_ms": 154.849
-      },
-      {
-        "fonte": "545364 - Hollywood",
-        "visitados": 2288,
-        "primeiros_visitados": [
-          "545364 - Hollywood",
-          "945884 - Asleep at the Switch",
-          "175857 - The Dare-Devil",
-          "176452 - Ten Dollars or Ten Days",
-          "228488 - The Hollywood Kid",
-          "176305 - Yukon Jake",
-          "1282056 - Romeo and Juliet",
-          "184393 - The Wild Goose Chaser",
-          "189534 - A Prodigal Bridegroom",
-          "273860 - When a Man's a Prince"
-        ],
-        "tem_ciclo": false,
-        "contagem_arcos": {
-          "arvore": 2287,
-          "retorno": 0,
-          "avanco": 2603,
-          "cruzamento": 73594
+        {
+          "no": "1596330 (American Pachuco: The Legend of Luis Valdez)",
+          "camada": 1
         },
-        "tempo_ms": 24.883
-      },
-      {
-        "fonte": "22943 - Tillie's Punctured Romance",
-        "visitados": 4957,
-        "primeiros_visitados": [
-          "22943 - Tillie's Punctured Romance",
-          "138922 - Hash House Mashers",
-          "138924 - Fatty's New Role",
-          "401831 - A Lucky Leap",
-          "351042 - Love in Armor",
-          "551316 - His Luckless Love",
-          "389881 - The Rent Jumpers",
-          "174161 - The Little Teacher",
-          "228488 - The Hollywood Kid",
-          "176305 - Yukon Jake"
-        ],
-        "tem_ciclo": false,
-        "contagem_arcos": {
-          "arvore": 4956,
-          "retorno": 0,
-          "avanco": 7430,
-          "cruzamento": 247143
+        {
+          "no": "675871 (Super Troopers 3)",
+          "camada": 1
         },
-        "tempo_ms": 175.262
-      }
-    ],
-    "dijkstra": [
-      {
-        "origem": "3059 - Intolerance: Love's Struggle Throughout the Ages",
-        "destino": "615649 - Law of Mountain",
-        "nivel_bfs_do_destino": 12,
-        "recusou_peso_negativo": false,
-        "custo_deslocado": 119.0,
-        "arcos_no_caminho": 12,
-        "caminho": [
-          "3059 - Intolerance: Love's Struggle Throughout the Ages",
-          "452184 - Less Than the Dust",
-          "1376288 - Outcast",
-          "282232 - The Cigarette",
-          "282241 - Work",
-          "285009 - The House of Mystery",
-          "605115 - Member Of Parliament",
-          "250676 - Miss Mend",
-          "98914 - Mother",
-          "160661 - Wings of a Serf",
-          "383882 - Bela",
-          "234363 - Gogi Ratiani",
-          "615649 - Law of Mountain"
-        ],
-        "tempo_ms": 1455.975
+        {
+          "no": "1433367 (One Night Only)",
+          "camada": 1
+        },
+        {
+          "no": "1731694 (LEGO Star Wars: The Mandalorian)",
+          "camada": 1
+        },
+        {
+          "no": "1718545 (Phreaker)",
+          "camada": 1
+        },
+        {
+          "no": "983635 (Crooks)",
+          "camada": 2
+        }
+      ]
+    },
+    {
+      "caso": "DFS",
+      "fonte": "1358005 (Office Romance)",
+      "tem_ciclo": false,
+      "contagem_arcos": {
+        "arvore": 376,
+        "retorno": 0,
+        "avanco": 20,
+        "cruzamento": 238
       },
-      {
-        "origem": "545364 - Hollywood",
-        "destino": "160824 - Oktyabryuhov and Dekabryuhov",
-        "nivel_bfs_do_destino": 12,
-        "recusou_peso_negativo": false,
-        "custo_deslocado": 119.4,
-        "arcos_no_caminho": 12,
-        "caminho": [
-          "545364 - Hollywood",
-          "143534 - The White Shadow",
-          "980508 - Chu-Chin-Chow",
-          "283030 - Decameron Nights",
-          "649441 - Jealousy",
-          "632362 - The Bastard",
-          "1396039 - The Punishment of Shirvanskaya",
-          "402997 - Ilan Dili",
-          "740468 - Mr. Lloyd's Flight",
-          "234271 - The Poet and the Tsar",
-          "313072 - His Excellency",
-          "296434 - Through Tears",
-          "160824 - Oktyabryuhov and Dekabryuhov"
-        ],
-        "tempo_ms": 754.08
+      "nos_alcancados": 377
+    },
+    {
+      "caso": "BFS",
+      "fonte": "1191259 (Kira)",
+      "nos_alcancados": 2956,
+      "camadas": {
+        "0": 1,
+        "1": 1,
+        "2": 6,
+        "3": 32,
+        "4": 64,
+        "5": 141,
+        "6": 352,
+        "7": 575,
+        "8": 635,
+        "9": 501,
+        "10": 289,
+        "11": 193,
+        "12": 98,
+        "13": 41,
+        "14": 15,
+        "15": 7,
+        "16": 1,
+        "17": 1,
+        "18": 2,
+        "19": 1
       },
-      {
-        "origem": "22943 - Tillie's Punctured Romance",
-        "destino": "105170 - The Overcoat",
-        "nivel_bfs_do_destino": 12,
-        "recusou_peso_negativo": false,
-        "custo_deslocado": 120.4,
-        "arcos_no_caminho": 12,
-        "caminho": [
-          "22943 - Tillie's Punctured Romance",
-          "389879 - Settled at the Seaside",
-          "298209 - On the Night Stage",
-          "627840 - Mortmain",
-          "466293 - The Foolish Virgin",
-          "290582 - Le Carnaval des vérités",
-          "175206 - The Man of the Sea",
-          "284643 - Justice d'abord",
-          "2973 - Aelita: Queen of Mars",
-          "1500118 - Stepan Khalturin",
-          "440026 - Napoleon Gas",
-          "189525 - The Devil's Wheel",
-          "105170 - The Overcoat"
-        ],
-        "tempo_ms": 1595.02
+      "primeiros_10": [
+        {
+          "no": "1191259 (Kira)",
+          "camada": 0
+        },
+        {
+          "no": "851479 (Rocky Road to Berlin)",
+          "camada": 1
+        },
+        {
+          "no": "1252182 (Under the Volcano)",
+          "camada": 2
+        },
+        {
+          "no": "1085172 (The Glass House)",
+          "camada": 2
+        },
+        {
+          "no": "1419709 (Doggies)",
+          "camada": 2
+        },
+        {
+          "no": "1035047 (Home Sweet Home)",
+          "camada": 2
+        },
+        {
+          "no": "1578099 (In Her Arms)",
+          "camada": 2
+        },
+        {
+          "no": "1518752 (Team Building)",
+          "camada": 2
+        },
+        {
+          "no": "1358823 (The Daughter)",
+          "camada": 3
+        },
+        {
+          "no": "1157407 (Two Sisters)",
+          "camada": 3
+        }
+      ]
+    },
+    {
+      "caso": "DFS",
+      "fonte": "1191259 (Kira)",
+      "tem_ciclo": false,
+      "contagem_arcos": {
+        "arvore": 2955,
+        "retorno": 0,
+        "avanco": 169,
+        "cruzamento": 4767
       },
-      {
-        "origem": "194055 - 1776, or The Hessian Renegades",
-        "destino": "105170 - The Overcoat",
-        "nivel_bfs_do_destino": 10,
-        "recusou_peso_negativo": false,
-        "custo_deslocado": 101.2,
-        "arcos_no_caminho": 10,
-        "caminho": [
-          "194055 - 1776, or The Hessian Renegades",
-          "669555 - The Conscience of Hassan Bey",
-          "466293 - The Foolish Virgin",
-          "290582 - Le Carnaval des vérités",
-          "175206 - The Man of the Sea",
-          "284643 - Justice d'abord",
-          "2973 - Aelita: Queen of Mars",
-          "1500118 - Stepan Khalturin",
-          "440026 - Napoleon Gas",
-          "189525 - The Devil's Wheel",
-          "105170 - The Overcoat"
-        ],
-        "tempo_ms": 2107.537
-      },
-      {
-        "origem": "384913 - A Strange Meeting",
-        "destino": "105170 - The Overcoat",
-        "nivel_bfs_do_destino": 10,
-        "recusou_peso_negativo": false,
-        "custo_deslocado": 101.7,
-        "arcos_no_caminho": 10,
-        "caminho": [
-          "384913 - A Strange Meeting",
-          "557929 - The Battle of the Sexes",
-          "466293 - The Foolish Virgin",
-          "290582 - Le Carnaval des vérités",
-          "175206 - The Man of the Sea",
-          "284643 - Justice d'abord",
-          "2973 - Aelita: Queen of Mars",
-          "1500118 - Stepan Khalturin",
-          "440026 - Napoleon Gas",
-          "189525 - The Devil's Wheel",
-          "105170 - The Overcoat"
-        ],
-        "tempo_ms": 2162.676
-      }
-    ],
-    "bellman_ford_peso_negativo_sem_ciclo": {
-      "fonte": "3059 - Intolerance: Love's Struggle Throughout the Ages",
+      "nos_alcancados": 2956
+    },
+    {
+      "caso": "DIJKSTRA",
+      "origem": "646370 (Looping)",
+      "destino": "1757360 (Maria of Maria)",
+      "grafo": "deslocado (+10 por aresta)",
+      "alcancavel": true,
+      "custo": 61.300000000000004,
+      "arestas_no_caminho": 6,
+      "caminho": [
+        "646370 (Looping)",
+        "1501987 (O Último Episódio)",
+        "1432241 (Cinco Tipos de Medo)",
+        "1352384 (Rio de Sangue)",
+        "1488583 (O Gênio do Crime)",
+        "1481626 (Love Kills)",
+        "1757360 (Maria of Maria)"
+      ]
+    },
+    {
+      "caso": "DIJKSTRA",
+      "origem": "646370 (Looping)",
+      "destino": "1444084 (Narcisa's Will)",
+      "grafo": "deslocado (+10 por aresta)",
+      "alcancavel": true,
+      "custo": 49.10000000000001,
+      "arestas_no_caminho": 5,
+      "caminho": [
+        "646370 (Looping)",
+        "1501987 (O Último Episódio)",
+        "1432241 (Cinco Tipos de Medo)",
+        "1352384 (Rio de Sangue)",
+        "1702037 (Amadeo and the Hypothetical New World)",
+        "1444084 (Narcisa's Will)"
+      ]
+    },
+    {
+      "caso": "DIJKSTRA",
+      "origem": "646370 (Looping)",
+      "destino": "1511829 (The Nameless Ballad)",
+      "grafo": "deslocado (+10 por aresta)",
+      "alcancavel": true,
+      "custo": 69.30000000000001,
+      "arestas_no_caminho": 7,
+      "caminho": [
+        "646370 (Looping)",
+        "1501987 (O Último Episódio)",
+        "1432241 (Cinco Tipos de Medo)",
+        "1524236 (Deixa Acontecer)",
+        "1401757 (Antarctic)",
+        "1135433 (100 Days)",
+        "1639616 (Zustìssia)",
+        "1511829 (The Nameless Ballad)"
+      ]
+    },
+    {
+      "caso": "DIJKSTRA",
+      "origem": "1358005 (Office Romance)",
+      "destino": "1044945 (Hellbilly Hollow)",
+      "grafo": "deslocado (+10 por aresta)",
+      "alcancavel": true,
+      "custo": 29.4,
+      "arestas_no_caminho": 3,
+      "caminho": [
+        "1358005 (Office Romance)",
+        "1275779 (Disclosure Day)",
+        "1476832 (The Life and Deaths of Wilson Shedd)",
+        "1044945 (Hellbilly Hollow)"
+      ]
+    },
+    {
+      "caso": "DIJKSTRA",
+      "origem": "1358005 (Office Romance)",
+      "destino": "1247047 (Bollywoof)",
+      "grafo": "deslocado (+10 por aresta)",
+      "alcancavel": true,
+      "custo": 51.1,
+      "arestas_no_caminho": 5,
+      "caminho": [
+        "1358005 (Office Romance)",
+        "1275779 (Disclosure Day)",
+        "1285951 (Chapter 51)",
+        "1732097 (Euphoria: A Look Back)",
+        "1567265 (Onwards and Sideways)",
+        "1247047 (Bollywoof)"
+      ]
+    },
+    {
+      "caso": "BELLMAN_FORD",
+      "grafo": "original (sem ciclo negativo)",
+      "origem": "646370 (Looping)",
+      "destino": "1757360 (Maria of Maria)",
       "tem_ciclo_negativo": false,
-      "alcancados": 4458,
-      "menor_distancia": {
-        "destino": "1049250 - Back to Liberty",
-        "custo": -6.6,
-        "caminho": [
-          "3059 - Intolerance: Love's Struggle Throughout the Ages",
-          "686183 - A Sister of Six",
-          "380966 - The Children Pay",
-          "481599 - Oliver Twist",
-          "947745 - Perils of the Secret Service",
-          "607288 - The Circus of Life",
-          "1574930 - The Gray Ghost",
-          "130045 - The Scarlet Car",
-          "273487 - The Kaiser, the Beast of Berlin",
-          "174907 - Bud's Recruit",
-          "933327 - Huck and Tom",
-          "448826 - Follow the Crowd",
-          "407103 - It's a Wild Life",
-          "53641 - Two-Gun Gussie",
-          "224205 - Hear 'Em Rave",
-          "175021 - Going! Going! Gone!",
-          "82015 - Hustling for Health",
-          "53512 - Ask Father",
-          "174998 - I'm on My Way",
-          "53632 - Ring Up the Curtain",
-          "407111 - Pistols for Breakfast",
-          "448840 - The Rajah",
-          "53515 - Bumping Into Broadway",
-          "53761 - Male and Female",
-          "221373 - Hawthorne of the U.S.A.",
-          "334180 - The Gift Supreme",
-          "940857 - Miss Nobody",
-          "175205 - Nomads of the North",
-          "130066 - Outside the Law",
-          "621489 - The First Born",
-          "200405 - A Tale of Two Worlds",
-          "618456 - Desperate Trails",
-          "618462 - The Fox",
-          "676750 - Shame",
-          "492913 - Ladies Must Live",
-          "878043 - Wild Honey",
-          "893259 - The Infidel",
-          "188867 - The Masquerader",
-          "614261 - Skin Deep",
-          "1598956 - Dusk to Dawn",
-          "166472 - Manslaughter",
-          "772339 - The Impossible Mrs. Bellew",
-          "184262 - The Village Blacksmith",
-          "27508 - A Blind Bargain",
-          "1673838 - The Social Buccaneer",
-          "618807 - The Love Letter",
-          "175887 - The Shriek of Araby",
-          "175861 - Little Church Around the Corner",
-          "91208 - Souls for Sale",
-          "594909 - Main Street",
-          "673210 - Pioneer Trails",
-          "186196 - Soul of the Beast",
-          "1609091 - The Destroying Angel",
-          "619921 - The Spoilers",
-          "1609049 - The Miracle Makers",
-          "482881 - Let's Go",
-          "1591924 - Kentucky Days",
-          "676758 - The Fortieth Door",
-          "901415 - Against All Odds",
-          "186458 - Dante's Inferno",
-          "337982 - Hello, 'Frisco",
-          "599772 - Husbands and Lovers",
-          "1405 - Greed",
-          "120679 - Smouldering Fires",
-          "918965 - The Devil's Cargo",
-          "252749 - Oh, Doctor!",
-          "419764 - Head Winds",
-          "624549 - Fifth Avenue Models",
-          "111759 - Don Q Son of Zorro",
-          "964 - The Phantom of the Opera",
-          "363576 - My Lady's Lips",
-          "27505 - The Unholy Three",
-          "329680 - The Only Thing",
-          "31510 - Ben-Hur: A Tale of the Christ",
-          "284529 - Irene",
-          "932407 - Hands Across the Border",
-          "567709 - The Greater Glory",
-          "671356 - The Man in the Saddle",
-          "671358 - Don't Shoot",
-          "470673 - The Wild Horse Stampede",
-          "702226 - The Runaway Express",
-          "1604932 - The Winner",
-          "1080518 - Tin Hats",
-          "188861 - The Fire Brigade",
-          "347699 - Winners of the Wilderness",
-          "108632 - The Show",
-          "544766 - Women Love Diamonds",
-          "111580 - Orchids and Ermine",
-          "441110 - Broadway Nights",
-          "1049250 - Back to Liberty"
-        ]
-      },
-      "arcos_negativos_no_grafo": 195969,
-      "tempo_ms": 145.449
+      "custo": 1.3,
+      "caminho": [
+        "646370 (Looping)",
+        "1501987 (O Último Episódio)",
+        "1432241 (Cinco Tipos de Medo)",
+        "1352384 (Rio de Sangue)",
+        "1488583 (O Gênio do Crime)",
+        "1481626 (Love Kills)",
+        "1757360 (Maria of Maria)"
+      ]
     },
-    "bellman_ford_ciclo_negativo": {
-      "transformacao_ciclo_negativo": "PROPOSTA a ser decidida pelo grupo: recorte dos primeiros filmes por data, arcos nos dois sentidos e peso = -|nota(destino) - nota(origem)|.",
-      "recorte_filmes": 300,
-      "vertices": 300,
-      "arcos": 1548,
-      "fonte": "104466 - The Vanishing Lady",
+    {
+      "caso": "BELLMAN_FORD",
+      "grafo": "caso do ciclo negativo (recorte do mesmo ano, ajuste < 0)",
+      "origem": "319989 (Never Alone)",
+      "vertices": 5,
       "tem_ciclo_negativo": true,
       "ciclo": [
-        "934630 - A Midnight Episode",
-        "114108 - Cinderella",
-        "934630 - A Midnight Episode"
-      ],
-      "custo_do_ciclo": -2.6,
-      "tempo_ms": 40.387
+        "572125 (The 2019 Rose Parade with Cord & Tish)",
+        "572000 (The Demonologist)",
+        "572125 (The 2019 Rose Parade with Cord & Tish)"
+      ]
     }
-  }
+  ]
 }

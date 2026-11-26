@@ -88,6 +88,7 @@ def gerar_grafo_taxi(texto: str) -> GrafoTaxi:
     classes No_estados/Camada. A entrada de uma 4ª pessoa é bloqueada quando
     há três a bordo. Destinos entregues permanecem liberados.
     """
+    # [IA] ChatGPT – apoio à modelagem do minijogo: capacidade, embarques, entregas e custos no grafo de estados.
     linhas = validar_texto(texto)
     passageiros = "".join(p for p in "abcd" if p in texto)
     with TemporaryDirectory(prefix="taxi_mapa_") as tmp:
@@ -205,6 +206,7 @@ def reproduzir_percurso(grafo, movimentos):
 
 
 def comparar_com_dijkstra(grafo, movimentos):
+    # [IA] ChatGPT – apoio à comparação do trajeto validado com Dijkstra e à apresentação de custo e eficiência.
     caminho_jogador, custo_jogador = reproduzir_percurso(grafo, movimentos)
     if caminho_jogador[-1] not in grafo.finais:
         raise ValueError("Entregue todos os passageiros e chegue a G antes da comparação.")

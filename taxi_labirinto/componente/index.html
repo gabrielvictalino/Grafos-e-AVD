@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- [IA] ChatGPT – apoio à interface do jogo: HUD, mapa ampliado e resumo da corrida fora do tabuleiro. -->
 <style>
 :root{color-scheme:dark;--bg:#132127;--line:#3d5357;--muted:#b0c1bd;--mint:#a6e4cc;--gold:#ffdb85}
 *{box-sizing:border-box}body{margin:0;background:#101b22;color:#f7f5e9;font:14px system-ui,sans-serif}
@@ -95,6 +96,7 @@ function pathLine(ids,color,offset=0){
 }
 // O cenário estático é pintado uma vez por mapa e reutilizado durante a animação.
 let landscape = null, lots = new Map(), replayCosts = [];
+// [IA] ChatGPT – apoio à visualização de custos: sprites transparentes de obras/alagamento sobre a pista e fachada destacada para os destinos.
 const terrain = {
   ',': {name:'Obras', sprite:'obras', extra:2, color:'#ffcf8a'},
   '~': {name:'Alagamento', sprite:'alagamento', extra:4, color:'#aee8f2'}

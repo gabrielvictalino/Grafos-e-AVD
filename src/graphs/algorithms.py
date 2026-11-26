@@ -211,6 +211,7 @@ def bellman_ford_com_ciclo_negativo_nos(listas_nos, origem):
 
 
 def bellman_ford_sem_ciclo_negativo(listas_nos, origem):
+    # [IA] ChatGPT – revisão conceitual: bônus consumíveis precisam ser modelados no estado do grafo; conferir a modelagem com o grupo.
     anteriores = {}
     distancias = {}
     arestas = []
