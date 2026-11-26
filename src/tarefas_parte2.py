@@ -6,10 +6,13 @@ Uso (a saída é gerada por quem rodar o comando):
     # opcional: acrescentar a chave "tarefas" ao parte2_report.json já existente
     python -m src.tarefas_parte2 --dataset ... --out out/parte2 --relatorio out/parte2/parte2_report.json
 
-Critérios de escolha (registrados no próprio JSON, para o grupo conferir ou trocar):
-  - fontes: os vértices com maior grau de saída (desempate pelo id);
-  - alvo de cada par do Dijkstra: o vértice alcançável mais distante em níveis de BFS;
-  - caso com ciclo negativo: PROPOSTA a ser decidida pelo grupo (ver `transformacao_ciclo_negativo`).
+Critérios decididos pelo grupo (registrados no próprio JSON):
+  - grafo: o mesmo do benchmark (modo "consecutivo"), na escala de 10% (41.624 filmes, até 1955);
+  - fontes: filmes conhecidos (FONTES_CONHECIDAS; dá para trocar com --fontes);
+  - alvo de cada par do Dijkstra: o filme em que a queda acumulada de nota é a maior
+    (menor distância do Bellman-Ford com os pesos originais);
+  - caso com ciclo negativo: recorte com arcos nos dois sentidos e peso -|nota(v) - nota(u)|.
+# [IA] Claude – critérios acima implementados a partir da decisão do grupo (25/11)
 O grafo do TMDB é um DAG (datas estritamente crescentes), então não tem ciclo negativo por construção.
 """
 
@@ -25,8 +28,18 @@ from src.graphs.io import carregar_grafo_tmdb
 
 N_FONTES_BFS_DFS = 3
 N_PARES_DIJKSTRA = 5
-LIMITE_FILMES_PADRAO = 10_000   # o Dijkstra do grupo é O(V^2): um recorte mantém o tempo viável
+# [IA] Claude – mesmo grafo do benchmark: modo consecutivo, escala de 10%
+LIMITE_FILMES_PADRAO = 41_624   # escala 10% do benchmark (filmes até 1955-05-10)
+MODO_ARESTAS = "consecutivo"    # igual ao benchmark (src/solve.py)
 LIMITE_FILMES_CICLO = 300       # recorte pequeno para exibir o ciclo negativo
+# [IA] Claude – filmes conhecidos escolhidos pelo grupo como critério; ids do TMDB
+FONTES_CONHECIDAS = [
+    "19",     # Metropolis (1927)
+    "653",    # Nosferatu (1922)
+    "10098",  # The Kid (1921)
+    "901",    # City Lights (1931)
+    "3082",   # Modern Times (1936)
+]
 
 
 def _finito(x):
@@ -53,8 +66,16 @@ def _arestas(no):
 
 
 def escolher_fontes(lista_nos, quantidade: int) -> list:
-    """Vértices com maior grau de saída; desempate pelo id (texto)."""
+    """Vértices com maior grau de saída; desempate pelo id (texto). Usado só no recorte do ciclo."""
     return sorted(lista_nos, key=lambda n: (-len(_arestas(n)), str(n.id)))[:quantidade]
+
+
+def fontes_conhecidas(mapa_nos, ids) -> list:
+    """# [IA] Claude – devolve os nós dos filmes escolhidos pelo grupo, na ordem dada."""
+    faltando = [i for i in ids if str(i) not in mapa_nos]
+    if faltando:
+        raise ValueError(f"Filmes fora do recorte: {faltando}. Aumente --limite-filmes ou troque --fontes.")
+    return [mapa_nos[str(i)] for i in ids]
 
 
 def tarefa_bfs_dfs(lista_nos, fontes) -> tuple[list[dict], list[dict]]:
@@ -89,28 +110,38 @@ def tarefa_bfs_dfs(lista_nos, fontes) -> tuple[list[dict], list[dict]]:
 
 
 def tarefa_dijkstra(lista_nos_nao_neg, mapa_nao_neg, lista_nos_orig, mapa_orig, fontes) -> list[dict]:
-    """Um par (fonte, alvo) por fonte, com pesos deslocados (+10) para serem >= 0."""
+    """Um par (fonte, alvo) por fonte, com pesos deslocados (+10) para serem >= 0.
+
+    # [IA] Claude – alvo = filme com a maior queda acumulada de nota a partir da fonte
+    (menor distância do Bellman-Ford com os pesos originais), decisão do grupo.
+    """
     pares = []
     for fonte in fontes:
-        niveis, _ = bfs(lista_nos_orig, mapa_orig[str(fonte.id)])
-        alcancaveis = [(d, str(n.id)) for n, d in niveis.items() if math.isfinite(d) and d > 0]
+        dist_orig, _, _, _ = bellman_ford(lista_nos_orig, mapa_orig[str(fonte.id)])
+        alcancaveis = [(d, str(n.id)) for n, d in dist_orig.items()
+                       if math.isfinite(d) and n is not mapa_orig[str(fonte.id)]]
         if not alcancaveis:
             continue
-        maior = max(d for d, _ in alcancaveis)
-        alvo_id = min(i for d, i in alcancaveis if d == maior)
+        menor = min(d for d, _ in alcancaveis)
+        alvo_id = min(i for d, i in alcancaveis if d == menor)
         origem = mapa_nao_neg[str(fonte.id)]
         alvo = mapa_nao_neg[alvo_id]
         t0 = time.perf_counter()
         distancias, anteriores, peso_negativo = dijkstra(lista_nos_nao_neg, origem)
         tempo = round((time.perf_counter() - t0) * 1000, 3)
+        caminho_dij = _caminho(anteriores, origem, alvo) if anteriores else []
+        arcos_dij = max(len(caminho_dij) - 1, 0)
+        custo_desl = _finito(distancias[alvo]) if distancias else None
         pares.append({
             "origem": _rotulo(origem),
             "destino": _rotulo(alvo),
-            "nivel_bfs_do_destino": int(maior),
+            "queda_acumulada_bellman_ford": round(menor, 4),
+            "custo_original_do_caminho_dijkstra": (round(custo_desl - 10 * arcos_dij, 4)
+                                                   if custo_desl is not None else None),
             "recusou_peso_negativo": bool(peso_negativo),
-            "custo_deslocado": _finito(distancias[alvo]) if distancias else None,
-            "arcos_no_caminho": max(len(_caminho(anteriores, origem, alvo)) - 1, 0) if anteriores else None,
-            "caminho": _caminho(anteriores, origem, alvo) if anteriores else [],
+            "custo_deslocado": custo_desl,
+            "arcos_no_caminho": arcos_dij if anteriores else None,
+            "caminho": caminho_dij,
             "tempo_ms": tempo,
         })
     return pares
@@ -134,7 +165,7 @@ def tarefa_bellman_ford_sem_ciclo(lista_nos, fonte) -> dict:
 
 
 def construir_grafo_ciclo_negativo(lista_nos) -> tuple[list[No], dict[str, No]]:
-    """PROPOSTA (decisão do grupo): copia o recorte com arcos nos dois sentidos e peso -|Δnota|.
+    """Decisão do grupo: copia o recorte com arcos nos dois sentidos e peso -|Δnota|.
 
     Cada par de filmes ligados por ator passa a ter os arcos u->v e v->u com peso -|nota(v)-nota(u)|.
     O ciclo u->v->u soma -2|Δnota|, negativo sempre que as notas diferem.
@@ -155,7 +186,8 @@ def construir_grafo_ciclo_negativo(lista_nos) -> tuple[list[No], dict[str, No]]:
 
 
 def tarefa_bellman_ford_ciclo_negativo(dataset, limite_filmes: int) -> dict:
-    nos, _ = carregar_grafo_tmdb(dataset, limite_filmes=limite_filmes, transformacao_peso="original")
+    nos, _ = carregar_grafo_tmdb(dataset, limite_filmes=limite_filmes, transformacao_peso="original",
+                                 modo_arestas=MODO_ARESTAS)  # [IA] Claude – mesmo modo do benchmark
     com_arestas = [n for n in nos if _arestas(n)]
     if not com_arestas:
         return {"erro": "o recorte não tem arestas; aumente o limite de filmes"}
@@ -171,8 +203,9 @@ def tarefa_bellman_ford_ciclo_negativo(dataset, limite_filmes: int) -> dict:
         custo = round(sum(min(a.custo for a in _arestas(u) if a.destino is v) for u, v in zip(fechado, fechado[1:])), 4)
     return {
         "transformacao_ciclo_negativo": (
-            "PROPOSTA a ser decidida pelo grupo: recorte dos primeiros filmes por data, arcos nos dois "
-            "sentidos e peso = -|nota(destino) - nota(origem)|."),
+            "recorte dos primeiros filmes por data, arcos nos dois sentidos e "
+            "peso = -|nota(destino) - nota(origem)|"),
+        "criterio_fonte_ciclo": "maior grau de saída no recorte (os filmes conhecidos não estão nos 300 primeiros)",
         "recorte_filmes": limite_filmes,
         "vertices": len(lista),
         "arcos": sum(len(_arestas(n)) for n in lista),
@@ -184,19 +217,25 @@ def tarefa_bellman_ford_ciclo_negativo(dataset, limite_filmes: int) -> dict:
     }
 
 
-def executar_tarefas_parte2(dataset, limite_filmes: int = LIMITE_FILMES_PADRAO) -> dict:
-    nos_orig, mapa_orig = carregar_grafo_tmdb(dataset, limite_filmes=limite_filmes, transformacao_peso="original")
-    nos_pos, mapa_pos = carregar_grafo_tmdb(dataset, limite_filmes=limite_filmes, transformacao_peso="nao_negativo")
-    fontes = escolher_fontes(nos_orig, max(N_FONTES_BFS_DFS, N_PARES_DIJKSTRA))
+def executar_tarefas_parte2(dataset, limite_filmes: int = LIMITE_FILMES_PADRAO,
+                           ids_fontes=None) -> dict:
+    # [IA] Claude – mesmo grafo do benchmark (consecutivo) e fontes escolhidas pelo grupo
+    nos_orig, mapa_orig = carregar_grafo_tmdb(dataset, limite_filmes=limite_filmes,
+                                              transformacao_peso="original", modo_arestas=MODO_ARESTAS)
+    nos_pos, mapa_pos = carregar_grafo_tmdb(dataset, limite_filmes=limite_filmes,
+                                            transformacao_peso="nao_negativo", modo_arestas=MODO_ARESTAS)
+    fontes = fontes_conhecidas(mapa_orig, ids_fontes or FONTES_CONHECIDAS)
     bfs_res, dfs_res = tarefa_bfs_dfs(nos_orig, fontes[:N_FONTES_BFS_DFS])
     return {
         "parametros": {
             "dataset": str(dataset),
             "recorte_filmes": limite_filmes,
+            "modo_arestas": MODO_ARESTAS,
             "vertices": len(nos_orig),
             "arestas": sum(len(_arestas(n)) for n in nos_orig),
-            "criterio_fontes": "maiores graus de saída, desempate pelo id",
-            "criterio_alvo_dijkstra": "alcançável mais distante em níveis de BFS, desempate pelo menor id",
+            "criterio_fontes": "filmes conhecidos escolhidos pelo grupo",
+            "criterio_alvo_dijkstra": "filme com a maior queda acumulada de nota (menor distância do "
+                                      "Bellman-Ford com pesos originais), desempate pelo menor id",
             "transformacao_pesos_dijkstra": "peso + 10,0 (a nota vai de 1 a 10, então a diferença mínima é -9)",
         },
         "bfs": bfs_res,
@@ -213,11 +252,13 @@ def main() -> None:
     parser.add_argument("--out", required=True, help="Diretório de saída (grava parte2_tarefas.json)")
     parser.add_argument("--limite-filmes", type=int, default=LIMITE_FILMES_PADRAO,
                         help="Recorte cronológico (os N primeiros filmes por data)")
+    parser.add_argument("--fontes", nargs="+", default=None,  # [IA] Claude
+                        help="ids TMDB das fontes (padrão: FONTES_CONHECIDAS); as 3 primeiras vão para BFS/DFS")
     parser.add_argument("--relatorio", default=None,
                         help="parte2_report.json existente: acrescenta a chave 'tarefas' sem apagar 'escalabilidade'")
     args = parser.parse_args()
 
-    resultado = executar_tarefas_parte2(args.dataset, args.limite_filmes)
+    resultado = executar_tarefas_parte2(args.dataset, args.limite_filmes, args.fontes)
     saida = Path(args.out)
     saida.mkdir(parents=True, exist_ok=True)
     caminho = saida / "parte2_tarefas.json"
