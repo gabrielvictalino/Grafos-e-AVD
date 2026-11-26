@@ -1034,7 +1034,7 @@ def exportar_arvore_bfs_m02(
 
 # [IA] Antigravity (Gemini) – orquestração da geração das 5 figuras PNG da Parte 1
 def gerar_figuras_parte1(
-    pasta_mapas: str | Path = "mapas",
+    pasta_mapas: str | Path = "data/mapas",
     diretorio_saida: str | Path = "out/parte1",
 ) -> list[Path]:
     """Gera as 5 figuras PNG obrigatórias da Seção 8 da Parte 1."""
@@ -1183,7 +1183,7 @@ def main() -> None:
     parser.add_argument("--graus", metavar="DATASET", help="Gera os histogramas de grau a partir do dataset limpo")
     # [IA] Antigravity (Gemini) – opções --parte1 e --mapas na CLI para gerar as 5 figuras da Parte 1
     parser.add_argument("--parte1", action="store_true", help="Gera as 5 figuras PNG obrigatórias da Parte 1")
-    parser.add_argument("--mapas", default="mapas", help="Pasta com os mapas .txt da Parte 1 (padrão: mapas)")
+    parser.add_argument("--mapas", default="data/mapas", help="Pasta com os mapas .txt da Parte 1 (padrão: data/mapas)")
     parser.add_argument("--out", default=None, help="Diretório para salvar os gráficos")
     args = parser.parse_args()
     if not args.relatorio and not args.graus and not args.parte1:

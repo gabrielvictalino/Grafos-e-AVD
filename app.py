@@ -204,8 +204,8 @@ class Grafo:
 
 
 def chave_camada(estado):
-    """# [IA] Claude – identifica a camada de um estado: (chaves, bônus consumidos)."""
-    return estado.chaves, estado.bonus
+    """# [IA] Claude – identifica a camada de um estado pelo conjunto de chaves (o 2º item fica vazio)."""
+    return estado.chaves, ()
 
 
 def posicao(no):
@@ -370,9 +370,9 @@ def carregar(caminho, algoritmo, com_estados):
 
             vertices = {alvo: Vertice(posicao(alvo), "G", alvo=True)}
             camadas_visuais = {}
-            # Camadas vêm prontas do backend: (chaves, bônus consumidos)
+            # Camadas vêm prontas do backend: uma por conjunto de chaves
             for camada in camadas:
-                camada_visual = camadas_visuais.setdefault((camada.chaves, tuple(sorted(camada.bonus))), [])
+                camada_visual = camadas_visuais.setdefault((camada.chaves, ()), [])
                 for estado in camada.lista_nos_estados:
                     casa = estado.no_pos
                     vertice = Vertice(posicao(casa), casa.tipo, estado.chaves, tuple(sorted(estado.bonus)))
@@ -781,7 +781,7 @@ def main():
         passo = sessao.get("passo", 0)
         quadro = quadros[passo] if quadros else None
 
-        # [IA] Claude – um painel por camada (chaves + bônus), em vez de um seletor único
+        # [IA] Claude – um painel por camada (conjunto de chaves), em vez de um seletor único
         atual = chave_camada(quadro.estado) if quadro else None
         ordem = ordem_camadas(resultado.camadas)
         exibidas = ordem

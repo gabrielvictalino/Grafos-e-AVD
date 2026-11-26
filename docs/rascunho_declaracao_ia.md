@@ -12,11 +12,18 @@
 | Antigravity (Gemini) | `app.py` | Filtro de linhas comentadas (`;`) e linhas vazias na leitura da grade em `carregar` |
 | Gemini | `notebooks/exploracao_grafo_avd.ipynb` (3 células) | Métricas estruturais do grafo em DataFrames; cruzamento de arestas com elenco e atributos; merge e matriz de correlação |
 | ChatGPT | `notebooks/projeto_pos_limpeza.ipynb` (2 células) | Apoio com pandas: exclusão de colunas e remoção de registros incompletos; conversão e validação de datas |
-| Claude | `app.py` (interface Streamlit) | Visual do app (tema, cartões, legenda, rastro colorido) e painéis separados por camada (chaves + bônus) |
-| Claude | `src/graphs/labirinto.py`, `src/graphs/estados.py`, `src/solve.py` | Camada passa a ser identificada por (chaves, bônus consumidos): campo `bonus` em `Camada`, `rotulo_camada`, comparações nas camadas e rótulos em `camadas.json`. A lógica de exploração e de custos não foi alterada |
-| Claude | `src/graficos_atores.py` | Gráficos de atores (variação de notas, constância, receita), idioma e produtoras. Escolha dos critérios (metades da carreira, mínimos de filmes) proposta pelo Claude; **a equipe precisa confirmar ou ajustar** |
+| Claude | `app.py` (interface Streamlit) | Visual do app (tema, cartões, legenda, rastro colorido) e painéis separados por camada (conjunto de chaves) |
 | Claude | `src/viz.py` (`gerar_histogramas_grau`, `calcular_graus`) | Histogramas de grau de entrada e de saída (sintaxe matplotlib) |
 | Antigravity (Gemini) | `src/viz.py` (`exportar_heatmap`, `exportar_percurso_mapa`, `exportar_grafo_estados_m02`, `exportar_arvore_bfs_m02`, `gerar_figuras_parte1`, `main`) | Apoio com sintaxe matplotlib para gerar as 5 figuras PNG obrigatórias da Parte 1 (percursos de `m03`/`m08`, grafo em camadas e árvore BFS de `m02`, heatmap de `m08`) e flags `--parte1`/`--mapas` na CLI |
+
+| Claude Code | `data/mapas/` (movida de `mapas/`), `app.py`, `src/cli.py`, `src/solve.py`, `src/viz.py`, `tests/test_io.py`, `README.md` | Mover os mapas com `git mv` e atualizar os caminhos que apontavam para `mapas` |
+| Claude Code | `tests/test_bellman_ford.py` | 2 testes sugeridos (ciclo negativo detectado e devolvido; peso negativo sem ciclo), com cálculo à mão nos comentários |
+| Claude Code | `tests/test_modelagem_e_atores.py` | 3 testes sugeridos para `comparacao_modelagem` e `variacao_consecutiva_por_ator`, com conta à mão nos comentários (**o grupo precisa conferir**) |
+| Claude Code | `src/comparacao_modelagem.py` | Orquestração da Seção 6 (BFS em G_pos com portas como chão, G_pos com portas como parede e G_est) chamando as funções do grupo; validade do caminho conferida por simulação |
+| Claude Code | `src/tarefas_parte2.py` | Orquestração das tarefas da Parte 2 (BFS/DFS em 3 fontes, Dijkstra em 5 pares, Bellman-Ford sem ciclo e com ciclo negativo) chamando os algoritmos do grupo. A transformação do caso de ciclo negativo é só uma **proposta**: o grupo decide |
+| Claude Code | `notebooks/exploracao_grafo_avd.ipynb` (células no fim) | Sintaxe pandas/matplotlib para os histogramas de grau e para 6 gráficos pedidos pela equipe (barras de atores que mais diminuíram/aumentaram, boxplot de constância, dispersão com tendência, boxplots por idioma e por produtora). Os tipos de gráfico e a pergunta vieram da equipe; os valores dos parâmetros (mínimos de filmes, quantos mostrar) ficam numa célula marcada como **decisão do grupo** |
+| Claude Code | `docs/matriz_contribuicao_dados.md` | Contagem de commits por autor e por pasta a partir do `git log` (dados, sem comentários) |
+| Claude Code | `README.md` | Versão do Python, lista de comandos do CLI e comandos dos módulos novos |
 
 Os arquivos `out/parte1/camadas.json`, `out/parte1/*.png` e `out/parte2/*.png` são saídas geradas por esse código.
 
@@ -29,7 +36,24 @@ Os arquivos `out/parte1/camadas.json`, `out/parte1/*.png` e `out/parte2/*.png` s
 - [ ] Verificar que todo trecho com apoio de IA tem o marcador `# [IA] <ferramenta> – <finalidade>`, como pede `docs/CHECKLIST_ENTREGA_PARTE1.md`.
 - [ ] Assinatura de todos os integrantes e exportação para `docs/DECLARACAO_IA.pdf`.
 
-## 3. O que a IA **não** fez
+## 3. Conferência contra as regras de uso de IA do enunciado
 
-- Não escreveu as análises, interpretações e notas autorais dos relatórios.
-- Não alterou os algoritmos (BFS, DFS, Dijkstra, Bellman-Ford) nem a lógica do grafo de estados.
+**Permitido (com registro):** tirar dúvidas conceituais; depurar código do grupo; sugerir casos de teste e mapas extras, conferidos pelo grupo; apoio com pandas e bibliotecas de visualização; revisão de ortografia e clareza.
+**Proibido:** gerar BFS, DFS, Dijkstra, Bellman-Ford ou a construção do grafo de estados; gerar análises, discussões, conclusões, notas analíticas ou a prova do m05; pedir que a IA interprete gráficos, escolha o tipo de gráfico ou os elementos de destaque, ou monte a história explanatória; pedir que a IA resolva os mapas; entregar trecho que ninguém sabe explicar.
+
+**Removido do repositório por ser proibido ou de risco** (continua visível só no histórico do git):
+- A mudança de camadas por (chaves, bônus) em `estados.py`, `labirinto.py` e `solve.py`. Voltou ao original: a camada é o conjunto de chaves.
+- O módulo de gráficos de atores (`src/graficos_atores.py`) e as 6 imagens geradas por ele: os critérios e destaques foram escolhidos pelo Claude. Os mesmos gráficos voltaram como células do notebook, a pedido da equipe, com os critérios em parâmetros que o grupo deve definir e sem cores de destaque escolhidas pelo Claude.
+
+**O que o Claude fez e permanece:**
+
+| Trabalho do Claude | Enquadramento | Situação |
+| :--- | :--- | :--- |
+| Testes novos (`test_bellman_ford.py`, `test_modelagem_e_atores.py`) | Permitido: sugerir casos de teste | Grupo precisa conferir os valores à mão (estão nos comentários) |
+| Caminhos `data/mapas`, README, matriz de contribuição, `.pyc` fora do git | Organização e dados, sem análise | Sem pendência |
+| Histogramas de grau (`viz.py` e notebook) | Sintaxe matplotlib de um gráfico que o enunciado já define | Grupo escreve a interpretação |
+| `comparacao_modelagem.py` e `tarefas_parte2.py` | Orquestração; os algoritmos chamados são do grupo | Grupo precisa saber explicar o código. O caso de ciclo negativo é só proposta: a decisão é do grupo |
+| Visual do `app.py` (cartões, painéis por camada) | Apoio com biblioteca de visualização | Grupo precisa saber explicar |
+| Comentários de interpretação dados no chat (resultado de uma dispersão, limites do `io.py`) | **Proibido** para o relatório | Nada disso pode entrar no PDF como análise do grupo |
+
+O Claude não escreveu as análises, as notas analíticas, a prova do m05 nem preencheu os blocos `[PREENCHER]` ou `[AUTORAL]`. Não alterou a lógica de `io.py`, `graph.py`, `estados.py` e `algorithms.py` na versão atual.

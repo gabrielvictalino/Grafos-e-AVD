@@ -24,7 +24,6 @@ from src.graphs.labirinto import (
     No_estados,
     gerar_labirinto,
     preparar_estados,
-    rotulo_camada,
     validar_labirinto,
 )
 from src.graphs.io import carregar_grafo_tmdb
@@ -342,8 +341,8 @@ def exportar_parte1(entrada_mapas: str | Path = "data/mapas", out_dir: str | Pat
         info_camadas = {}
         for camada in camadas:
             camada.calcular_metricas_camada(arestas_geradas)
-            # [IA] Claude – camadas rotuladas por (chaves, bônus) via rotulo_camada
-            info_camadas[camada.rotulo] = {
+            chave_camada = camada.chaves or "-"
+            info_camadas[chave_camada] = {
                 "ordem": camada.metricas.ordem,
                 "tamanho": camada.metricas.tamanho,
                 "densidade": camada.metricas.densidade,
@@ -352,14 +351,14 @@ def exportar_parte1(entrada_mapas: str | Path = "data/mapas", out_dir: str | Pat
         arcos_entre_camadas = []
         contagem_casas_entre: dict[tuple[int, int, str], int] = {}
         for origem, destino, movimento, casa_destino, peso in arestas_geradas:
-            if destino != "ALVO" and (origem.chaves, origem.bonus) != (destino.chaves, destino.bonus):
+            if destino != "ALVO" and origem.chaves != destino.chaves:
                 r_dest = destino.no_pos.posicao_linha
                 c_dest = destino.no_pos.posicao_coluna
                 arcos_entre_camadas.append({
                     "origem": formatar_estado(origem),
                     "destino": formatar_estado(destino),
-                    "camada_origem": rotulo_camada(origem.chaves, origem.bonus),
-                    "camada_destino": rotulo_camada(destino.chaves, destino.bonus),
+                    "camada_origem": origem.chaves or "-",
+                    "camada_destino": destino.chaves or "-",
                     "movimento": movimento,
                     "casa_destino": casa_destino,
                     "posicao_destino": [r_dest, c_dest],
@@ -521,7 +520,7 @@ def _construir_estados_percurso(
         estados_percurso.append({
             "passo": idx,
             "estado": formatar_estado(est),
-            "camada": rotulo_camada(est.chaves, est.bonus),
+            "camada": est.chaves or "-",
             "linha": est.no_pos.posicao_linha,
             "coluna": est.no_pos.posicao_coluna,
             "casa": est.no_pos.tipo,
@@ -641,7 +640,7 @@ def _executar_algoritmo_unico_parte1(
             estados_dfs.append({
                 "passo": idx,
                 "estado": formatar_estado(est),
-                "camada": rotulo_camada(est.chaves, est.bonus),
+                "camada": est.chaves or "-",
                 "linha": est.no_pos.posicao_linha,
                 "coluna": est.no_pos.posicao_coluna,
                 "casa": est.no_pos.tipo,
@@ -878,7 +877,7 @@ def _gerar_html_interativo(
     armadilhas_lista = [
         {
             "estado": formatar_estado(e),
-            "camada": rotulo_camada(e.chaves, e.bonus),
+            "camada": e.chaves or "-",
             "linha": e.no_pos.posicao_linha,
             "coluna": e.no_pos.posicao_coluna,
         }

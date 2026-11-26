@@ -43,8 +43,8 @@ Grafos-e-AVD/
 │  ├─ relatorio_parte2.md          # Documentação técnica e análise AVD da Parte 2 (base para o PDF)
 │  ├─ CHECKLIST_ENTREGA_PARTE1.md  # Checklist de entrega e pendências da Parte 1
 │  └─ CHECKLIST_ENTREGA_PARTE2.md  # Checklist de entrega e pendências da Parte 2 e AVD
-├─ mapas/                          # Mapas fornecidos da Parte 1 (m01 a m08)
 ├─ data/
+│  ├─ mapas/                       # Mapas fornecidos da Parte 1 (m01 a m08)
 │  ├─ mapas_grupo/                 # 2 mapas próprios do grupo (g01 e g02)
 │  └─ dataset_parte2/
 │     └─ tmdb_limpo.csv.gz         # Dataset tratado da Parte 2
@@ -83,7 +83,7 @@ Grafos-e-AVD/
 1. **Exportar todas as saídas da Parte 1** (`arestas_<mapa>.csv`, `graus_<mapa>.csv`, `metricas_global.json`, `camadas.json`, `solucoes.csv`, `dfs_classificacao.csv`, `percurso_m03.json`, `ciclo_negativo_m06.json`, `armadilhas_m04.csv`, `armadilhas_m07.csv`):
 
 ```bash
-python -m src.cli --exportar-parte1 mapas --out out/parte1
+python -m src.cli --exportar-parte1 data/mapas --out out/parte1
 ```
 
 2. **Executar o labirinto interativo (Streamlit):**
@@ -113,7 +113,7 @@ pytest tests/
 A CLI suporta execução em lote (`--exportar-parte1`) e execução individual por mapa (`--mapa`), além de `--alg {BFS,DFS,DIJKSTRA,BELLMAN_FORD}`, `--fonte-consumivel`, `--armadilhas` e `--interactive` (que gera `labirinto_interativo.html` no diretório informado em `--out`). Exemplos:
 
 ```bash
-python -m src.cli --mapa mapas/m06_fonte.txt --alg BELLMAN_FORD --fonte-consumivel --out out/parte1
+python -m src.cli --mapa data/mapas/m06_fonte.txt --alg BELLMAN_FORD --fonte-consumivel --out out/parte1
 python -m src.cli --mapa data/mapas_grupo/g02_armadilha.txt --armadilhas --out out/parte1
 ```
 
@@ -136,10 +136,14 @@ Para executar um algoritmo específico entre origem e destino no dataset da Part
 python -m src.cli --dataset data/dataset_parte2/tmdb_limpo.csv.gz --alg DIJKSTRA --source <ID_ORIGEM> --target <ID_DESTINO> --out out/parte2
 ```
 
-Para gerar os gráficos de atores, idioma e produtoras (`out/parte2/`). O `--bruto` é o `TMDB_all_movies.csv` do Kaggle, necessário para revenue, idioma e produtoras; sem ele só os 3 primeiros gráficos são gerados:
+<!-- [IA] Claude Code – comandos dos módulos src/comparacao_modelagem.py e src/tarefas_parte2.py -->
+Comparação de modelagens da Parte 1 (Seção 6) e tarefas por algoritmo da Parte 2 (BFS/DFS em 3 fontes, Dijkstra em 5 pares, Bellman-Ford sem ciclo e com ciclo negativo):
 
 ```bash
-python -m src.graficos_atores --bruto caminho/TMDB_all_movies.csv --out out/parte2
+python -m src.comparacao_modelagem --out out/parte1
+python -m src.tarefas_parte2 --dataset data/dataset_parte2/tmdb_limpo.csv.gz --out out/parte2
+# opcional: acrescenta a chave "tarefas" ao relatório existente, sem apagar "escalabilidade"
+python -m src.tarefas_parte2 --dataset data/dataset_parte2/tmdb_limpo.csv.gz --out out/parte2 --relatorio out/parte2/parte2_report.json
 ```
 
 ---
