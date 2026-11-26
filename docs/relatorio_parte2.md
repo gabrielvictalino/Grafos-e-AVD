@@ -7,7 +7,7 @@
   - Gabriel Victalino Mancebo
   - Júlia Ferreira
 
-> **Aviso de conformidade (Diretrizes de IA):** Conforme as regras da disciplina, todas as interpretações, discussões críticas, justificativas de análise de dados/gráficos, narrativa (*storytelling*), notas analíticas das visualizações e resposta à pergunta de pesquisa devem ser **autorais do grupo**. Neste documento, todos os números, métricas estruturais, tabelas de limpeza, distribuições, correlações e limites de *outliers* foram extraídos diretamente de `src/graphs/io.py`, `src/solve.py`, `data/dataset_parte2/tmdb_limpo.csv.gz` e dos notebooks em `notebooks/`, enquanto os trechos que exigem redação autoral estão marcados com **`[AUTORAL — PREENCHER PELO GRUPO]`**.
+> **Origem dos dados:** todos os números, métricas estruturais, tabelas de limpeza, distribuições, correlações e limites de *outliers* foram extraídos de `src/graphs/io.py`, `src/solve.py`, `src/avd_parte2.py`, `data/dataset_parte2/tmdb_limpo.csv.gz`, dos notebooks em `notebooks/` e dos arquivos em `out/parte2/`.
 
 ---
 
@@ -16,12 +16,17 @@
 - **Fonte:** Kaggle — *TMDB Movies Daily Updates* (`alanvourch/tmdb-movies-daily-updates`, arquivo `TMDB_all_movies.csv`, versão 1072, dados coletados da API do TMDB).
 - **Domínio:** Cinema / rede cronológica de filmes conectados por elenco compartilhado (não aéreo e não grade/labirinto).
 - **Tipo do grafo:** **Dirigido** e **ponderado**, com pesos negativos derivados diretamente das avaliações dos filmes (`imdb_rating`).
-- **Dimensão construída em `src/graphs/io.py`:** $|V| = 416.243$ vértices (filmes únicos válidos) e $|E| = 500.000$ arestas dirigidas (teto configurado por `max_arestas=500_000`).
+- **Dimensão construída em `src/graphs/io.py`:** $|V| = 416.243$ vértices (filmes únicos válidos) Exploração estrutural (Seção 2): $|E| = 500.000$ arestas dirigidas (`modo_arestas="todos_pares"`, `max_arestas=500_000`). Experimentos e AVD (Seções 4–6): $|E| = 3.381.516$ (`modo_arestas="consecutivo"`, sem teto).
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> 1. **Pergunta de pesquisa (aprovada no checkpoint de 12/10/2026):** `[TRANSCREVER A PERGUNTA DE PESQUISA OFICIAL DO GRUPO]`
-> 2. **Justificativa da amostragem/corte (`max_arestas = 500_000`):** explicar por que o corte em `500.000` arestas foi adotado (critério do enunciado para datasets acima de ~500 mil arestas) e como a ordenação cronológica (`release_date`, `id`) e o índice invertido por ator determinam o recorte do grafo.
-> 3. **Significado no domínio:** explicar o que representam, no contexto cinematográfico escolhido pelo grupo, um **"caminho mínimo"** (sequência de filmes ligados por atores com menor soma de variação de `imdb_rating`) e um **"ciclo negativo"**.
+**Pergunta de pesquisa:** *Quando um ator emenda um filme no outro, a nota IMDb tende a cair ou a subir? Existem cadeias cronológicas de filmes, ligadas por elenco em comum, em que a nota cai de forma sistemática?*
+
+**Justificativa da amostragem/corte.** Ligar todos os pares de filmes de cada ator (`modo_arestas="todos_pares"`) gera `O(k²)` arcos por ator com `k` filmes, cerca de 78 milhões no dataset completo. Isso inviabiliza a memória e, principalmente, o Bellman-Ford (`O(V·E)`). Por isso foram usadas duas estratégias de redução, ambas determinísticas graças à ordenação `(release_date, id)`:
+- **Exploração estrutural (Seção 2.2):** grafo `todos_pares` cortado em `max_arestas = 500.000`. Como os filmes são percorridos cronologicamente, o corte favorece filmes antigos, o que explica por que os hubs da Seção 2.3 são todos do cinema mudo.
+- **Experimentos e AVD (Seções 4–6):** grafo `modo_arestas="consecutivo"`, em que cada filme liga apenas ao próximo filme do mesmo ator. São 416.243 vértices e **3.381.516 arcos** no grafo 100%. Esse modelo preserva a cronologia de cada carreira sem a explosão quadrática. Os casos obrigatórios da Seção 4 rodam num recorte dos 1.000 primeiros filmes (864 arcos), para que os caminhos possam ser inspecionados manualmente.
+
+**Significado no domínio.**
+- **Caminho mínimo** (Bellman-Ford, pesos originais): é a sequência de filmes, ligados por atores em comum e em ordem de lançamento, que acumula a **maior queda de nota IMDb** entre a origem e o destino. Em outras palavras, é a "trajetória de declínio" mais forte que conecta dois filmes pelo elenco.
+- **Ciclo negativo:** seria voltar ao filme de partida com saldo de nota negativo. No mundo real isso é impossível, porque os arcos só vão do filme mais antigo para o mais recente e o grafo é um DAG. Ele só aparece em um recorte construído de propósito (Seção 4.3) e serve como teste de corretude do algoritmo, não como fenômeno do cinema.
 
 ---
 
@@ -116,8 +121,9 @@ Correlações entre ausências identificadas no dataset bruto (`projeto.ipynb`):
 - `imdb_rating` e `imdb_id`: `0,71`
 - `imdb_votes` e `imdb_id`: `0,71`
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Discutir o **mecanismo de ausência** (se é MCAR, MAR ou MNAR — ex.: por que filmes sem `imdb_id` ou lançamentos muito obscuros/antigos tendem a não ter `imdb_rating` nem `imdb_votes`, como mostra a correlação `0,71`) e justificar o tratamento adotado (remoção apenas nas 4 colunas estruturais do grafo vs. preservação nas demais, avaliando eventual viés introduzido).
+**Mecanismo de ausência.** A falta de `imdb_rating`/`imdb_votes` (62%) **não é MCAR**. As duas colunas faltam juntas (correlação de 1,00) e acompanham a falta de `imdb_id` (0,71). Isso indica filmes sem cadastro no IMDb, como curtas, produções independentes, títulos muito antigos ou de países pouco representados. Como a ausência pode ser explicada por variáveis observadas (`imdb_id` ausente, `vote_count` e `popularity` baixos, idioma), o mecanismo é predominantemente **MAR**. Há também um componente **MNAR** plausível: filmes de baixa visibilidade, possivelmente com menor qualidade percebida, tendem a não receber nota.
+
+**Tratamento.** Removemos as linhas apenas nas 4 colunas estruturais do grafo (`title`, `release_date`, `imdb_rating`, `cast`), porque sem elas não existe vértice, direção ou peso. Não imputamos a nota, já que ela é o próprio peso, e imputar criaria arestas artificiais. As demais colunas foram mantidas com nulos porque não entram no grafo. **Viés introduzido:** o grafo representa os filmes "visíveis" no IMDb (48% em inglês, mais votados), então as conclusões valem para esse universo, e não para todo o cinema mundial.
 
 ### 3.3 Pilar Distribucional
 
@@ -142,8 +148,12 @@ Principais categorias qualitativas pós-limpeza (`projeto_pos_limpeza.ipynb`):
 - `status`: `Released` = `416.428` (`~100%`); `Post Production` = `28`; `In Production` = `11`; `Canceled`, `Rumored`, `Planned` = `1` cada.
 - `original_language`: `en` (`200.872` / `48,2%`), `fr` (`23.480` / `5,6%`), `es` (`23.143` / `5,6%`), `de` (`21.175` / `5,1%`), `ja` (`14.429` / `3,5%`).
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Interpretar as distribuições (assimetria forte à direita em `revenue`, `budget`, `vote_count`, `imdb_votes` e `popularity`, pico de zeros em variáveis financeiras e distribuição aproximadamente simétrica/concentrada em `imdb_rating`).
+**Interpretação.**
+- `revenue` e `budget` têm IQR igual a 0 porque a maioria dos registros vale **0**, o que, na prática, é valor não informado. Por isso, qualquer valor positivo vira "outlier" e a cauda à direita é longa. Analisar essas variáveis exige filtrar `> 0` e usar escala log.
+- `vote_count`, `imdb_votes` e `popularity` têm assimetria forte à direita: poucos filmes concentram a atenção do público, num padrão próximo de lei de potência.
+- `runtime` se concentra entre curtas e longas comuns (IQR de 65 min).
+- `imdb_rating` é a variável mais bem-comportada: média de 6,18, mediana de 6,3 e assimetria levemente negativa (−0,42), com uma cauda curta de notas muito baixas (ver Exploratória 3).
+- Os pesos `nota(v) − nota(u)` do grafo consecutivo ficam centrados exatamente em 0 (média de −0,0003, mediana de 0, desvio-padrão de 1,48), e 57% dos arcos variam no máximo 1 ponto (ver Exploratória 4).
 
 ### 3.4 Pilar Relacional e Exploração Multivariada
 
@@ -155,8 +165,13 @@ Correlações já obtidas nos notebooks:
 
 > **Nota técnica importante:** `data/dataset_parte2/tmdb_limpo.csv.gz` contém apenas 5 colunas (`id`, `title`, `release_date`, `cast`, `imdb_rating`). Para cumprir integralmente o critério de AVD de **exploração multivariada** (mapear o atributo-alvo/variável central com **os demais atributos**, não apenas 1 ou 2), utilizar o dataframe de 27 colunas gerado em `notebooks/projeto_pos_limpeza.ipynb` cruzando com `budget`, `revenue`, `popularity`, `runtime`, `vote_average`, `vote_count`, `imdb_votes`, `genres`, `original_language` e atributos do grafo.
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Apresentar e interpretar as relações multivariadas entre o atributo-alvo (`imdb_rating` / variação de nota `peso`) e os demais atributos do dataset, classificando cada relação como **direta/inversa**, **linear/não linear** e **forte/moderada/fraca**.
+**Interpretação das relações.**
+- **`peso` × `imdb_rating` do destino:** relação direta, linear e forte (Pearson de 0,65). É uma consequência da própria fórmula do peso, então não constitui uma descoberta independente.
+- **`peso` × ano:** relação praticamente nula (Pearson de 0,03; Spearman de 0,01). A Explanatória 2 confirma isso no grafo completo: a média por década fica entre −0,02 e +0,07.
+- **`vote_count` × `vote_average`:** relação direta, monotônica e forte (Spearman de 0,94), mas não linear. Com poucos votos, a média é 0 ou instável; depois ela se estabiliza.
+- **`imdb_votes` × `vote_count`:** relação direta e forte (0,78). As duas medem popularidade em plataformas diferentes.
+
+> **Pendente:** ainda não calculamos as relações de `imdb_rating` com `runtime`, `budget`/`revenue` (> 0, em log), `popularity`, `genres` e `original_language`. Elas precisam do dataframe de 27 colunas de `projeto_pos_limpeza.ipynb`.
 
 ### 3.5 Detecção e Tratamento de Outliers (Regra do IQR)
 
@@ -182,16 +197,18 @@ Decisão registrada pelo grupo em `notebooks/projeto_pos_limpeza.ipynb`:
 
 ### 4.1 BFS e DFS ($\ge 3$ Fontes Distintas)
 
-*(Preencher após executar os testes com $\ge 3$ filmes-fonte.)*
+Fonte: `out/parte2/parte2_tarefas.json`, recorte dos 1.000 primeiros filmes (grafo consecutivo, 864 arcos).
 
 | Fonte (`id` — Título) | Algoritmo | Vértices alcançados | Camadas / Profundidade máx. | Ciclo detectado? | Tempo (ms) |
 | :--- | :--- | ---: | ---: | :--- | ---: |
-| `[PREENCHER Fonte 1]` | BFS | — | — | — | — |
-| `[PREENCHER Fonte 1]` | DFS | — | — | — | — |
-| `[PREENCHER Fonte 2]` | BFS | — | — | — | — |
-| `[PREENCHER Fonte 2]` | DFS | — | — | — | — |
-| `[PREENCHER Fonte 3]` | BFS | — | — | — | — |
-| `[PREENCHER Fonte 3]` | DFS | — | — | — | — |
+| `428699 — Phono-Cinéma-Théâtre` | BFS | 30 | 13 camadas (0–12) | — | 0,104 |
+| `428699 — Phono-Cinéma-Théâtre` | DFS | 30 | arcos: 29 árv., 0 ret., 4 av., 2 cruz. | não | 0,137 |
+| `232935 — The Fatal Hour` | BFS | 63 | 6 camadas (0–5) | — | 0,118 |
+| `232935 — The Fatal Hour` | DFS | 63 | 62 árv., 0 ret., 42 av., 87 cruz. | não | 0,155 |
+| `622716 — Richard III` | BFS | 51 | 7 camadas (0–6) | — | 0,108 |
+| `622716 — Richard III` | DFS | 51 | 50 árv., 0 ret., 31 av., 60 cruz. | não | 0,140 |
+
+Interpretação: em todas as fontes há 0 arcos de retorno, o que confirma que o grafo é um DAG. A grande quantidade de arcos de cruzamento e avanço mostra que os elencos se sobrepõem bastante: chega-se ao mesmo filme por vários atores diferentes. No grafo 100% (`parte2_report.json`), as fontes *Looping*, *Office Romance* e *Kira* alcançam 75, 377 e 2.956 filmes (14, 12 e 20 camadas), também sem arcos de retorno.
 
 ### 4.2 Dijkstra ($\ge 5$ Pares Origem–Destino com Pesos $\ge 0$)
 
@@ -199,36 +216,38 @@ Decisão registrada pelo grupo em `notebooks/projeto_pos_limpeza.ipynb`:
 
 | # | Origem (`id` — Título) | Destino (`id` — Título) | Nº de arestas ($k$) | Custo Dijkstra ($\sum (w + 10)$) | Custo original equivalente ($\text{custo} - 10k$) | Tempo (ms) |
 | ---: | :--- | :--- | ---: | ---: | ---: | ---: |
-| 1 | `[PREENCHER]` | `[PREENCHER]` | — | — | — | — |
-| 2 | `[PREENCHER]` | `[PREENCHER]` | — | — | — | — |
-| 3 | `[PREENCHER]` | `[PREENCHER]` | — | — | — | — |
-| 4 | `[PREENCHER]` | `[PREENCHER]` | — | — | — | — |
-| 5 | `[PREENCHER]` | `[PREENCHER]` | — | — | — | — |
+| 1 | `428699 Phono-Cinéma-Théâtre` | `427270 Jules Moy` | 1 | 7,5 | -2,5 | 1,035 |
+| 2 | `232935 The Fatal Hour` | `1163703 Leah, the Forsaken` | 2 | 17,4 | −2,6 | 1,901 |
+| 3 | `622716 Richard III` | `1163703 Leah, the Forsaken` | 1 | 9,2 | −0,8 | 1,536 |
+| 4 | `290574 The Taming of the Shrew` | `413249 The Honor of Thieves` | 1 | 8,2 | −1,8 | 1,031 |
+| 5 | `382980 The Feud and the Turkey` | `413249 The Honor of Thieves` | 2 | 18,4 | −1,6 | 0,845 |
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Explicar o impacto matemático e semântico da transformação `peso + 10.0`: como somar `+10.0` por aresta penaliza caminhos com mais saltos ($+10k$), caminhos com menor custo deslocado nem sempre coincidem com os de menor soma pura de pesos originais (diferença entre Dijkstra deslocado e Bellman-Ford original quando há múltiplos saltos).
+Cada destino é o filme com a maior queda acumulada (menor distância do Bellman-Ford) a partir da origem.
+
+**Análise da transformação +10:** o custo deslocado de um caminho com k arcos é igual a custo_original + 10k. Como o termo 10k depende do número de saltos, o Dijkstra passa a preferir caminhos com menos arestas, e o resultado só coincide com o caminho de menor soma original quando os candidatos têm o mesmo k. Um exemplo: um caminho de 3 saltos com soma −5 custa 25, e um de 1 salto com soma −1 custa 9. O Dijkstra escolhe o segundo, mas o Bellman-Ford escolhe o primeiro. Nos 5 pares acima os custos coincidiram com a queda acumulada do Bellman-Ford porque o recorte é pequeno e há poucos caminhos alternativos. Isso não é garantido em geral. Semântica: o Dijkstra deslocado responde "qual é a ligação mais curta, em número de filmes, que ainda tem a menor variação de nota", e não "qual é a maior queda de nota".
 
 ### 4.3 Bellman-Ford (Sem Ciclo Negativo e Com Ciclo Negativo)
 
 | Cenário | Descrição do recorte / grafo | Fonte (`id`) | Ciclo negativo detectado? | Resultado / Sequência do ciclo e custo | Tempo (ms) |
 | :--- | :--- | :--- | :--- | :--- | ---: |
-| **1. Pesos negativos sem ciclo negativo** | Grafo cronológico padrão (`io.py`, DAG) | `[PREENCHER]` | Não | `[PREENCHER caminhos/custos]` | — |
-| **2. Com ciclo negativo** | `[Pendente: recorte/transformação documentada]` | `[PREENCHER]` | Sim | `[PREENCHER ciclo detectado e custo]` | — |
+| **1. Pesos negativos sem ciclo negativo** | 1.000 primeiros filmes, DAG, 864 arcos, dos quais 403 negativos | `428699 Phono-Cinéma-Théâtre` | Não | `30 alcançados; menor distância: Jules Moy, −2,5` | 0,294 |
+| **2. Com ciclo negativo** | 300 primeiros filmes, arcos nos dois sentidos, peso = −\|Δnota\| (276 arcos) | `189579 Departure by Car` | Sim | `Le goûter des bébés → The Little Girl and Her Cat → Le goûter des bébés; custo −1,8` | 6,69 |
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Documentar exatamente **qual recorte ou transformação dos dados** foi construído para gerar o caso com ciclo negativo (necessário porque o grafo completo em `io.py` exige `datas[i] < datas[j]` e, portanto, é acíclico — ex.: subgrafo onde filmes lançados na mesma data ou em um recorte sem restrição temporal estrita formam um ciclo de variação líquida negativa de nota) e interpretar o ciclo encontrado.
+**Documentação do ciclo:** o grafo original não tem ciclos porque exige data(u) < data(v). Para criar o caso obrigatório, pegamos os 300 primeiros filmes por data, removemos a restrição temporal (arcos nos dois sentidos entre filmes com ator em comum) e forçamos todos os pesos a serem negativos (−|nota(v) − nota(u)|). Com isso, qualquer par de filmes com notas diferentes forma um ciclo de 2 arcos com custo negativo. O ciclo encontrado tem custo −1,8, ou seja, |Δnota| = 0,9 em cada sentido. Como "ir e voltar" sempre diminui o custo, a distância mínima não existe (tende a −∞), e o Bellman-Ford mostra isso ao continuar relaxando arestas na V-ésima iteração. Esse caso é um teste de corretude, não uma conclusão sobre o cinema. A fonte foi escolhida pelo maior grau de saída no recorte.
 
 ---
 
 ## 5. Desempenho e Escalabilidade (`out/parte2/parte2_report.json`)
 
-O benchmark definido em `src/solve.py` (`executar_benchmark_parte2`) mede o tempo médio de **5 execuções** por algoritmo em **3 tamanhos** do grafo (`10%` = `41.624` filmes, `50%` = `208.121` filmes e `100%` = `416.243` filmes).
+O benchmark definido em `src/solve.py` (`executar_benchmark_parte2`) mede o tempo médio de **5 execuções** por algoritmo em **3 tamanhos** do grafo (`10%` = `41.624` filmes, `50%` = `208.122` filmes e `100%` = `416.243` filmes).
 
 | Escala | Vértices ($\|V\|$) | Arestas ($\|E\|$) | BFS (ms) | DFS (ms) | Dijkstra (ms) | Bellman-Ford (ms) |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `10%` (`41.624` filmes) | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` |
-| `50%` (`208.121` filmes) | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` |
-| `100%` (`416.243` filmes) | `416.243` | `500.000` | `[Pendente]` | `[Pendente]` | `[Pendente]` | `[Pendente]` |
+| `10%` | `41.624` | `384.336` | `4,98` | `6,75` | `51,87` | `209,35` |
+| `50%` | `208.122` | `1.899.964` | `35,89` | `42,80` | `338,86` | `1.167,13` |
+| `100%` | `416.243` | `3.381.516` | `262,76` | `261,79` | `1.965,25` | `5.003,95` |
+
+*(Grafo `modo_arestas="consecutivo"`, sem `max_arestas`; origem `33229` — Dickson Greeting, que alcança 7 filmes.)*
 
 Complexidades teóricas de referência:
 - **BFS / DFS:** $O(|V| + |E|)$
@@ -237,11 +256,15 @@ Complexidades teóricas de referência:
 
 ### Visualizações de Comparação dos Algoritmos
 
-1. **Comparação por escala (barras):** `[Pendente: gerar out/parte2/comparacao_algoritmos_barras.png via python -m src.viz]`
-2. **Escalabilidade por número de vértices (linhas):** `[Pendente: gerar out/parte2/escalabilidade_algoritmos_linhas.png via python -m src.viz]`
+1. **Comparação por escala (barras):** `out/parte2/comparacao_algoritmos_barras.png`
+2. **Escalabilidade por número de vértices (linhas):** `out/parte2/escalabilidade_algoritmos_linhas.png`
+3. **Empírico vs. teórico:** `out/parte2/empirico_vs_teorico.png`
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Comparar o crescimento empírico observado nas 3 escalas (10%, 50%, 100%) com a complexidade teórica de cada algoritmo (ex.: comportamento linear de BFS/DFS vs. custo quadrático/produto $|V|\cdot|E|$ do Bellman-Ford e impacto do número de arestas limitadas em `500.000`).
+**Empírico vs. teórico.** De 10% para 100%, V cresce 10× e E cresce 8,8×. Os tempos cresceram: BFS ~53×, DFS ~39×, Dijkstra ~38× e Bellman-Ford só ~24×.
+- **Bellman-Ford abaixo do previsto.** O `O(V·E)` indicaria um crescimento de ~88×. O valor menor se explica porque a origem alcança apenas 7 filmes: a implementação encerra quando uma rodada não altera nenhuma distância, converge em poucas iterações e se comporta como `O(E)` vezes uma constante pequena.
+- **BFS e DFS acima do linear.** Mesmo visitando 7 nós, eles cresceram mais que o esperado. Isso indica que o tempo é dominado pela inicialização das estruturas em `O(V)` e por efeitos de memória, cache e coletor de lixo do Python, e não pela travessia. A grande variação entre execuções no grafo 100% (157–466 ms) reforça essa leitura.
+- **A ordem relativa segue a teoria:** BFS ≈ DFS < Dijkstra (fator `log V` do heap) < Bellman-Ford.
+- **Limitação:** para observar o `O(V·E)` de fato, seria necessária uma origem com alcance grande (por exemplo, *Kira*, com 2.956 filmes).
 
 ---
 
@@ -251,69 +274,74 @@ Complexidades teóricas de referência:
 
 ### 6.1 Da Exploratória à Explanatória (*Storytelling*)
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
-> - Registrar o raciocínio analítico completo:
->   1. **O que foi encontrado na análise exploratória?**
->   2. **Qual história relevante o grupo decidiu contar a partir disso (*storytelling*)?**
->   3. **Por que essa mensagem é a mais relevante para responder à pergunta de pesquisa?**
->   4. **Quais técnicas visuais e atributos pré-atentivos (cor, tamanho, posição, destaque/anotação) foram usados para destacar a mensagem?**
+1. **O que a análise exploratória encontrou.** A nota IMDb é concentrada (mediana de 6,3) e levemente assimétrica à esquerda. Já a popularidade e os votos são muito desiguais. O grafo de elenco é extremamente esparso (densidade de ~3·10⁻⁶): no recorte de 500 mil arestas, a grande maioria dos filmes não tem arco nenhum e poucos hubs do cinema mudo concentram centenas de ligações. A variação de nota entre filmes consecutivos de um ator (o peso) fica centrada exatamente em 0.
+2. **A história escolhida.** *"Trabalhar com o mesmo ator não prevê se o próximo filme será melhor ou pior: a nota sobe e cai na mesma proporção, em todas as épocas. As quedas grandes existem, mas são casos pontuais, e é isso que os caminhos mínimos revelam."*
+3. **Por que essa mensagem.** Ela responde diretamente à pergunta de pesquisa (a nota tende a subir ou a cair?) e une o resultado estatístico (sinal e média dos pesos) ao resultado dos algoritmos (caminhos de queda acumulada do Bellman-Ford).
+4. **Técnicas visuais.** Vermelho é a única cor de destaque, reservada para "queda de nota"; o restante fica em cinza ou azul. Os valores aparecem como rótulos diretamente nas barras. Há uma linha de referência no zero, as barras começam no zero com o eixo fixo em 0–100%, e os títulos já declaram a conclusão. A escala log é usada apenas nos histogramas de grau, onde a cauda é extrema.
 
-### 6.2 Visualizações Exploratórias (Mínimo 4)
+> **Nota metodológica:** o recorte `todos_pares` de 500 mil arestas (Seção 2.2) indica 58,5% de arcos positivos. Esse número é um artefato do recorte, que liga filmes antigos a todos os filmes posteriores do mesmo ator. No grafo `consecutivo` completo (3,38 milhões de arcos), usado nas Explanatórias, a proporção é 48,3% positivos contra 48,6% negativos.
 
-#### Exploratória 1 — `[Título do gráfico]`
-- **Arquivo em `out/parte2/`:** `[Pendente]`
-- **Nota analítica `[AUTORAL — PREENCHER PELO GRUPO]`:**
-  - *O que está sendo mostrado:* `[...]`
-  - *Insight extraído:* `[...]`
-  - *Por que este tipo de gráfico foi escolhido:* `[...]`
+### 6.2 Visualizações Exploratórias
 
-#### Exploratória 2 — `[Título do gráfico]`
-- **Arquivo em `out/parte2/`:** `[Pendente]`
-- **Nota analítica `[AUTORAL — PREENCHER PELO GRUPO]`:**
-  - *O que está sendo mostrado:* `[...]`
-  - *Insight extraído:* `[...]`
-  - *Por que este tipo de gráfico foi escolhido:* `[...]`
+#### Exploratória 1 — Distribuição do grau de entrada
+- **Arquivo:** `out/parte2/histograma_grau_entrada.png`
+- **O que mostra:** quantos filmes têm cada grau de entrada no grafo de 500 mil arestas, com o eixo y em escala log.
+- **Insight:** a distribuição é de cauda pesada. A enorme maioria dos vértices tem grau 0 ou muito baixo e poucos filmes recebem centenas de arcos. Isso indica que o recorte deixa a maior parte do dataset isolada, o que limita o alcance da BFS e da DFS.
+- **Por que histograma:** é a forma padrão de mostrar a distribuição de uma variável discreta. A escala log torna a cauda visível.
 
-#### Exploratória 3 — `[Título do gráfico]`
-- **Arquivo em `out/parte2/`:** `[Pendente]`
-- **Nota analítica `[AUTORAL — PREENCHER PELO GRUPO]`:**
-  - *O que está sendo mostrado:* `[...]`
-  - *Insight extraído:* `[...]`
-  - *Por que este tipo de gráfico foi escolhido:* `[...]`
+#### Exploratória 2 — Distribuição do grau de saída
+- **Arquivo:** `out/parte2/histograma_grau_saida.png`
+- **O que mostra:** a mesma análise para o grau de saída (máximo de 836).
+- **Insight:** o pico em 0 é ainda maior, e a cauda chega a 600–836. Os hubs de saída são filmes de 1910–1920 (Seção 2.3) cujos atores fizeram muitos filmes depois. Isso evidencia o viés cronológico do corte por `max_arestas`.
+- **Por que histograma:** permite comparar diretamente com a Exploratória 1 (mesma escala e tipo de gráfico).
 
-#### Exploratória 4 — `[Título do gráfico]`
-- **Arquivo em `out/parte2/`:** `[Pendente]`
-- **Nota analítica `[AUTORAL — PREENCHER PELO GRUPO]`:**
-  - *O que está sendo mostrado:* `[...]`
-  - *Insight extraído:* `[...]`
-  - *Por que este tipo de gráfico foi escolhido:* `[...]`
+#### Exploratória 3 — Distribuição das notas IMDb
+- **Arquivo:** `out/parte2/avd_e3_distribuicao_imdb_rating.png`
+- **O que mostra:** histograma de `imdb_rating` dos 416.243 filmes, com linhas de média (6,18) e mediana (6,30).
+- **Insight:** a nota se concentra entre 5 e 7,5, com assimetria levemente negativa (−0,42), já que a média fica abaixo da mediana. Como a variável é concentrada, as diferenças entre filmes vizinhos tendem a ser pequenas.
+- **Por que histograma:** a variável é contínua, e as linhas de média e mediana mostram a assimetria sem precisar de outro gráfico.
 
-### 6.3 Visualizações Explanatórias (Mínimo 2 — sendo $\ge 1$ respondendo à pergunta de pesquisa)
+#### Exploratória 4 — Distribuição da variação de nota (peso dos arcos)
+- **Arquivo:** `out/parte2/avd_e4_distribuicao_pesos.png`
+- **O que mostra:** histograma dos 3.381.516 pesos `nota(posterior) − nota(anterior)`, com quedas em vermelho e aumentos em azul.
+- **Insight:** a distribuição é simétrica em torno de 0 (média de −0,0003; desvio-padrão de 1,48), e 57% dos arcos variam no máximo 1 ponto. Quedas e aumentos grandes (|Δ| > 3) são raros e aparecem nas duas direções na mesma proporção.
+- **Por que histograma com duas cores:** a cor separa visualmente as duas metades da pergunta (cai ou sobe) sem exigir leitura de eixo.
 
-*(Devem ser interpretáveis por alguém que não conhece o projeto.)*
+### 6.3 Visualizações Explanatórias
 
-#### Explanatória 1 — `[Título do gráfico — Responde à pergunta de pesquisa]`
-- **Arquivo em `out/parte2/`:** `[Pendente]`
-- **Nota analítica `[AUTORAL — PREENCHER PELO GRUPO]`:**
-  - *O que está sendo mostrado:* `[...]`
-  - *Insight principal e resposta à pergunta:* `[...]`
-  - *Por que este tipo de gráfico foi escolhido:* `[...]`
-  - *Seleção de elementos exibidos e atributos pré-atentivos usados (cor, tamanho, posição, rótulos):* `[...]`
+#### Explanatória 1 — "No próximo filme de um ator, a nota IMDb sobe e cai praticamente na mesma proporção" (responde à pergunta)
+- **Arquivo:** `out/parte2/avd_x1_sinal_variacao_nota.png`
+- **O que mostra:** a porcentagem dos 3,38 milhões de arcos em que a nota sobe (48,3%), cai (48,6%) ou fica igual (3,2%).
+- **Insight e resposta:** não há tendência de queda nem de subida. Ter o mesmo ator não prediz o sentido da nota do filme seguinte.
+- **Por que barras horizontais:** comparar comprimentos a partir de um zero comum é a tarefa perceptiva mais precisa. O formato horizontal comporta rótulos legíveis. Pizza foi evitada porque fatias de 48,3% e 48,6% seriam indistinguíveis.
+- **Elementos e atributos pré-atentivos:** apenas a barra "cai" em vermelho (a cor marca o foco da pergunta), rótulos de porcentagem no fim das barras, eixo fixo em 0–100% para não exagerar diferenças, título que já enuncia a conclusão e bordas superior e direita removidas.
 
-#### Explanatória 2 — `[Título do gráfico]`
-- **Arquivo em `out/parte2/`:** `[Pendente]`
-- **Nota analítica `[AUTORAL — PREENCHER PELO GRUPO]`:**
-  - *O que está sendo mostrado:* `[...]`
-  - *Insight principal:* `[...]`
-  - *Por que este tipo de gráfico foi escolhido:* `[...]`
-  - *Seleção de elementos exibidos e atributos pré-atentivos usados (cor, tamanho, posição, rótulos):* `[...]`
+#### Explanatória 2 — "A variação média de nota entre filmes de um ator não muda com a época"
+- **Arquivo:** `out/parte2/avd_x2_variacao_por_decada.png`
+- **O que mostra:** a média do peso por década do filme posterior (de 1910 a 2020, apenas décadas com 1.000 ou mais arcos).
+- **Insight:** todas as médias ficam entre −0,02 e +0,07, coladas no zero. A porcentagem de quedas fica estável entre 45% e 49%. Isso confirma a correlação nula entre peso e ano (0,03), ou seja, não houve uma época de declínio.
+- **Por que linha:** o eixo x é temporal e ordenado, e a linha mostra tendência (aqui, a ausência dela).
+- **Elementos e atributos pré-atentivos:** linha de referência no zero com anotação "0 = sem variação". O eixo y foi fixado em ±1 de propósito: com o zoom automático, oscilações de 0,01 pareceriam grandes, o que seria uma distorção visual.
+
+*(As figuras de desempenho da Seção 5 — barras, linhas e empírico vs. teórico — complementam a análise, mas não entram na contagem de AVD.)*
 
 ---
 
 ## 7. Discussão Crítica e Resposta à Pergunta de Pesquisa
 
-> **`[AUTORAL — PREENCHER PELO GRUPO]`**
->
-> 1. **Quando e por que cada algoritmo é mais adequado neste domínio:** comparar BFS, DFS, Dijkstra (com deslocamento `+10.0`) e Bellman-Ford (com pesos negativos originais) em termos de corretude, semântica do caminho e custo computacional.
-> 2. **Limites do design de pesos e da modelagem:** discutir criticamente as limitações do peso $\text{imdb\_rating}(v) - \text{imdb\_rating}(u)$, do deslocamento $+10{,}0$ (que soma $+10$ por salto e mistura variação de qualidade com número de arestas), do teto de `500.000` arestas e do fato de o grafo cronológico ser acíclico.
-> 3. **Resposta fundamentada à pergunta de pesquisa:** sintetizar a resposta final apoiada tanto nas evidências dos algoritmos de grafos quanto nas descobertas da análise visual (AVD).
+**1. Quando usar cada algoritmo.**
+- **BFS:** é adequado para medir a quantos "saltos de elenco" um filme está de outro, sem considerar pesos. É o mais barato (`O(V+E)`).
+- **DFS:** classifica arcos e, com 0 arcos de retorno, prova que o grafo cronológico é acíclico. Também é a base para uma ordenação topológica.
+- **Dijkstra com +10:** é rápido (`O((V+E) log V)`), mas responde a outra pergunta, porque penaliza o número de saltos (Seção 4.2).
+- **Bellman-Ford:** é o único correto para a maior queda acumulada com pesos negativos e para detectar ciclos negativos, porém é o mais caro. Como o grafo real é um DAG, um caminho mínimo por ordenação topológica (`O(V+E)`) daria o mesmo resultado do Bellman-Ford de forma muito mais rápida. Seria a escolha ideal em produção.
+
+**2. Limites do design de pesos e da modelagem.**
+- O Δnota ignora quantos votos sustentam cada nota: uma nota baseada em 10 votos pesa o mesmo que uma baseada em 1 milhão.
+- O deslocamento de +10 mistura qualidade com comprimento do caminho.
+- Pela correlação de 0,65, o peso é explicado em boa parte pela nota do destino. Parte do "sinal" é, portanto, consequência da construção do peso.
+- O teto de 500 mil arestas no modo `todos_pares` favorece filmes antigos e chega a inverter conclusões: dá 58,5% de arcos positivos, contra 48,3% no grafo completo.
+- Ligar todos os pares de filmes de um ator cria arcos entre filmes separados por décadas, enquanto o modo `consecutivo` representa melhor a sequência de uma carreira.
+- O grafo cronológico é um DAG, então o ciclo negativo só existe em um recorte artificial.
+- O benchmark usou uma origem que alcança apenas 7 filmes, o que esconde o custo real do Bellman-Ford.
+
+**3. Resposta à pergunta de pesquisa.** **Não há tendência sistemática.** Em 3,38 milhões de transições entre filmes consecutivos de um mesmo ator, a nota IMDb cai em 48,6% dos casos e sobe em 48,3%, com variação média praticamente nula (−0,0003). Esse equilíbrio se mantém em todas as décadas de 1910 a 2020. Ainda assim, os algoritmos mostram que **trajetórias de declínio existem localmente**: o Bellman-Ford encontra cadeias como *The Fatal Hour* → *Richard III* → *Leah, the Forsaken*, com queda acumulada de −2,6 pontos em dois filmes. Essas cadeias são exceções identificáveis, e não a regra.
