@@ -1,3 +1,4 @@
+<!-- [IA] Claude Code – contagem de commits por autor e pasta a partir do git log -->
 # Matriz de contribuição — dados do `git log`
 
 Commits (sem merges) em que cada autor alterou ao menos um arquivo da pasta, na história atual de `main`. Autores como aparecem no git; 'David Magalhães' e 'David-git123' estão somados, assim como 'Aline Takakura' e 'AlineTakakura' (mesmas pessoas, confirmado pela equipe).
