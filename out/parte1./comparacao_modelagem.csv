@@ -1,0 +1,10 @@
+mapa,abordagem,passos,caminho_valido,observacao
+m02,G_pos com portas como chão,10,False,"entra na porta A em (1,6) sem a chave a"
+m02,G_pos com portas como parede,,False,G inalcançável: nenhum caminho de S até G
+m02,G_est (modelagem correta),34,True,todas as portas cruzadas com a chave correspondente
+m03,G_pos com portas como chão,21,False,"entra na porta C em (7,13) sem a chave c"
+m03,G_pos com portas como parede,,False,G inalcançável: nenhum caminho de S até G
+m03,G_est (modelagem correta),87,True,todas as portas cruzadas com a chave correspondente
+m04,G_pos com portas como chão,14,False,"entra na porta A em (1,10) sem a chave a"
+m04,G_pos com portas como parede,,False,G inalcançável: nenhum caminho de S até G
+m04,G_est (modelagem correta),20,True,todas as portas cruzadas com a chave correspondente
