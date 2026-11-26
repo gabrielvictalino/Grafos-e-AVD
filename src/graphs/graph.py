@@ -1,4 +1,4 @@
-
+# [IA] Gemini Classes de adaptador (Nó e Aresta) compatíveis com a assinatura de src/graphs/algorithms.py
 class Aresta:
     def __init__(self, origem, destino, custo: float):
         self.origem = origem
