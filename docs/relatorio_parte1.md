@@ -128,16 +128,15 @@ Definições adotadas (grafo dirigido, sem o nó virtual `ALVO`):
 ### 3.1 Portas como Chão vs. Portas como Parede vs. Grafo de Estados
 
 | Mapa | Abordagem | Passos (BFS) | Caminho válido? | Observação |
-| :--- | :--- | ---: | :--- | :--- |
-| `m02` | `G_pos` (portas como chão) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
-| `m02` | `G_pos` (portas como parede) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
-| `m02` | `G_est` (modelagem correta) | 34 | Sim | Coleta `a` em `(3,11)` e retorna para cruzar `A` |
-| `m03` | `G_pos` (portas como chão) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
-| `m03` | `G_pos` (portas como parede) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
-| `m03` | `G_est` (modelagem correta) | 87 | Sim | Ordem obrigatória `a -> b -> c` |
-| `m04` | `G_pos` (portas como chão) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
-| `m04` | `G_pos` (portas como parede) | `[Pendente: gerar comparacao_modelagem.csv]` | Não | `[Pendente]` |
-| `m04` | `G_est` (modelagem correta) | 20 | Sim | Coleta `a` e evita esteiras-armadilha |
+| m02 | G_pos com portas como chão | 10 | False | Entra na porta A em (1,6) sem a chave a |
+| m02 | G_pos com portas como parede | — | False | G inalcançável: nenhum caminho de S até G |
+| m02 | G_est (modelagem correta) | 34 | True | Todas as portas cruzadas com a chave correspondente |
+| m03 | G_pos com portas como chão | 21 | False | Entra na porta C em (7,13) sem a chave c |
+| m03 | G_pos com portas como parede | — | False | G inalcançável: nenhum caminho de S até G |
+| m03 | G_est (modelagem correta) | 87 | True | Todas as portas cruzadas com a chave correspondente |
+| m04 | G_pos com portas como chão | 14 | False | Entra na porta A em (1,10) sem a chave a |
+| m04 | G_pos com portas como parede | — | False | G inalcançável: nenhum caminho de S até G |
+| m04 | G_est (modelagem correta) | 20 | True | Todas as portas cruzadas com a chave correspondente |
 
 > - Após gerar `out/parte1/comparacao_modelagem.csv`, preencher os passos e observações faltantes na tabela acima.
 > - Portas como chão acavbam por gerar caminhos que que são inválidos pois as portas acabam por ser transpostas sem nenhum tipo de limitação de aquisição de chaves. Portas como parede geram falhas pois tornam o caminho intransponível, mesmo com as chaves necessárias para passar pela porta. A implementação via estados permite com que "novas casas" com condições diferentes sejam geradas a medida que o estado muda. Esse tipo de modelagem acaba por possibilitar, por exemplo, que caminhos intransponívieis no estado atual possam ser transpostos com uma mudança que estados.
@@ -325,15 +324,3 @@ Todos esses valores (`5` casas livres, `7` estados alcançáveis divididos em `2
 
 > A implementação do grafo de estados pode gerar um overhead no sistema quando o grafo possui múltiplos estados, pois todo estado é uma nova instância de objeto. O tratamento de ciclos negativos acaba por ser outra limitação, pois acaba descaracterizando algoritmos como o bellman ford que de forma tradicional não possui mudanças de pesos durante sua execução. De um modo geral, a utilização de grafos de estado possibilita uma implementações mais completas e robustas para o problema de labirintos.
 
-
-## 9. Matriz de Contribuição da Equipe
-
-*(Confirmar a divisão de **Dono** e **Revisor** por pacote, garantindo que todos os integrantes tenham commits em pelo menos 2 pacotes.)*
-
-| Pacote | Escopo (enunciado) | Dono | Revisor | Evidências observadas no histórico Git |
-| :--- | :--- | :--- | :--- | :--- |
-| **P1** — Modelagem e grafo de estados | `io.py`, `estados.py`, `arestas`, `test_io`, `test_estados` | `[PREENCHER]` | `[PREENCHER]` | `estados.py`, `labirinto.py` (`David-git123`, `juliavfe`); `test_estados.py`, `test_io.py` (`gabrielvictalino`) |
-| **P2** — Algoritmos e testes | BFS, DFS com classificação, Dijkstra, Bellman-Ford com ciclo, transposto e testes | `[PREENCHER]` | `[PREENCHER]` | `algorithms.py` (`David-git123`, `juliavfe`, `AlineTakakura`, `gabrielvictalino`); `test_bfs/dfs/dijkstra/bellman_ford.py` (`gabrielvictalino`) |
-| **P3** — Análises da Parte 1 | Métricas, camadas, comparação de modelagens, prova do `m05`, correção do `m06`, mapas do grupo | `[PREENCHER]` | `[PREENCHER]` | `solve.py`, exportação Parte 1 (`gabrielvictalino`, `juliavfe`) |
-| **P4** — Parte 2: dados e experimentos | Proposta, dataset, pesos negativos, casos obrigatórios, benchmark e escalabilidade | `[PREENCHER]` | `[PREENCHER]` | `io.py`, `graph.py`, `cli.py`, `solve.py`, `notebooks/`, `tmdb_limpo.csv.gz` (`AlineTakakura`) |
-| **P5** — Visualização e comunicação | Figuras da Parte 1, app interativo, visualizações AVD, README e PDF *(dividido entre os outros pacotes em grupos de 4)* | `[PREENCHER]` | `[PREENCHER]` | `app.py` (`juliavfe`, `David-git123`), `viz.py` (`juliavfe`), `taxi_labirinto/` (`David-git123`) |
